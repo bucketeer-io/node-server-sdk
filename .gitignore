@@ -1,0 +1,16 @@
+.DS_Store
+
+/bazel-bin
+/bazel-bucketeer-node-server-sdkrver-sdk
+/bazel-genfiles
+/bazel-out
+/bazel-testlogs
+
+node_modules
+yarn-error.log
+
+__dist
+__lib
+__test
+__e2e
+lib

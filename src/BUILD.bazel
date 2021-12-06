@@ -1,0 +1,99 @@
+load("@npm_bazel_typescript//:index.bzl", "ts_library")
+load("@npm_bazel_rollup//:index.bzl", "rollup_bundle")
+load("@npm_bazel_terser//:index.bzl", "terser_minified")
+
+package(default_visibility = ["//visibility:private"])
+
+ts_library(
+    name = "index",
+    srcs = [
+        "index.ts",
+    ],
+    devmode_module = "commonjs",
+    runtime = "nodejs",
+    tsconfig = "//:tsconfig.json",
+    visibility = ["//visibility:private"],
+    deps = [
+        ":schedule",
+        ":shared",
+        "//src/api:fetch",
+        "//src/api:getEvaluation",
+        "//src/api:registerEvents",
+        "//src/objects:Duration",
+        "//src/objects:Evaluation",
+        "//src/objects:EvaluationEvent",
+        "//src/objects:GetEvaluationLatencyMetricsEvent",
+        "//src/objects:GetEvaluationSizeMetricsEvent",
+        "//src/objects:InternalErrorCountMetricsEvent",
+        "//src/objects:TimeoutErrorCountMetricsEvent",
+        "//src/objects:GoalEvent",
+        "//src/objects:MetricsEvent",
+        "//src/objects:Reason",
+        "//src/objects:User",
+        "//src/objects:SourceId",
+        "//src/stores:EventStore",
+        "@npm//@types/node",
+        "@npm//option-t",
+    ],
+)
+
+ts_library(
+    name = "schedule",
+    srcs = [
+        "schedule.ts",
+    ],
+    tsconfig = "//:tsconfig.json",
+    visibility = ["//:__subpackages__"],
+    deps = [
+        "@npm//@types/node",
+    ],
+)
+
+ts_library(
+    name = "shared",
+    srcs = [
+        "shared.ts",
+    ],
+    tsconfig = "//:tsconfig.json",
+    visibility = ["//:__subpackages__"],
+    deps = [
+        "@npm//@types/node",
+    ],
+)
+
+genrule(
+    name = "bootstrap",
+    srcs = ["bootstrap.js"],
+    outs = ["_bootstrap.js"],
+    cmd = "cp $< $@",
+)
+
+rollup_bundle(
+    name = "bucketeer",
+    config_file = "//:rollup.config.js",
+    entry_point = "_bootstrap.js",
+    format = "esm",
+    visibility = ["//:__pkg__"],
+    deps = [
+        ":index",
+        "@npm//option-t",
+        "@npm//rollup-plugin-alias",
+        "@npm//rollup-plugin-commonjs",
+        "@npm//rollup-plugin-node-resolve",
+        "@npm//rollup-plugin-replace",
+    ],
+)
+
+terser_minified(
+    name = "bucketeer.min",
+    src = ":bucketeer",
+    sourcemap = False,
+    visibility = ["//:__pkg__"],
+)
+
+filegroup(
+    name = "es5",
+    srcs = [":index"],
+    output_group = "es5_sources",
+    visibility = ["//:__pkg__"],
+)

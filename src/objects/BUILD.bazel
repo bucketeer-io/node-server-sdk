@@ -1,0 +1,149 @@
+load("@npm_bazel_typescript//:index.bzl", "ts_library")
+
+package(default_visibility = ["//src:__subpackages__"])
+
+ts_library(
+    name = "Evaluation",
+    srcs = [
+        "Evaluation.ts",
+    ],
+    tsconfig = "//:tsconfig.json",
+    deps = [
+        ":Reason",
+        "@npm//@types/node",
+        "@npm//option-t",
+    ],
+)
+
+ts_library(
+    name = "EvaluationEvent",
+    srcs = [
+        "EvaluationEvent.ts",
+    ],
+    tsconfig = "//:tsconfig.json",
+    deps = [
+        ":Reason",
+        ":User",
+        ":SourceId",
+        "@npm//@types/node",
+        "@npm//option-t",
+    ],
+)
+
+ts_library(
+    name = "GoalEvent",
+    srcs = [
+        "GoalEvent.ts",
+    ],
+    tsconfig = "//:tsconfig.json",
+    deps = [
+        ":Evaluation",
+        ":SourceId",
+        "@npm//@types/node",
+        "@npm//option-t",
+    ],
+)
+
+ts_library(
+    name = "MetricsEvent",
+    srcs = [
+        "MetricsEvent.ts",
+    ],
+    tsconfig = "//:tsconfig.json",
+    deps = [
+        ":GetEvaluationLatencyMetricsEvent",
+        ":GetEvaluationSizeMetricsEvent",
+        ":InternalErrorCountMetricsEvent",
+        ":TimeoutErrorCountMetricsEvent",
+        "@npm//@types/node",
+    ],
+)
+
+ts_library(
+    name = "GetEvaluationLatencyMetricsEvent",
+    srcs = [
+        "GetEvaluationLatencyMetricsEvent.ts",
+    ],
+    tsconfig = "//:tsconfig.json",
+    deps = [
+        ":Duration",
+        "@npm//@types/node",
+    ],
+)
+
+ts_library(
+    name = "GetEvaluationSizeMetricsEvent",
+    srcs = [
+        "GetEvaluationSizeMetricsEvent.ts",
+    ],
+    tsconfig = "//:tsconfig.json",
+    deps = [
+        "@npm//@types/node",
+    ],
+)
+
+ts_library(
+    name = "InternalErrorCountMetricsEvent",
+    srcs = [
+        "InternalErrorCountMetricsEvent.ts",
+    ],
+    tsconfig = "//:tsconfig.json",
+    deps = [
+        "@npm//@types/node",
+    ],
+)
+
+ts_library(
+    name = "TimeoutErrorCountMetricsEvent",
+    srcs = [
+        "TimeoutErrorCountMetricsEvent.ts",
+    ],
+    tsconfig = "//:tsconfig.json",
+    deps = [
+        "@npm//@types/node",
+    ],
+)
+
+ts_library(
+    name = "Duration",
+    srcs = [
+        "Duration.ts",
+    ],
+    tsconfig = "//:tsconfig.json",
+    deps = [
+        "@npm//@types/node",
+    ],
+)
+
+ts_library(
+    name = "Reason",
+    srcs = [
+        "Reason.ts",
+    ],
+    tsconfig = "//:tsconfig.json",
+    deps = [
+        "@npm//@types/node",
+    ],
+)
+
+ts_library(
+    name = "User",
+    srcs = [
+        "User.ts",
+    ],
+    tsconfig = "//:tsconfig.json",
+    deps = [
+        "@npm//@types/node",
+    ],
+)
+
+ts_library(
+    name = "SourceId",
+    srcs = [
+        "SourceId.ts",
+    ],
+    tsconfig = "//:tsconfig.json",
+    deps = [
+        "@npm//@types/node",
+    ],
+)

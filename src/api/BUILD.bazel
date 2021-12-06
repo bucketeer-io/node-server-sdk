@@ -1,0 +1,66 @@
+load("@npm_bazel_typescript//:index.bzl", "ts_library")
+
+package(default_visibility = ["//src:__subpackages__"])
+
+ts_library(
+    name = "fetch",
+    srcs = [
+        "fetch.ts",
+    ],
+    tsconfig = "//:tsconfig.json",
+    deps = [
+        "@npm//@types/node",
+        "@npm//option-t",
+    ],
+)
+
+ts_library(
+    name = "getEvaluation",
+    srcs = [
+        "getEvaluation.ts",
+    ],
+    tsconfig = "//:tsconfig.json",
+    deps = [
+        ":shared",
+        "//src:shared",
+        "//src/objects:SourceId",
+        "//src/objects:Evaluation",
+        "//src/objects:User",
+        "@npm//@types/node",
+        "@npm//option-t",
+    ],
+)
+
+ts_library(
+    name = "registerEvents",
+    srcs = [
+        "registerEvents.ts",
+    ],
+    tsconfig = "//:tsconfig.json",
+    deps = [
+        ":shared",
+        "//src:shared",
+        "//src/objects:SourceId",
+        "//src/objects:EvaluationEvent",
+        "//src/objects:GoalEvent",
+        "//src/objects:MetricsEvent",
+        "@npm//@types/node",
+        "@npm//@types/uuid",
+        "@npm//option-t",
+        "@npm//uuid",
+    ],
+)
+
+ts_library(
+    name = "shared",
+    srcs = [
+        "shared.ts",
+    ],
+    tsconfig = "//:tsconfig.json",
+    deps = [
+        ":fetch",
+        "//src:shared",
+        "@npm//@types/node",
+        "@npm//option-t",
+    ],
+)

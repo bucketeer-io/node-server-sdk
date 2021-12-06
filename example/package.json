@@ -1,0 +1,17 @@
+{
+  "private": true,
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@bucketeer/sdk": "1.26.8",
+    "cors": "^2.8.5",
+    "express": "4.17.1",
+    "option-t": "28.1.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.12",
+    "@types/express": "4.17.7",
+    "typescript": "3.9.10",
+    "webpack": "4.44.2",
+    "webpack-cli": "3.3.10"
+  }
+}
