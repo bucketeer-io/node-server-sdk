@@ -8,6 +8,3 @@ __lib
 __test
 __e2e
 lib
-
-proto
-grpc
