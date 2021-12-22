@@ -23,6 +23,8 @@ export interface BuildInfo {
   readonly GIT_REVISION: string;
 }
 
+export { Config } from './config';
+
 export { Logger, DefaultLogger } from './logger';
 
 export { UserAsPlainObject } from './objects/User';
