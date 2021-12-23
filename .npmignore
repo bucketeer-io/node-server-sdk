@@ -1,4 +1,5 @@
 .DS_Store
+.vscode
 __dist
 __lib
 __test
@@ -19,11 +20,11 @@ ava-test.config.js
 babel-e2e.config.js
 babel-test.config.js
 babel.config.js
+renovate.json
 Makefile
 tsconfig.json
 tsconfig.test.json
 tslint.json
-WORKSPACE
 yarn-error.log
 bootstrap.js
 index.ts

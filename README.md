@@ -73,7 +73,7 @@ make publish
 Before build example, you need some setups.
 
 - Build SDK.
-- Replace placeholders in [client/index.ts](./example/src/client/index.ts)
+- Replace placeholders in [index.ts](./example/src/index.ts)
 - Move to example directory. `cd example`
 - Install dependencies. `make init`
 
@@ -89,7 +89,7 @@ Start example server.
 make start
 ```
 
-If you want to use published SDK instead of local one, see `NOTE:` in [the example code](./example/src/client/index.ts)
+If you want to use published SDK instead of local one, see `NOTE:` in [the example code](./example/src/index.ts)
 
 ## Contributing
 

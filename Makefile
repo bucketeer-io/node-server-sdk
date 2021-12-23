@@ -90,13 +90,13 @@ copy-genfiles:
 	$(NPM_BIN_DIR)/babel lib --extensions '.mjs' --config-file "$(CURDIR)/babel.config.js" --out-dir "lib"
 
 .PHONY: publish-dry
-publish-dry: copy_genfiles
+publish-dry: copy-genfiles
 	npm publish --dry-run
 
 .PHONY: publish
-publish: copy_genfiles
+publish: copy-genfiles
 ifeq ($(shell $(NPM_BIN_DIR)/semver -r ">$(CURRENT_VERSION)" $(LOCAL_VERSION) ),$(LOCAL_VERSION))
-	npm publish --unsafe-perm
+	npm publish --access public
 else
 	@echo "$(LOCAL_VERSION) exists. skip publish."
 endif

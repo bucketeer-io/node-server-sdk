@@ -47,6 +47,5 @@
     "terser": "4.8.0",
     "typescript": "3.9.10",
     "uglify-es": "3.3.9"
-  },
-  "version": "0.0.0"
+  }
 }
