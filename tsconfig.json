@@ -23,10 +23,6 @@
       "node"
     ]
   },
-  /* Bazel Options */
-  "bazelOptions": {
-    "suppressTsconfigOverrideWarnings": true
-  },
   "include": [
     "./src/**/*"
   ],
