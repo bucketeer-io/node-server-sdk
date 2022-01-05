@@ -30,33 +30,86 @@ export { Logger, DefaultLogger } from './logger';
 export { UserAsPlainObject } from './objects/User';
 
 export interface Bucketeer {
+  /**
+   * getStringVariation returns variation as string.
+   * If a variation returned by server is not string, defaultValue is retured.
+   * @param user User information.
+   * @param featureId Feature flag ID to use.
+   * @param defaultValue The variation value that is retured if SDK fails to fetch the variation or the variation is not string.
+   * @returns The variation value returned from server or default value.
+   */
   getStringVariation(
     user: UserAsPlainObject,
     featureId: string,
     defaultValue: string,
   ): Promise<string>;
+  /**
+   * getBoolVariation returns variation as boolean.
+   * If a variation returned by server is not boolean, defaultValue is retured.
+   * @param user User information.
+   * @param featureId Feature flag ID to use.
+   * @param defaultValue The variation value that is retured if SDK fails to fetch the variation or the variation is not boolean.
+   * @returns The variation value returned from server or default value.
+   */
   getBoolVariation(
     user: UserAsPlainObject,
     featureId: string,
     defaultValue: boolean,
   ): Promise<boolean>;
+  /**
+   * getNumberVariation returns variation as number.
+   * If a variation returned by server is not number, defaultValue is retured.
+   * @param user User information.
+   * @param featureId Feature flag ID to use.
+   * @param defaultValue The variation value that is retured if SDK fails to fetch the variation or the variation is not number.
+   * @returns The variation value returned from server or default value.
+   */
   getNumberVariation(
     user: UserAsPlainObject,
     featureId: string,
     defaultValue: number,
   ): Promise<number>;
+  /**
+   * getJsonVariation returns variation as json object.
+   * If a variation returned by server is not json, defaultValue is retured.
+   * @param user User information.
+   * @param featureId Feature flag ID to use.
+   * @param defaultValue The variation value that is retured if SDK fails to fetch the variation or the variation is not json.
+   * @returns The variation value returned from server or default value.
+   */
   getJsonVariation(
     user: UserAsPlainObject,
     featureId: string,
     defaultValue: object,
   ): Promise<object>;
+  /**
+   * track records a goal event.
+   * @param user User information.
+   * @param goalId Goal ID to record.
+   * @param value The value that is the additional information that user can add to goal event.
+   * @returns The variation value returned from server or default value.
+   */
   track(user: UserAsPlainObject, goalId: string, value?: number): void;
+  /**
+   * destroy finalizes Bucketeer instance.
+   * It sends all event in memory and stop workers.
+   * The application should call destroy before the application stops, otherwise remaining events can be lost.
+   */
   destroy(): void;
+  /**
+   * getBuildInfo returns the SDK's build information.
+   * @returns The SDK's build information.
+   */
   getBuildInfo(): BuildInfo;
 }
 
 const COUNT_PER_REGISTER_EVENT = 100;
 
+/**
+ * initialize initializes a Bucketeer instance and returns it.
+ * @param config Configurations of the SDK.
+ * @returns Bucketeer SDK instance.
+ */
 export function initialize(config: Config): Bucketeer {
   const { host, port, token, tag, pollingIntervalForRegisterEvents, logger } = {
     ...defaultConfig,
