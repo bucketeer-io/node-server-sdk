@@ -2,7 +2,7 @@ import { DefaultLogger, Logger } from './logger';
 
 export interface Config {
   host: string;
-  port: string;
+  port?: string;
   token: string;
   tag: string;
   pollingIntervalForRegisterEvents?: number;
