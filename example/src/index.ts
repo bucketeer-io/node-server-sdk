@@ -10,18 +10,7 @@ import { initialize } from '../../lib';
 const PORT = 3000;
 
 /**
- *  Public API
  *  Initialize bucketeer.
- *  Returned instance is the body of the bucketeer.
- *
- *  host:   Api request destination.
- *  port(optional):
- *          Api request destination port.
- *  token:  Authentication token when requesting.
- *  tag:    Grouping set by bucketeer.
- *  pollingIntervalForRegisterEvents(optional):
- *          Interval for registering track events in internal API.
- *          Specify in milliseconds.
  */
 const bucketeer = initialize({
   host: '<API_ENDPOINT>', // e.g. api-media.bucketeer.jp
@@ -30,9 +19,7 @@ const bucketeer = initialize({
 });
 
 /**
- *  Public API
  *  Useful for trouble shooting.
- *  Return GIT_REVISION and BUILD_DATE.
  */
 console.table(bucketeer.getBuildInfo());
 
@@ -99,7 +86,6 @@ const server = app.listen(PORT, () => {
 process.on('SIGINT', () => {
   server.close(async () => {
     /**
-     *  Public API
      *  Use to destroy bucketeer sdk.
      *  User must call destory() in an arbitrary point.
      */
