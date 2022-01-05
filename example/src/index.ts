@@ -24,11 +24,9 @@ const PORT = 3000;
  *          Specify in milliseconds.
  */
 const bucketeer = initialize({
-  host: 'api-dev.bucketeer.jp',
-  port: '443',
-  token: '12a1251e8ffe64792b4c5bd9c4f5268b79fe093911835c08bfb2c677021a5e52',
+  host: '<API_ENDPOINT>', // e.g. api-media.bucketeer.jp
+  token: '<TOKEN>',
   tag: 'node',
-  pollingIntervalForRegisterEvents: 2 * 60 * 1000,
 });
 
 /**
