@@ -20,7 +20,7 @@ $ npm install --save @bucketeer/node-server-sdk
 
 ## Example
 
-Before build example, you need some setups.
+Before building an example, you need some setups.
 
 - Replace placeholders in [index.ts](./example/src/index.ts)
 - Move to example directory. `cd example`
