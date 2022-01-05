@@ -2,7 +2,7 @@ NPM_BIN_DIR := $(CURDIR)/node_modules/.bin
 SDK_DIR := $(CURDIR)/..
 
 .PHONY: init
-init: ## Install dependencies.
+init:
 	yarn
 
 .PHONY: start
