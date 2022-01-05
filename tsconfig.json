@@ -1,0 +1,35 @@
+{
+  "compilerOptions": {
+    /* Basic Options */
+    "target": "es5", /* Specify ECMAScript target version. */
+    "module": "ESNext", /* Specify module code generation. */
+    "moduleResolution": "node",
+    "lib": [
+      "es6"
+    ],
+    "declaration": true,
+    "allowJs": true,
+    /* Strict Type-Checking Options */
+    "strict": true,
+    /* Additional Checks */
+    // "noUnusedLocals": true, /* Report errors on unused locals. */
+    "allowSyntheticDefaultImports": true,
+    "preserveConstEnums": true,
+    "noUnusedParameters": true, /* Report errors on unused parameters. */
+    "noImplicitReturns": true, /* Report error when not all code paths in function return a value. */
+    "noFallthroughCasesInSwitch": true, /* Report errors for fallthrough cases in switch statement. */
+    "outDir": "./__lib/",
+    "types": [
+      "node"
+    ]
+  },
+  "include": [
+    "./src/**/*"
+  ],
+  "exclude": [
+    "./src/**/__tests__/*",
+  ],
+  /* Module Resolution Options */
+  /* Advanced Options */
+  "pretty": true,
+}
