@@ -3,8 +3,8 @@ import express from 'express';
 /* webpackChunkName: "bucketeer" */
 
 // NOTE: If you want to use SDK published on npm,
-// replace the path below with the following.
-// '@bucketeer/node-server-sdk'
+// replace the line below with the following.
+// import { initialize } from '@bucketeer/node-server-sdk';
 import { initialize } from '../../lib';
 
 const PORT = 3000;
