@@ -2,7 +2,7 @@
   "private": true,
   "license": "Apache-2.0",
   "dependencies": {
-    "@grpc/grpc-js": "^1.4.4",
+    "@bucketeer/node-server-sdk": "^0.1.1",
     "express": "4.17.1"
   },
   "devDependencies": {
