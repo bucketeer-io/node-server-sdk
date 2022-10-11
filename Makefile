@@ -60,6 +60,7 @@ rename-js:
 test:
 	rm -rf $(CURDIR)/__test
 	$(NPM_BIN_DIR)/babel src --extensions '.ts' --config-file "$(CURDIR)/babel-test.config.js" --out-dir "__test"
+	cp -r $(CURDIR)/src/__tests__/testdata __test/__tests__/
 	$(NPM_BIN_DIR)/ava --config ava-test.config.js
 
 .PHONY: e2e
