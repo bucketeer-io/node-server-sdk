@@ -4,7 +4,7 @@
 
 import { UserAsPlainObject } from '../bootstrap';
 
-interface Evaluation {
+type Evaluation = {
   id: string;
   featureId: string;
   featureVersion: number;
@@ -12,9 +12,9 @@ interface Evaluation {
   variationId: string;
   reason?: Reason;
   variationValue: string;
-}
+};
 
-interface RawEvaluation {
+type RawEvaluation = {
   id: string;
   feature_id: string;
   feature_version: number;
@@ -22,17 +22,17 @@ interface RawEvaluation {
   variation_id: string;
   reason?: RawReason;
   variation_value: string;
-}
+};
 
-interface Reason {
+type Reason = {
   type: ReasonType;
   ruleId?: string;
-}
+};
 
-interface RawReason {
+type RawReason = {
   type: ReasonType;
   rule_id?: string;
-}
+};
 
 enum ReasonType {
   TARGET = 0,
@@ -52,9 +52,9 @@ export enum SourceId {
   NODE_SERVER = 6,
 }
 
-interface RawGetEvaluationResponse {
+type RawGetEvaluationResponse = {
   evaluation?: RawEvaluation;
-}
+};
 
 enum EventType {
   GOAL = 1,
@@ -63,32 +63,32 @@ enum EventType {
   METRICS = 4,
 }
 
-export interface Event {
+export type Event = {
   id: string;
   type: EventType;
   environmentNamespace: string;
   event: string;
-}
+};
 
-export interface RawEvent {
+export type RawEvent = {
   id: string;
   type: EventType;
   environment_namespace: string;
   event: string;
-}
+};
 
-interface RegisterEventsResponseError {
+type RegisterEventsResponseError = {
   retriable: boolean;
   message: string;
-}
+};
 
-interface RawRegisterEventsResponse {
+type RawRegisterEventsResponse = {
   errors: { [key: string]: RegisterEventsResponseError };
-}
+};
 
-interface RawRegisterEventsRequest {
+type RawRegisterEventsRequest = {
   events: RawEvent[];
-}
+};
 
 export class RegisterEventsRequest {
   public events: Event[] = [];
@@ -147,12 +147,12 @@ export class RegisterEventsResponse {
   }
 }
 
-interface RawGetEvaluationRequest {
+type RawGetEvaluationRequest = {
   tag: string;
   user?: UserAsPlainObject;
   feature_id: string;
   source_id: SourceId;
-}
+};
 
 export class GetEvaluationRequest {
   public tag: string = '';
