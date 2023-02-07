@@ -1,59 +1,57 @@
 import anyTest, { TestInterface } from 'ava';
 import https from 'https';
 import fs from 'fs';
-import { Client } from '../rest/client';
+import { Client } from '../api/client';
 import { UserAsPlainObject } from '../bootstrap';
 import path from 'path';
 import { v4 } from 'uuid';
+import { GetEvaluationResponse, RegisterEventsResponse } from '../api/type';
 
-const version = '/v1';
-const service = '/gateway';
-const evaluationAPI = '/evaluation';
-const eventsAPI = '/events';
+const evaluationAPI = '/get_evaluation';
+const eventsAPI = '/register_events';
 const apiKey = '';
 
 const port = 9990;
 const host = `localhost:${port}`;
 
 const test = anyTest as TestInterface<{ server: https.Server }>;
+const projectRoot = path.join(__dirname, '..', '..');
+const serverKey = path.join(projectRoot, 'src', '__tests__', 'testdata', 'server.key');
+const serverCrt = path.join(projectRoot, 'src', '__tests__', 'testdata', 'server.crt');
 
-const dummyEvalResponse = {
-  data: {
-    evaluation: {
-      id: v4(),
-      feature_id: 'feature_id',
-      feature_version: 2,
-      user_id: 'user_id',
-      variation_id: v4(),
-      reason: {
-        type: 3,
-      },
-      variation_value: 'value-1',
+const dummyEvalResponse: GetEvaluationResponse = {
+  evaluation: {
+    id: v4(),
+    featureId: 'feature_id',
+    featureVersion: 2,
+    userId: 'user_id',
+    variationId: v4(),
+    reason: {
+      type: 3,
     },
+    variationValue: 'value-1',
   },
 };
 
-const dummpyRegisterEvtsResponse = {
-  data: { errors: { key: { message: 'Invalid message type', retriable: false } } },
+const dummpyRegisterEvtsResponse: RegisterEventsResponse = {
+  errors: { key: { message: 'Invalid message type', retriable: false } },
 };
 
 test.before((t) => {
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
   const opts = {
-    key: fs.readFileSync(path.join(__dirname, 'testdata/server.key')),
-    cert: fs.readFileSync(path.join(__dirname, 'testdata/server.crt')),
+    key: fs.readFileSync(serverKey),
+    cert: fs.readFileSync(serverCrt),
   };
-  const eventsUrl = ''.concat(version, service, eventsAPI);
-  const evalUrl = ''.concat(version, service, evaluationAPI);
   t.context = {
     server: https
       .createServer(opts, (req, res) => {
         switch (req.url) {
-          case evalUrl:
+          case evaluationAPI:
             res.setHeader('Content-Type', 'application/json');
             res.end(JSON.stringify(dummyEvalResponse));
             break;
-          case eventsUrl:
+          case eventsAPI:
             res.setHeader('Content-Type', 'application/json');
             res.end(JSON.stringify(dummpyRegisterEvtsResponse));
             break;
@@ -80,16 +78,12 @@ test('getEvaluation: success', async (t) => {
     },
   };
   const res = await client.getEvaluation('', user, '');
-  if (res.evaluation) {
-    t.is(res.evaluation.featureId, dummyEvalResponse.data.evaluation.feature_id);
-    t.is(res.evaluation.featureVersion, dummyEvalResponse.data.evaluation.feature_version);
-    t.is(res.evaluation.variationValue, dummyEvalResponse.data.evaluation.variation_value);
-  }
+  t.deepEqual(res.evaluation, dummyEvalResponse.evaluation);
 });
 
 test('registerEvents', async (t) => {
   const client = new Client(host, apiKey);
   const res = await client.registerEvents([]);
-  t.is(res.errors.key.message, dummpyRegisterEvtsResponse.data.errors.key.message);
-  t.is(res.errors.key.retriable, dummpyRegisterEvtsResponse.data.errors.key.retriable);
+  t.is(res.errors.key.message, dummpyRegisterEvtsResponse.errors.key.message);
+  t.is(res.errors.key.retriable, dummpyRegisterEvtsResponse.errors.key.retriable);
 });
