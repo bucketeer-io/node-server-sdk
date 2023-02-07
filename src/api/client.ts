@@ -1,13 +1,12 @@
 import { UserAsPlainObject } from '../bootstrap';
 import https from 'https';
 import {
-  Event,
   GetEvaluationRequest,
   GetEvaluationResponse,
   RegisterEventsRequest,
   RegisterEventsResponse,
-  SourceId,
 } from './type';
+import { Event, SourceId } from '../newObjects/Event';
 
 const scheme = 'https://';
 const evaluationAPI = '/get_evaluation';
