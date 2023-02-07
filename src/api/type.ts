@@ -1,7 +1,3 @@
-// These codes are designed to hide the snake case in JSON so that developers
-// who write codes in other file don't have to be aware of it.
-// By this design, developers can write codes in camel case consistently.
-
 import { UserAsPlainObject } from '../bootstrap';
 
 type Evaluation = {
