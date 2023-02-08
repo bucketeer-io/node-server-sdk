@@ -21,7 +21,7 @@
     "outDir": "./__lib/",
     "types": [
       "node"
-    ],
+    ]
   },
   "include": [
     "./src/**/*"
