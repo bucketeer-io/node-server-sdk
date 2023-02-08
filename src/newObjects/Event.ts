@@ -1,6 +1,7 @@
 import { v4 } from 'uuid';
 import { createTimestamp } from '../utils/time';
 import { User } from './User';
+import { version } from '../../package.json';
 
 const EVALUATION_EVENT_NAME = 'bucketeer.event.client.EvaluationEvent';
 const GOAL_EVENT_NAME = 'bucketeer.event.client.GoalEvent';
@@ -24,6 +25,8 @@ export function createGoalEvent(tag: string, goalId: string, user: User, value: 
     sourceId: SourceId.NODE_SERVER,
     timestamp: createTimestamp(),
     userId: user.id,
+    sdkVersion: version,
+    metadata: {},
     '@type': GOAL_EVENT_NAME,
   };
   return createEvent(JSON.stringify(goalEvent));
@@ -40,6 +43,8 @@ export function createEvaluationEvent(tag: string, user: User, evaluation: Evalu
     variationId: evaluation.variationId,
     sourceId: SourceId.NODE_SERVER,
     reason: evaluation.reason,
+    sdkVersion: version,
+    metadata: {},
     '@type': EVALUATION_EVENT_NAME,
   };
   return createEvent(JSON.stringify(evaluationEvent));
@@ -59,6 +64,8 @@ export function createDefaultEvaluationEvent(tag: string, user: User, featureId:
       type: ReasonType.CLIENT,
     },
     '@type': EVALUATION_EVENT_NAME,
+    sdkVersion: version,
+    metadata: {},
   };
   return createEvent(JSON.stringify(evaluationEvent));
 }
@@ -71,7 +78,6 @@ export function createGetEvaluationLatencyMetricsEvent(tag: string, durationMS: 
     },
     labels: {
       tag,
-      state: UserEvaluationsState.FULL.toString(),
     },
     '@type': GET_EVALUATION_LATENCY_METRICS_EVENT_NAME,
   };
@@ -88,7 +94,6 @@ export function createGetEvaluationSizeMetricsEvent(tag: string, size: number) {
     sizeByte: size,
     labels: {
       tag,
-      state: UserEvaluationsState.FULL.toString(),
     },
     '@type': GET_EVALUATION_SIZE_METRICS_EVENT_NAME,
   };
@@ -125,6 +130,9 @@ function createMetricsEvent(b: string): MetricsEvent {
   return {
     timestamp: createTimestamp(),
     event: b,
+    sourceId: SourceId.NODE_SERVER,
+    sdkVersion: version,
+    metadata: {},
     '@type': METRICS_EVENT_NAME,
   };
 }
@@ -137,6 +145,9 @@ export type Event = {
 export type MetricsEvent = {
   timestamp: number;
   event?: string;
+  sourceId: typeof SourceId.NODE_SERVER;
+  sdkVersion: string;
+  metadata: { [key: string]: string };
   '@type': typeof METRICS_EVENT_NAME;
 };
 
@@ -174,7 +185,9 @@ export type GoalEvent = {
   value: number;
   user?: User;
   tag: string;
-  sourceId: SourceId;
+  sourceId: typeof SourceId.NODE_SERVER;
+  sdkVersion: string;
+  metadata: { [key: string]: string };
   '@type': typeof GOAL_EVENT_NAME;
 };
 
@@ -188,6 +201,8 @@ export type EvaluationEvent = {
   reason?: Reason;
   tag: string;
   sourceId: typeof SourceId.NODE_SERVER;
+  sdkVersion: string;
+  metadata: { [key: string]: string };
   '@type': typeof EVALUATION_EVENT_NAME;
 };
 
@@ -202,6 +217,7 @@ enum ReasonType {
   DEFAULT = 3,
   CLIENT = 4,
   OFF_VARIATION = 5,
+  PREREQUISITE = 6,
 }
 
 export enum SourceId {
@@ -212,12 +228,6 @@ export enum SourceId {
   GOAL_BATCH = 4,
   GO_SERVER = 5,
   NODE_SERVER = 6,
-}
-
-enum UserEvaluationsState {
-  QUEUED = 0,
-  PARTIAL = 1,
-  FULL = 2,
 }
 
 export type Evaluation = {

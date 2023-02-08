@@ -21,7 +21,8 @@
     "outDir": "./__lib/",
     "types": [
       "node"
-    ]
+    ],
+    "resolveJsonModule": true,
   },
   "include": [
     "./src/**/*"
