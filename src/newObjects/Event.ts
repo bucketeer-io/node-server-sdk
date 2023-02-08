@@ -1,7 +1,7 @@
 import { v4 } from 'uuid';
 import { createTimestamp } from '../utils/time';
 import { User } from './User';
-import { version } from '../../package.json';
+const version: string = require('../../package.json').version;
 
 const EVALUATION_EVENT_NAME = 'bucketeer.event.client.EvaluationEvent';
 const GOAL_EVENT_NAME = 'bucketeer.event.client.GoalEvent';
@@ -211,7 +211,7 @@ export type Reason = {
   ruleId?: string;
 };
 
-enum ReasonType {
+export enum ReasonType {
   TARGET = 0,
   RULE = 1,
   DEFAULT = 3,
