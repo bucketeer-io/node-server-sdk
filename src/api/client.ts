@@ -6,7 +6,8 @@ import {
   RegisterEventsRequest,
   RegisterEventsResponse,
 } from './type';
-import { Event, SourceId } from '../newObjects/Event';
+import { Event } from '../newObjects/Event';
+import { SourceId } from '../newObjects/sourceId';
 
 const scheme = 'https://';
 const evaluationAPI = '/get_evaluation';

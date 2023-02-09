@@ -1,25 +1,45 @@
 import test from 'ava';
-import {
-  createDefaultEvaluationEvent,
-  createEvaluationEvent,
-  createGetEvaluationLatencyMetricsEvent,
-  createGetEvaluationSizeMetricsEvent,
-  createGoalEvent,
-  createInternalErrorCountMetricsEvent,
-  createTimeoutErrorCountMetricsEvent,
-  Evaluation,
-  EvaluationEvent,
-  GetEvaluationLatencyMetricsEvent,
-  GetEvaluationSizeMetricsEvent,
-  GoalEvent,
-  InternalErrorCountMetricsEvent,
-  Reason,
-  ReasonType,
-  SourceId,
-  TimeoutErrorCountMetricsEvent,
-} from '../newObjects/Event';
+// import {
+//   createDefaultEvaluationEvent,
+//   createEvaluationEvent,
+//   createGetEvaluationLatencyMetricsEvent,
+//   createGetEvaluationSizeMetricsEvent,
+//   createGoalEvent,
+//   createInternalErrorCountMetricsEvent,
+//   createTimeoutErrorCountMetricsEvent,
+//   Evaluation,
+//   EvaluationEvent,
+//   GetEvaluationLatencyMetricsEvent,
+//   GetEvaluationSizeMetricsEvent,
+//   GoalEvent,
+//   InternalErrorCountMetricsEvent,
+//   Reason,
+//   ReasonType,
+//   SourceId,
+//   TimeoutErrorCountMetricsEvent,
+// } from '../newObjects/Event';
+import { Evaluation } from '../newObjects/evaluation';
+import { SourceId } from '../newObjects/sourceId';
+import { ReasonType, Reason } from '../newObjects/reason';
+import { GoalEvent, createGoalEvent } from '../newObjects/goalEvent';
 import { User } from '../newObjects/User';
 import { createTimestamp } from '../utils/time';
+import {
+  EvaluationEvent,
+  createEvaluationEvent,
+  createDefaultEvaluationEvent,
+} from '../newObjects/evaluationEvent';
+import {
+  createInternalErrorCountMetricsEvent,
+  GetEvaluationLatencyMetricsEvent,
+  createGetEvaluationSizeMetricsEvent,
+  createTimeoutErrorCountMetricsEvent,
+  createGetEvaluationLatencyMetricsEvent,
+  GetEvaluationSizeMetricsEvent,
+  InternalErrorCountMetricsEvent,
+  TimeoutErrorCountMetricsEvent,
+} from '../newObjects/metricsEvent';
+
 const version: string = require('../../package.json').version;
 
 const GOAL_EVENT_NAME = 'bucketeer.event.client.GoalEvent';

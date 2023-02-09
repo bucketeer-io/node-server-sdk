@@ -1,5 +1,7 @@
 import { UserAsPlainObject } from '../bootstrap';
-import { Evaluation, Event, Reason, SourceId } from '../newObjects/Event';
+import { Evaluation } from '../newObjects/evaluation';
+import { Event } from '../newObjects/Event';
+import { SourceId } from '../newObjects/sourceId';
 
 enum EventType {
   GOAL = 1,
