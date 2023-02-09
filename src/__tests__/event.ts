@@ -1,23 +1,4 @@
 import test from 'ava';
-// import {
-//   createDefaultEvaluationEvent,
-//   createEvaluationEvent,
-//   createGetEvaluationLatencyMetricsEvent,
-//   createGetEvaluationSizeMetricsEvent,
-//   createGoalEvent,
-//   createInternalErrorCountMetricsEvent,
-//   createTimeoutErrorCountMetricsEvent,
-//   Evaluation,
-//   EvaluationEvent,
-//   GetEvaluationLatencyMetricsEvent,
-//   GetEvaluationSizeMetricsEvent,
-//   GoalEvent,
-//   InternalErrorCountMetricsEvent,
-//   Reason,
-//   ReasonType,
-//   SourceId,
-//   TimeoutErrorCountMetricsEvent,
-// } from '../newObjects/Event';
 import { Evaluation } from '../newObjects/evaluation';
 import { SourceId } from '../newObjects/sourceId';
 import { ReasonType, Reason } from '../newObjects/reason';
