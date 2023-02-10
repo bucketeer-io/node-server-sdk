@@ -2,7 +2,7 @@ import anyTest, { TestInterface } from 'ava';
 import https from 'https';
 import fs from 'fs';
 import { Client } from '../api/client';
-import { UserAsPlainObject } from '../bootstrap';
+import { User } from '../bootstrap';
 import path from 'path';
 
 const apiKey = '';
@@ -41,7 +41,7 @@ test.after.always((t) => {
 
 test('getEvaluation: 500', async (t) => {
   const client = new Client(host, apiKey);
-  const user: UserAsPlainObject = {
+  const user: User = {
     id: '',
     data: {
       '': '',

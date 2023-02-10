@@ -1,4 +1,4 @@
-import { Event } from '../proto/event/client/event_pb';
+import { Event } from '../objects/event';
 
 export class EventStore {
   private _events: Array<Event>;

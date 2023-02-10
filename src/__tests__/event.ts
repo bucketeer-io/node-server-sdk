@@ -1,15 +1,15 @@
 import test from 'ava';
-import { Evaluation } from '../newObjects/evaluation';
-import { SourceId } from '../newObjects/sourceId';
-import { ReasonType, Reason } from '../newObjects/reason';
-import { GoalEvent, createGoalEvent } from '../newObjects/goalEvent';
-import { User } from '../newObjects/user';
+import { Evaluation } from '../objects/evaluation';
+import { SourceId } from '../objects/sourceId';
+import { ReasonType, Reason } from '../objects/reason';
+import { GoalEvent, createGoalEvent } from '../objects/goalEvent';
+import { User } from '../objects/user';
 import { createTimestamp } from '../utils/time';
 import {
   EvaluationEvent,
   createEvaluationEvent,
   createDefaultEvaluationEvent,
-} from '../newObjects/evaluationEvent';
+} from '../objects/evaluationEvent';
 import {
   createInternalErrorCountMetricsEvent,
   GetEvaluationLatencyMetricsEvent,
@@ -19,7 +19,7 @@ import {
   GetEvaluationSizeMetricsEvent,
   InternalErrorCountMetricsEvent,
   TimeoutErrorCountMetricsEvent,
-} from '../newObjects/metricsEvent';
+} from '../objects/metricsEvent';
 
 const version: string = require('../../package.json').version;
 
