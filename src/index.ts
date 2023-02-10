@@ -16,8 +16,6 @@ import {
 import { Evaluation } from './objects/evaluation';
 import { Event } from './objects/event';
 import { GetEvaluationResponse } from './objects/response';
-import * as http from 'http';
-import { Status } from '@grpc/grpc-js/build/src/constants';
 
 export interface BuildInfo {
   readonly GIT_REVISION: string;
