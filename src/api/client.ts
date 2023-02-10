@@ -1,6 +1,6 @@
 import { UserAsPlainObject } from '../bootstrap';
 import https from 'https';
-import { Event } from '../newObjects/Event';
+import { Event } from '../newObjects/event';
 import { SourceId } from '../newObjects/sourceId';
 import { GetEvaluationRequest, RegisterEventsRequest } from '../newObjects/request';
 import { GetEvaluationResponse, RegisterEventsResponse } from '../newObjects/response';
