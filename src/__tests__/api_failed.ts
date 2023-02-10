@@ -48,12 +48,15 @@ test('getEvaluation: 500', async (t) => {
     },
   };
   let err = '';
+  let code: number | undefined;
   try {
     await client.getEvaluation('', user, '');
   } catch (error) {
     err = error.message;
+    code = error.code;
   }
   t.is(err, 'bucketeer/api: send HTTP request failed: 500');
+  t.is(code, 500);
 });
 
 test('registerEvents: 500', async (t) => {
