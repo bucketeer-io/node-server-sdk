@@ -2,7 +2,7 @@ import anyTest, { TestInterface } from 'ava';
 import https from 'https';
 import fs from 'fs';
 import { Client } from '../api/client';
-import { UserAsPlainObject } from '../bootstrap';
+import { User } from '../bootstrap';
 import path from 'path';
 
 const apiKey = '';
@@ -41,19 +41,22 @@ test.after.always((t) => {
 
 test('getEvaluation: 500', async (t) => {
   const client = new Client(host, apiKey);
-  const user: UserAsPlainObject = {
+  const user: User = {
     id: '',
     data: {
       '': '',
     },
   };
   let err = '';
+  let code: number | undefined;
   try {
     await client.getEvaluation('', user, '');
   } catch (error) {
     err = error.message;
+    code = error.code;
   }
   t.is(err, 'bucketeer/api: send HTTP request failed: 500');
+  t.is(code, 500);
 });
 
 test('registerEvents: 500', async (t) => {

@@ -6,10 +6,6 @@ export interface Config {
    */
   host: string;
   /**
-   * API request destination port. Usually you don't have to use this.
-   */
-  port?: string;
-  /**
    * Optional property. Authentication token when requesting. You can copy from the admin console.
    */
   token: string;

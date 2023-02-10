@@ -1,9 +1,9 @@
-import { UserAsPlainObject } from '../bootstrap';
+import { User } from '../bootstrap';
 import https from 'https';
-import { Event } from '../newObjects/event';
-import { SourceId } from '../newObjects/sourceId';
-import { GetEvaluationRequest, RegisterEventsRequest } from '../newObjects/request';
-import { GetEvaluationResponse, RegisterEventsResponse } from '../newObjects/response';
+import { Event } from '../objects/event';
+import { SourceId } from '../objects/sourceId';
+import { GetEvaluationRequest, RegisterEventsRequest } from '../objects/request';
+import { GetEvaluationResponse, RegisterEventsResponse } from '../objects/response';
 
 const scheme = 'https://';
 const evaluationAPI = '/get_evaluation';
@@ -18,11 +18,7 @@ export class Client {
     this.apiKey = apiKey;
   }
 
-  getEvaluation(
-    tag: string,
-    user: UserAsPlainObject,
-    featureId: string,
-  ): Promise<GetEvaluationResponse> {
+  getEvaluation(tag: string, user: User, featureId: string): Promise<GetEvaluationResponse> {
     const req: GetEvaluationRequest = {
       tag,
       user,
@@ -80,7 +76,12 @@ export class Client {
     return new Promise((resolve, reject) => {
       const clientReq = https.request(url, opts, (res) => {
         if (res.statusCode != 200) {
-          reject(new Error(`bucketeer/api: send HTTP request failed: ${res.statusCode}`));
+          reject(
+            new InvalidStatusError(
+              `bucketeer/api: send HTTP request failed: ${res.statusCode}`,
+              res.statusCode,
+            ),
+          );
         }
         res.setEncoding('utf8');
         let rawData = '';
@@ -101,5 +102,13 @@ export class Client {
       clientReq.write(chunk);
       clientReq.end();
     });
+  }
+}
+
+export class InvalidStatusError extends Error {
+  readonly code: number | undefined;
+  constructor(message: string, code: number | undefined) {
+    super(message);
+    this.code = code;
   }
 }

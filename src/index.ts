@@ -1,23 +1,21 @@
-import { createUser, UserAsPlainObject } from './objects/User';
-import { Event } from './proto/event/client/event_pb';
-import { Evaluation } from './proto/feature/evaluation_pb';
+import { User } from './objects/user';
 import { EventStore } from './stores/EventStore';
 import { createSchedule, removeSchedule } from './schedule';
 import { GIT_REVISION } from './shared';
-import { Client } from './grpc/client';
+import { Client, InvalidStatusError } from './api/client';
+import { lengthInUtf8Bytes } from './utils/byte';
+import { Config, defaultConfig } from './config';
+import { createDefaultEvaluationEvent, createEvaluationEvent } from './objects/evaluationEvent';
+import { createGoalEvent } from './objects/goalEvent';
 import {
-  createDefaultEvaluationEvent,
-  createEvaluationEvent,
   createGetEvaluationLatencyMetricsEvent,
   createGetEvaluationSizeMetricsEvent,
-  createGoalEvent,
   createInternalErrorCountMetricsEvent,
   createTimeoutErrorCountMetricsEvent,
-} from './objects/Event';
-import { lengthInUtf8Bytes } from './utils/byte';
-import { Status } from '@grpc/grpc-js/build/src/constants';
-import { GetEvaluationResponse } from './proto/gateway/service_pb';
-import { Config, defaultConfig } from './config';
+} from './objects/metricsEvent';
+import { Evaluation } from './objects/evaluation';
+import { Event } from './objects/event';
+import { GetEvaluationResponse } from './objects/response';
 
 export interface BuildInfo {
   readonly GIT_REVISION: string;
@@ -27,7 +25,7 @@ export { Config } from './config';
 
 export { Logger, DefaultLogger } from './logger';
 
-export { UserAsPlainObject } from './objects/User';
+export { User } from './objects/user';
 
 export interface Bucketeer {
   /**
@@ -38,11 +36,7 @@ export interface Bucketeer {
    * @param defaultValue The variation value that is retured if SDK fails to fetch the variation or the variation is not string.
    * @returns The variation value returned from server or default value.
    */
-  getStringVariation(
-    user: UserAsPlainObject,
-    featureId: string,
-    defaultValue: string,
-  ): Promise<string>;
+  getStringVariation(user: User, featureId: string, defaultValue: string): Promise<string>;
   /**
    * getBoolVariation returns variation as boolean.
    * If a variation returned by server is not boolean, defaultValue is retured.
@@ -51,11 +45,7 @@ export interface Bucketeer {
    * @param defaultValue The variation value that is retured if SDK fails to fetch the variation or the variation is not boolean.
    * @returns The variation value returned from server or default value.
    */
-  getBoolVariation(
-    user: UserAsPlainObject,
-    featureId: string,
-    defaultValue: boolean,
-  ): Promise<boolean>;
+  getBoolVariation(user: User, featureId: string, defaultValue: boolean): Promise<boolean>;
   /**
    * getNumberVariation returns variation as number.
    * If a variation returned by server is not number, defaultValue is retured.
@@ -64,11 +54,7 @@ export interface Bucketeer {
    * @param defaultValue The variation value that is retured if SDK fails to fetch the variation or the variation is not number.
    * @returns The variation value returned from server or default value.
    */
-  getNumberVariation(
-    user: UserAsPlainObject,
-    featureId: string,
-    defaultValue: number,
-  ): Promise<number>;
+  getNumberVariation(user: User, featureId: string, defaultValue: number): Promise<number>;
   /**
    * getJsonVariation returns variation as json object.
    * If a variation returned by server is not json, defaultValue is retured.
@@ -77,11 +63,7 @@ export interface Bucketeer {
    * @param defaultValue The variation value that is retured if SDK fails to fetch the variation or the variation is not json.
    * @returns The variation value returned from server or default value.
    */
-  getJsonVariation(
-    user: UserAsPlainObject,
-    featureId: string,
-    defaultValue: object,
-  ): Promise<object>;
+  getJsonVariation(user: User, featureId: string, defaultValue: object): Promise<object>;
   /**
    * track records a goal event.
    * @param user User information.
@@ -89,7 +71,7 @@ export interface Bucketeer {
    * @param value The value that is the additional information that user can add to goal event.
    * @returns The variation value returned from server or default value.
    */
-  track(user: UserAsPlainObject, goalId: string, value?: number): void;
+  track(user: User, goalId: string, value?: number): void;
   /**
    * destroy finalizes Bucketeer instance.
    * It sends all event in memory and stop workers.
@@ -111,12 +93,12 @@ const COUNT_PER_REGISTER_EVENT = 100;
  * @returns Bucketeer SDK instance.
  */
 export function initialize(config: Config): Bucketeer {
-  const { host, port, token, tag, pollingIntervalForRegisterEvents, logger } = {
+  const { host, token, tag, pollingIntervalForRegisterEvents, logger } = {
     ...defaultConfig,
     ...config,
   };
 
-  const client = new Client(host, port, token);
+  const client = new Client(host, token);
 
   const eventStore = new EventStore();
 
@@ -144,18 +126,18 @@ export function initialize(config: Config): Bucketeer {
     });
   }
 
-  function saveDefaultEvaluationEvent(user: UserAsPlainObject, featureId: string) {
-    eventStore.add(createDefaultEvaluationEvent(tag, createUser(user), featureId));
+  function saveDefaultEvaluationEvent(user: User, featureId: string) {
+    eventStore.add(createDefaultEvaluationEvent(tag, user, featureId));
     registerEvents();
   }
 
-  function saveEvaluationEvent(user: UserAsPlainObject, evaluation: Evaluation) {
-    eventStore.add(createEvaluationEvent(tag, createUser(user), evaluation));
+  function saveEvaluationEvent(user: User, evaluation: Evaluation) {
+    eventStore.add(createEvaluationEvent(tag, user, evaluation));
     registerEvents();
   }
 
-  function saveGoalEvent(user: UserAsPlainObject, goalId: string, value?: number) {
-    eventStore.add(createGoalEvent(tag, goalId, createUser(user), value ? value : 0));
+  function saveGoalEvent(user: User, goalId: string, value?: number) {
+    eventStore.add(createGoalEvent(tag, goalId, user, value ? value : 0));
     registerEvents();
   }
 
@@ -185,25 +167,23 @@ export function initialize(config: Config): Bucketeer {
   }
 
   return {
-    async getStringVariation(
-      user: UserAsPlainObject,
-      featureId: string,
-      defaultValue: string,
-    ): Promise<string> {
+    async getStringVariation(user: User, featureId: string, defaultValue: string): Promise<string> {
       const startTime: number = Date.now();
       const res: GetEvaluationResponse | null = await client
         .getEvaluation(tag, user, featureId)
         .catch((e) => {
-          if (e.code === Status.DEADLINE_EXCEEDED) {
-            saveTimeoutErrorCountMetricsEvent(tag);
-            logger.warn('getEvaluation failed', e);
-          } else {
-            saveInternalErrorCountMetricsEvent(tag);
-            logger.error('getEvaluation failed', e);
+          if (e instanceof InvalidStatusError) {
+            if (e.code === 504) {
+              saveTimeoutErrorCountMetricsEvent(tag);
+              logger.warn('getEvaluation failed', e);
+            } else {
+              saveInternalErrorCountMetricsEvent(tag);
+              logger.error('getEvaluation failed', e);
+            }
           }
           return null;
         });
-      const evaluation = res?.getEvaluation();
+      const evaluation = res?.evaluation;
       if (evaluation == null) {
         saveDefaultEvaluationEvent(user, featureId);
         return defaultValue;
@@ -212,13 +192,9 @@ export function initialize(config: Config): Bucketeer {
       const size = lengthInUtf8Bytes(JSON.stringify(res));
       saveEvaluationEvent(user, evaluation);
       saveEvaluationMetricsEvent(tag, durationMS, size);
-      return evaluation.getVariationValue();
+      return evaluation.variationValue;
     },
-    async getBoolVariation(
-      user: UserAsPlainObject,
-      featureId: string,
-      defaultValue: boolean,
-    ): Promise<boolean> {
+    async getBoolVariation(user: User, featureId: string, defaultValue: boolean): Promise<boolean> {
       const valueStr = await this.getStringVariation(user, featureId, '');
       switch (valueStr.toLowerCase()) {
         case 'true':
@@ -229,11 +205,7 @@ export function initialize(config: Config): Bucketeer {
           return defaultValue;
       }
     },
-    async getNumberVariation(
-      user: UserAsPlainObject,
-      featureId: string,
-      defaultValue: number,
-    ): Promise<number> {
+    async getNumberVariation(user: User, featureId: string, defaultValue: number): Promise<number> {
       const valueStr = await this.getStringVariation(user, featureId, '');
       const value = parseFloat(valueStr);
       if (isNaN(value)) {
@@ -242,11 +214,7 @@ export function initialize(config: Config): Bucketeer {
       }
       return value;
     },
-    async getJsonVariation(
-      user: UserAsPlainObject,
-      featureId: string,
-      defaultValue: object,
-    ): Promise<object> {
+    async getJsonVariation(user: User, featureId: string, defaultValue: object): Promise<object> {
       const valueStr = await this.getStringVariation(user, featureId, '');
       try {
         return JSON.parse(valueStr);
@@ -255,7 +223,7 @@ export function initialize(config: Config): Bucketeer {
         return defaultValue;
       }
     },
-    track(user: UserAsPlainObject, goalId: string, value?: number): void {
+    track(user: User, goalId: string, value?: number): void {
       logger.debug('track is called', goalId, value);
       saveGoalEvent(user, goalId, value);
     },
