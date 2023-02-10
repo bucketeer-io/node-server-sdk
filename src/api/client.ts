@@ -1,13 +1,9 @@
 import { UserAsPlainObject } from '../bootstrap';
 import https from 'https';
-import {
-  GetEvaluationRequest,
-  GetEvaluationResponse,
-  RegisterEventsRequest,
-  RegisterEventsResponse,
-} from './type';
 import { Event } from '../newObjects/Event';
 import { SourceId } from '../newObjects/sourceId';
+import { GetEvaluationRequest, RegisterEventsRequest } from '../newObjects/request';
+import { GetEvaluationResponse, RegisterEventsResponse } from '../newObjects/response';
 
 const scheme = 'https://';
 const evaluationAPI = '/get_evaluation';
