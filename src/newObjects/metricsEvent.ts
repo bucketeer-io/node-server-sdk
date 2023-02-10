@@ -1,6 +1,6 @@
 import { createTimestamp } from '../utils/time';
 import { Duration, DURATION_NAME } from './duration';
-import { createEvent } from './event';
+import { createEvent } from './Event';
 import { SourceId } from './sourceId';
 
 const METRICS_EVENT_NAME = 'bucketeer.event.client.MetricsEvent';

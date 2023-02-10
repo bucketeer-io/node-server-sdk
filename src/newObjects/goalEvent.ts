@@ -1,7 +1,7 @@
 import { createTimestamp } from '../utils/time';
-import { Event, createEvent } from './event';
+import { Event, createEvent } from './Event';
 import { SourceId } from './sourceId';
-import { User } from './user';
+import { User } from './User';
 
 const GOAL_EVENT_NAME = 'bucketeer.event.client.GoalEvent';
 const version: string = require('../../package.json').version;

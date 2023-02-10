@@ -1,6 +1,6 @@
-import { Event } from './event';
+import { Event } from './Event';
 import { SourceId } from './sourceId';
-import { User } from './user';
+import { User } from './User';
 
 export type RegisterEventsRequest = {
   events: Event[];

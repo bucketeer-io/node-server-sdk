@@ -1,9 +1,9 @@
 import { createTimestamp } from '../utils/time';
 import { Evaluation } from './evaluation';
-import { Event, createEvent } from './event';
+import { Event, createEvent } from './Event';
 import { Reason, ReasonType } from './reason';
 import { SourceId } from './sourceId';
-import { User } from './user';
+import { User } from './User';
 const version: string = require('../../package.json').version;
 
 const EVALUATION_EVENT_NAME = 'bucketeer.event.client.EvaluationEvent';

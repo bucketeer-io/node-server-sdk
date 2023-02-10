@@ -3,7 +3,7 @@ import { Evaluation } from '../newObjects/evaluation';
 import { SourceId } from '../newObjects/sourceId';
 import { ReasonType, Reason } from '../newObjects/reason';
 import { GoalEvent, createGoalEvent } from '../newObjects/goalEvent';
-import { User } from '../newObjects/user';
+import { User } from '../newObjects/User';
 import { createTimestamp } from '../utils/time';
 import {
   EvaluationEvent,
