@@ -3,7 +3,7 @@ import { Event, createEvent } from './event';
 import { SourceId } from './sourceId';
 import { User } from './user';
 
-const GOAL_EVENT_NAME = 'bucketeer.event.client.GoalEvent';
+const GOAL_EVENT_NAME = 'type.googleapis.com/bucketeer.event.client.GoalEvent';
 const version: string = require('../../package.json').version;
 
 export function createGoalEvent(tag: string, goalId: string, user: User, value: number): Event {

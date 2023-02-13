@@ -6,7 +6,7 @@ import { SourceId } from './sourceId';
 import { User } from './user';
 const version: string = require('../../package.json').version;
 
-const EVALUATION_EVENT_NAME = 'bucketeer.event.client.EvaluationEvent';
+const EVALUATION_EVENT_NAME = 'type.googleapis.com/bucketeer.event.client.EvaluationEvent';
 
 export function createEvaluationEvent(tag: string, user: User, evaluation: Evaluation): Event {
   const evaluationEvent: EvaluationEvent = {

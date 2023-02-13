@@ -11,29 +11,28 @@ import {
   createDefaultEvaluationEvent,
 } from '../objects/evaluationEvent';
 import {
-  createInternalErrorCountMetricsEvent,
-  GetEvaluationLatencyMetricsEvent,
-  createGetEvaluationSizeMetricsEvent,
-  createTimeoutErrorCountMetricsEvent,
-  createGetEvaluationLatencyMetricsEvent,
-  GetEvaluationSizeMetricsEvent,
-  InternalErrorCountMetricsEvent,
-  TimeoutErrorCountMetricsEvent,
+  createInternalSdkErrorMetricsEvent,
+  LatencyMetricsEvent,
+  createSizeMetricsEvent,
+  createTimeoutErrorMetricsEvent,
+  createLatencyMetricsEvent,
+  SizeMetricsEvent,
+  InternalSdkErrorMetricsEvent,
+  TimeoutErrorMetricsEvent,
 } from '../objects/metricsEvent';
+import { ApiId } from '../objects/apiId';
 
 const version: string = require('../../package.json').version;
 
-const GOAL_EVENT_NAME = 'bucketeer.event.client.GoalEvent';
-const EVALUATION_EVENT_NAME = 'bucketeer.event.client.EvaluationEvent';
-const METRICS_EVENT_NAME = 'bucketeer.event.client.MetricsEvent';
-const GET_EVALUATION_LATENCY_METRICS_EVENT_NAME =
-  'bucketeer.event.client.GetEvaluationLatencyMetricsEvent';
-const GET_EVALUATION_SIZE_METRICS_EVENT_NAME =
-  'bucketeer.event.client.GetEvaluationSizeMetricsEvent';
-const INTERNAL_ERROR_COUNT_METRICS_EVENT_NAME =
-  'bucketeer.event.client.InternalErrorCountMetricsEvent';
-const TIMEOUT_ERROR_COUNT_METRICS_EVENT_NAME =
-  'bucketeer.event.client.TimeoutErrorCountMetricsEvent';
+const GOAL_EVENT_NAME = 'type.googleapis.com/bucketeer.event.client.GoalEvent';
+const EVALUATION_EVENT_NAME = 'type.googleapis.com/bucketeer.event.client.EvaluationEvent';
+const METRICS_EVENT_NAME = 'type.googleapis.com/bucketeer.event.client.MetricsEvent';
+const LATENCY_METRICS_EVENT_NAME = 'type.googleapis.com/bucketeer.event.client.LatencyMetricsEvent';
+const SIZE_METRICS_EVENT_NAME = 'type.googleapis.com/bucketeer.event.client.SizeMetricsEvent';
+const INTERNAL_SDK_ERROR_METRICS_EVENT_NAME =
+  'type.googleapis.com/bucketeer.event.client.InternalSdkErrorMetricsEvent';
+const TIMEOUT_ERROR_METRICS_EVENT_NAME =
+  'type.googleapis.com/bucketeer.event.client.TimeoutErrorMetricsEvent';
 const DURATION_NAME = 'type.googleapis.com/google.protobuf.Duration';
 
 const tag = 'tag';
@@ -57,6 +56,7 @@ const variationId = 'vid';
 const variationValue = 'value';
 const durationMS = new Date(2000, 1, 2).getTime() - new Date(2000, 1, 2).getTime();
 const sizeByte = 1000;
+const apiId = ApiId.GET_EVALUATION;
 
 test('createGoalEvent', (t) => {
   const goalEvent: GoalEvent = {
@@ -122,8 +122,9 @@ test('createDefaultEvaluationEvent', (t) => {
   t.deepEqual(JSON.parse(actual.event), evaluationEvent);
 });
 
-test('createGetEvaluationLatencyMetricsEvent', (t) => {
-  const getEvaluationLatencyMetricsEvent: GetEvaluationLatencyMetricsEvent = {
+test('createLatencyMetricsEvent', (t) => {
+  const getEvaluationLatencyMetricsEvent: LatencyMetricsEvent = {
+    apiId,
     duration: {
       value: convertMS(durationMS),
       '@type': DURATION_NAME,
@@ -131,44 +132,51 @@ test('createGetEvaluationLatencyMetricsEvent', (t) => {
     labels: {
       tag,
     },
-    '@type': GET_EVALUATION_LATENCY_METRICS_EVENT_NAME,
+    '@type': LATENCY_METRICS_EVENT_NAME,
   };
-  const actual = createGetEvaluationLatencyMetricsEvent(tag, durationMS);
+  const actual = createLatencyMetricsEvent(tag, durationMS, apiId);
   const metrics = JSON.parse(actual.event);
   t.deepEqual(JSON.parse(metrics.event), getEvaluationLatencyMetricsEvent);
 });
 
-test('createGetEvaluationSizeMetricsEvent', (t) => {
-  const getEvaluationSizeMetricsEvent: GetEvaluationSizeMetricsEvent = {
+test('createSizeMetricsEvent', (t) => {
+  const getEvaluationSizeMetricsEvent: SizeMetricsEvent = {
+    apiId,
     sizeByte,
     labels: {
       tag,
     },
-    '@type': GET_EVALUATION_SIZE_METRICS_EVENT_NAME,
+    '@type': SIZE_METRICS_EVENT_NAME,
   };
-  const actual = createGetEvaluationSizeMetricsEvent(tag, sizeByte);
+  const actual = createSizeMetricsEvent(tag, sizeByte, apiId);
   const metrics = JSON.parse(actual.event);
   t.deepEqual(JSON.parse(metrics.event), getEvaluationSizeMetricsEvent);
 });
 
-test('createInternalErrorCountMetricsEvent', (t) => {
-  const internalErrorCountMetricsEvent: InternalErrorCountMetricsEvent = {
-    tag,
-    '@type': INTERNAL_ERROR_COUNT_METRICS_EVENT_NAME,
+test('createInternalSdkErrorMetricsEvent', (t) => {
+  const internalErrorMetricsEvent: InternalSdkErrorMetricsEvent = {
+    apiId,
+    labels: {
+      tag,
+    },
+    '@type': INTERNAL_SDK_ERROR_METRICS_EVENT_NAME,
   };
-  const actual = createInternalErrorCountMetricsEvent(tag);
+  const actual = createInternalSdkErrorMetricsEvent(tag, apiId);
   const metrics = JSON.parse(actual.event);
-  t.deepEqual(JSON.parse(metrics.event), internalErrorCountMetricsEvent);
+  t.deepEqual(JSON.parse(metrics.event), internalErrorMetricsEvent);
 });
 
-test('timeoutErrorCountMetricsEvent', (t) => {
-  const timeoutErrorCountMetricsEvent: TimeoutErrorCountMetricsEvent = {
-    tag,
-    '@type': TIMEOUT_ERROR_COUNT_METRICS_EVENT_NAME,
+test('timeoutErrorMetricsEvent', (t) => {
+  const timeoutErrorMetricsEvent: TimeoutErrorMetricsEvent = {
+    apiId,
+    labels: {
+      tag,
+    },
+    '@type': TIMEOUT_ERROR_METRICS_EVENT_NAME,
   };
-  const actual = createTimeoutErrorCountMetricsEvent(tag);
+  const actual = createTimeoutErrorMetricsEvent(tag, apiId);
   const metrics = JSON.parse(actual.event);
-  t.deepEqual(JSON.parse(metrics.event), timeoutErrorCountMetricsEvent);
+  t.deepEqual(JSON.parse(metrics.event), timeoutErrorMetricsEvent);
 });
 
 function convertMS(ms: number): string {
