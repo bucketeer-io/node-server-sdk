@@ -69,6 +69,15 @@ tsfmt:
 lint:
 	$(NPM_BIN_DIR)/eslint '$(CURDIR)/src/**/*.ts'
 
+.PHONY: copy-genfiles
+copy-genfiles:
+	@rm -rf $(CURDIR)/lib
+	$(NPM_BIN_DIR)/cpx '$(GENFILES_DIR)/**/*.{mjs,d.ts}' $(CURDIR)/lib
+	$(NPM_BIN_DIR)/cpx '$(GENFILES_DIR)/bucketeer.*' $(CURDIR)/lib
+	@find $(CURDIR)/lib -type f -exec chmod 644 {} +
+	$(NPM_BIN_DIR)/rename '$(CURDIR)/lib/**/*.js' '{{f}}.mjs'
+	$(NPM_BIN_DIR)/babel lib --extensions '.mjs' --config-file "$(CURDIR)/babel.config.js" --out-dir "lib"
+
 .PHONY: publish-dry
 publish-dry: copy-genfiles
 	npm publish --dry-run
