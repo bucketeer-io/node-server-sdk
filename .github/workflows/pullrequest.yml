@@ -110,8 +110,6 @@ jobs:
             ${{ runner.os }}-yarn-
       - name: SDK Build
         run: make build
-      - name: Copy generated files
-        run: make copy-genfiles
       - name: Example Init
         working-directory: ${{ env.EXAMPLE_PATH }}
         run: make init
