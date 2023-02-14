@@ -1,15 +1,8 @@
 #############################
 # Variables
 #############################
-PROTO_TOP_DIR := $(shell cd ../bucketeer && pwd)
-PROTOBUF_INCLUDE_DIR := ${PROTO_TOP_DIR}/proto/external/protocolbuffers/protobuf/v3.9.0
-PROTO_FOLDERS := event/client feature gateway user
-PROTO_OUTPUT := proto_output
 IMPORT_PATH_FROM := github.com/ca-dp/bucketeer
 IMPORT_PATH_TO := github.com/ca-dp/bucketeer-node-server-sdk
-
-PROTO_SRC=../bucketeer/proto
-PROTO_DEST=./src
 
 # set output directory to CI cache path via environment variables
 BZFLAGS =
@@ -38,7 +31,7 @@ clean:
 	rm -rf $(CURDIR)/__test $(CURDIR)/__e2e $(CURDIR)/lib
 
 .PHONY: build
-build: clean-build tsc copy-proto-dts rename-js
+build: clean-build tsc rename-js
 
 .PHONY: clean-build
 clean-build:
@@ -47,10 +40,6 @@ clean-build:
 .PHONY: tsc
 tsc:
 	$(NPM_BIN_DIR)/tsc --project tsconfig.json
-
-.PHONY: copy-proto-dts
-copy-proto-dts:
-	$(NPM_BIN_DIR)/cpx '$(CURDIR)/src/**/*.d.ts' $(GENFILES_DIR)
 
 .PHONY: rename-js
 rename-js:
@@ -100,28 +89,3 @@ ifeq ($(shell $(NPM_BIN_DIR)/semver -r ">$(CURRENT_VERSION)" $(LOCAL_VERSION) ),
 else
 	@echo "$(LOCAL_VERSION) exists. skip publish."
 endif
-
-#############################
-# Proto
-#############################
-.PHONY: clean-proto
-clean-proto:
-	rm -rf src/proto/**/*.{js,ts}
-
-
-# We must manually remove lines related to google/api/annotations_pb.
-# See: https://github.com/improbable-eng/ts-protoc-gen/issues/201#issuecomment-563295145
-.PHONY: gen-proto
-gen-proto: clean-proto
-	for f in ${PROTO_FOLDERS}; do \
-		$(NPM_BIN_DIR)/grpc_tools_node_protoc \
-			--js_out=import_style=commonjs,binary:${PROTO_DEST} \
-			--ts_out=grpc_js:$(PROTO_DEST) \
-			--grpc_out=grpc_js:${PROTO_DEST} \
-			--plugin=protoc-gen-grpc=$(NPM_BIN_DIR)/grpc_tools_node_protoc_plugin \
-			--plugin=protoc-gen-ts=$(NPM_BIN_DIR)/protoc-gen-ts \
-			-I ${PROTO_TOP_DIR} \
-			-I"${GOPATH}/src/github.com/googleapis/googleapis" \
-			${PROTO_TOP_DIR}/proto/$$f/*.proto; \
-	done;
-	find $(PROTO_DEST)/proto -type f -name '*.js' | xargs sed -i '' '/google_api_annotations_pb/d'
