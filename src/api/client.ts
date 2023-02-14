@@ -72,6 +72,7 @@ export class Client {
         'Content-Type': 'application/json',
         authorization: this.apiKey,
       },
+      timeout: 10000,
     };
     return new Promise((resolve, reject) => {
       const clientReq = https.request(url, opts, (res) => {
@@ -101,6 +102,9 @@ export class Client {
       });
       clientReq.write(chunk);
       clientReq.end();
+      clientReq.on('timeout', () => {
+        clientReq.destroy();
+      });
     });
   }
 }

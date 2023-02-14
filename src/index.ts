@@ -8,14 +8,27 @@ import { Config, defaultConfig } from './config';
 import { createDefaultEvaluationEvent, createEvaluationEvent } from './objects/evaluationEvent';
 import { createGoalEvent } from './objects/goalEvent';
 import {
-  createGetEvaluationLatencyMetricsEvent,
-  createGetEvaluationSizeMetricsEvent,
-  createInternalErrorCountMetricsEvent,
-  createTimeoutErrorCountMetricsEvent,
+  createLatencyMetricsEvent,
+  createSizeMetricsEvent,
+  createInternalSdkErrorMetricsEvent,
+  createTimeoutErrorMetricsEvent,
+  createNetworkErrorMetricsEvent,
+  createUnknownErrorMetricsEvent,
 } from './objects/metricsEvent';
 import { Evaluation } from './objects/evaluation';
 import { Event } from './objects/event';
 import { GetEvaluationResponse } from './objects/response';
+import typeUtils from 'node:util/types';
+import { ApiId, NodeApiIds } from './objects/apiId';
+import {
+  createBadRequestErrorMetricsEvent,
+  createClientClosedRequestErrorMetricsEvent,
+  createForbiddenErrorMetricsEvent,
+  createInternalServerErrorMetricsEvent,
+  createNotFoundErrorMetricsEvent,
+  createServiceUnavailableErrorMetricsEvent,
+  createUnauthorizedErrorMetricsEvent,
+} from './objects/status';
 
 export interface BuildInfo {
   readonly GIT_REVISION: string;
@@ -122,6 +135,7 @@ export function initialize(config: Config): Bucketeer {
 
   function callRegisterEvents(events: Array<Event>): void {
     client.registerEvents(events).catch((e) => {
+      saveErrorMetricsEvent(e, ApiId.REGISTER_EVENTS);
       logger.warn('register events failed', e);
     });
   }
@@ -142,28 +156,127 @@ export function initialize(config: Config): Bucketeer {
   }
 
   function saveEvaluationMetricsEvent(tag: string, durationMS: number, size: number) {
-    saveGetEvaluationLatencyMetricsEvent(tag, durationMS);
-    saveGetEvaluationSizeMetricsEvent(tag, size);
+    saveLatencyMetricsEvent(tag, durationMS, ApiId.GET_EVALUATION);
+    saveSizeMetricsEvent(tag, size, ApiId.GET_EVALUATION);
   }
 
-  function saveGetEvaluationLatencyMetricsEvent(tag: string, durationMS: number) {
-    eventStore.add(createGetEvaluationLatencyMetricsEvent(tag, durationMS));
+  function saveLatencyMetricsEvent(tag: string, durationMS: number, apiId: NodeApiIds) {
+    eventStore.add(createLatencyMetricsEvent(tag, durationMS, apiId));
     registerEvents();
   }
 
-  function saveGetEvaluationSizeMetricsEvent(tag: string, size: number) {
-    eventStore.add(createGetEvaluationSizeMetricsEvent(tag, size));
+  function saveSizeMetricsEvent(tag: string, size: number, apiId: NodeApiIds) {
+    eventStore.add(createSizeMetricsEvent(tag, size, apiId));
     registerEvents();
   }
 
-  function saveInternalErrorCountMetricsEvent(tag: string) {
-    eventStore.add(createInternalErrorCountMetricsEvent(tag));
+  function saveInternalSdkErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
+    eventStore.add(createInternalSdkErrorMetricsEvent(tag, apiId));
     registerEvents();
   }
 
-  function saveTimeoutErrorCountMetricsEvent(tag: string) {
-    eventStore.add(createTimeoutErrorCountMetricsEvent(tag));
+  function saveTimeoutErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
+    eventStore.add(createTimeoutErrorMetricsEvent(tag, apiId));
     registerEvents();
+  }
+
+  function saveNetworkErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
+    eventStore.add(createNetworkErrorMetricsEvent(tag, apiId));
+    registerEvents();
+  }
+
+  function saveBadRequestErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
+    eventStore.add(createBadRequestErrorMetricsEvent(tag, apiId));
+    registerEvents();
+  }
+
+  function saveUnauthorizedErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
+    eventStore.add(createUnauthorizedErrorMetricsEvent(tag, apiId));
+    registerEvents();
+  }
+
+  function saveForbiddenErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
+    eventStore.add(createForbiddenErrorMetricsEvent(tag, apiId));
+    registerEvents();
+  }
+
+  function saveNotFoundErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
+    eventStore.add(createNotFoundErrorMetricsEvent(tag, apiId));
+    registerEvents();
+  }
+
+  function saveClientClosedRequestErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
+    eventStore.add(createClientClosedRequestErrorMetricsEvent(tag, apiId));
+    registerEvents();
+  }
+
+  function saveInternalServerErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
+    eventStore.add(createInternalServerErrorMetricsEvent(tag, apiId));
+    registerEvents();
+  }
+
+  function saveServiceUnavailableErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
+    eventStore.add(createServiceUnavailableErrorMetricsEvent(tag, apiId));
+    registerEvents();
+  }
+
+  function saveUnknownErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
+    eventStore.add(createUnknownErrorMetricsEvent(tag, apiId));
+    registerEvents();
+  }
+
+  function isNodeError(error: unknown): error is NodeJS.ErrnoException {
+    return typeUtils.isNativeError(error);
+  }
+
+  function saveErrorMetricsEvent(e: any, apiId: NodeApiIds) {
+    if (e instanceof InvalidStatusError) {
+      switch (e.code) {
+        case 400:
+          saveBadRequestErrorMetricsEvent(tag, apiId);
+          break;
+        case 401:
+          saveUnauthorizedErrorMetricsEvent(tag, apiId);
+          break;
+        case 403:
+          saveForbiddenErrorMetricsEvent(tag, apiId);
+          break;
+        case 404:
+          saveNotFoundErrorMetricsEvent(tag, apiId);
+          break;
+        case 499:
+          saveClientClosedRequestErrorMetricsEvent(tag, apiId);
+          break;
+        case 500:
+          saveInternalServerErrorMetricsEvent(tag, apiId);
+          break;
+        case 503:
+          saveServiceUnavailableErrorMetricsEvent(tag, apiId);
+          break;
+        case 504:
+          saveTimeoutErrorMetricsEvent(tag, apiId);
+          break;
+        default:
+          saveUnknownErrorMetricsEvent(tag, apiId);
+          break;
+      }
+      return;
+    }
+    if (isNodeError(e)) {
+      switch (e.code) {
+        case 'ECONNRESET':
+          saveTimeoutErrorMetricsEvent(tag, apiId);
+          break;
+        case 'EHOSTUNREACH':
+        case 'ECONNREFUSED':
+          saveNetworkErrorMetricsEvent(tag, apiId);
+          break;
+        default:
+          saveInternalSdkErrorMetricsEvent(tag, apiId);
+          break;
+      }
+      return;
+    }
   }
 
   return {
@@ -172,15 +285,7 @@ export function initialize(config: Config): Bucketeer {
       const res: GetEvaluationResponse | null = await client
         .getEvaluation(tag, user, featureId)
         .catch((e) => {
-          if (e instanceof InvalidStatusError) {
-            if (e.code === 504) {
-              saveTimeoutErrorCountMetricsEvent(tag);
-              logger.warn('getEvaluation failed', e);
-            } else {
-              saveInternalErrorCountMetricsEvent(tag);
-              logger.error('getEvaluation failed', e);
-            }
-          }
+          saveErrorMetricsEvent(e, ApiId.GET_EVALUATION);
           return null;
         });
       const evaluation = res?.evaluation;
