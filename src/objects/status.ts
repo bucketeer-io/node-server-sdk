@@ -1,6 +1,5 @@
 import { createTimestamp } from '../utils/time';
 import { ApiId, NodeApiIds } from './apiId';
-import { Duration, DURATION_NAME } from './duration';
 import { createEvent } from './event';
 import { createMetricsEvent } from './metricsEvent';
 import { SourceId } from './sourceId';
