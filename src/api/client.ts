@@ -94,11 +94,8 @@ export class Client {
           rawData += chunk.toString();
         });
         res.on('end', () => {
-          let header = res.headers['content-length'];
-          if (header === undefined) {
-            header = '0';
-          }
-          resolve([rawData, Number(header)]);
+          const header = res.headers['content-length'];
+          resolve([rawData, Number(header || 0)]);
         });
       });
       clientReq.on('error', (e) => {
