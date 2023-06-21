@@ -33,7 +33,6 @@ const INTERNAL_SDK_ERROR_METRICS_EVENT_NAME =
   'type.googleapis.com/bucketeer.event.client.InternalSdkErrorMetricsEvent';
 const TIMEOUT_ERROR_METRICS_EVENT_NAME =
   'type.googleapis.com/bucketeer.event.client.TimeoutErrorMetricsEvent';
-const DURATION_NAME = 'type.googleapis.com/google.protobuf.Duration';
 
 const tag = 'tag';
 const goalId = 'goalId';
@@ -54,7 +53,7 @@ const id = 'id';
 const featureVersion = 7;
 const variationId = 'vid';
 const variationValue = 'value';
-const durationMS = new Date(2000, 1, 2).getTime() - new Date(2000, 1, 2).getTime();
+const second = (new Date(2000, 1, 2).getTime() - new Date(2000, 1, 2).getTime()) / 1000;
 const sizeByte = 1000;
 const apiId = ApiId.GET_EVALUATION;
 
@@ -125,16 +124,13 @@ test('createDefaultEvaluationEvent', (t) => {
 test('createLatencyMetricsEvent', (t) => {
   const getEvaluationLatencyMetricsEvent: LatencyMetricsEvent = {
     apiId,
-    duration: {
-      value: convertMS(durationMS),
-      '@type': DURATION_NAME,
-    },
+    latencySecond: second,
     labels: {
       tag,
     },
     '@type': LATENCY_METRICS_EVENT_NAME,
   };
-  const actual = createLatencyMetricsEvent(tag, durationMS, apiId);
+  const actual = createLatencyMetricsEvent(tag, second, apiId);
   const metrics = JSON.parse(actual.event);
   t.deepEqual(JSON.parse(metrics.event), getEvaluationLatencyMetricsEvent);
 });

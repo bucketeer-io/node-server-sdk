@@ -155,13 +155,13 @@ export function initialize(config: Config): Bucketeer {
     registerEvents();
   }
 
-  function saveEvaluationMetricsEvent(tag: string, durationMS: number, size: number) {
-    saveLatencyMetricsEvent(tag, durationMS, ApiId.GET_EVALUATION);
+  function saveEvaluationMetricsEvent(tag: string, second: number, size: number) {
+    saveLatencyMetricsEvent(tag, second, ApiId.GET_EVALUATION);
     saveSizeMetricsEvent(tag, size, ApiId.GET_EVALUATION);
   }
 
-  function saveLatencyMetricsEvent(tag: string, durationMS: number, apiId: NodeApiIds) {
-    eventStore.add(createLatencyMetricsEvent(tag, durationMS, apiId));
+  function saveLatencyMetricsEvent(tag: string, second: number, apiId: NodeApiIds) {
+    eventStore.add(createLatencyMetricsEvent(tag, second, apiId));
     registerEvents();
   }
 
@@ -293,10 +293,10 @@ export function initialize(config: Config): Bucketeer {
         saveDefaultEvaluationEvent(user, featureId);
         return defaultValue;
       }
-      const durationMS: number = Date.now() - startTime;
+      const second = (Date.now() - startTime) / 1000;
       const size = lengthInUtf8Bytes(JSON.stringify(res));
       saveEvaluationEvent(user, evaluation);
-      saveEvaluationMetricsEvent(tag, durationMS, size);
+      saveEvaluationMetricsEvent(tag, second, size);
       return evaluation.variationValue;
     },
     async getBoolVariation(user: User, featureId: string, defaultValue: boolean): Promise<boolean> {

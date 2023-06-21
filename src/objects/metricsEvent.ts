@@ -1,6 +1,5 @@
 import { createTimestamp } from '../utils/time';
 import { ApiId, NodeApiIds } from './apiId';
-import { Duration, DURATION_NAME } from './duration';
 import { createEvent } from './event';
 import { SourceId } from './sourceId';
 
@@ -54,7 +53,7 @@ export type SizeMetricsEvent = {
 
 export type LatencyMetricsEvent = {
   apiId: ApiId.GET_EVALUATION | ApiId.REGISTER_EVENTS;
-  duration: Duration;
+  latencySecond: number;
   labels: { [key: string]: string };
   '@type': typeof LATENCY_METRICS_EVENT_NAME;
 };
@@ -113,13 +112,10 @@ export function createMetricsEvent(b: string): MetricsEvent {
   };
 }
 
-export function createLatencyMetricsEvent(tag: string, durationMS: number, apiId: NodeApiIds) {
+export function createLatencyMetricsEvent(tag: string, second: number, apiId: NodeApiIds) {
   const getEvaluationLatencyMetricsEvent: LatencyMetricsEvent = {
     apiId,
-    duration: {
-      value: convertMS(durationMS),
-      '@type': DURATION_NAME,
-    },
+    latencySecond: second,
     labels: {
       tag,
     },
