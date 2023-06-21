@@ -5,7 +5,7 @@ import { Client } from '../api/client';
 import { User } from '../bootstrap';
 import path from 'path';
 import { v4 } from 'uuid';
-import { GetEvaluationResponse, RegisterEventsResponse } from '../api/type';
+import { GetEvaluationResponse, RegisterEventsResponse } from '../objects/response';
 
 const evaluationAPI = '/get_evaluation';
 const eventsAPI = '/register_events';
@@ -77,13 +77,13 @@ test('getEvaluation: success', async (t) => {
       '': '',
     },
   };
-  const res = await client.getEvaluation('', user, '');
+  const [res] = await client.getEvaluation('', user, '');
   t.deepEqual(res.evaluation, dummyEvalResponse.evaluation);
 });
 
 test('registerEvents', async (t) => {
   const client = new Client(host, apiKey);
-  const res = await client.registerEvents([]);
+  const [res] = await client.registerEvents([]);
   t.is(res.errors.key.message, dummpyRegisterEvtsResponse.errors.key.message);
   t.is(res.errors.key.retriable, dummpyRegisterEvtsResponse.errors.key.retriable);
 });
