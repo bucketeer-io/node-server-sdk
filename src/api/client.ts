@@ -98,7 +98,7 @@ export class Client {
           if (header === undefined) {
             header = '0';
           }
-          resolve([rawData, 0]);
+          resolve([rawData, Number(header)]);
         });
       });
       clientReq.on('error', (e) => {
