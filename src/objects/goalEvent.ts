@@ -19,7 +19,7 @@ export function createGoalEvent(tag: string, goalId: string, user: User, value: 
     metadata: {},
     '@type': GOAL_EVENT_NAME,
   };
-  return createEvent(JSON.stringify(goalEvent));
+  return createEvent(goalEvent);
 }
 
 export type GoalEvent = {

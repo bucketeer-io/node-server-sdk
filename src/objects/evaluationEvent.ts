@@ -23,7 +23,7 @@ export function createEvaluationEvent(tag: string, user: User, evaluation: Evalu
     metadata: {},
     '@type': EVALUATION_EVENT_NAME,
   };
-  return createEvent(JSON.stringify(evaluationEvent));
+  return createEvent(evaluationEvent);
 }
 
 export type EvaluationEvent = {
@@ -58,5 +58,5 @@ export function createDefaultEvaluationEvent(tag: string, user: User, featureId:
     sdkVersion: version,
     metadata: {},
   };
-  return createEvent(JSON.stringify(evaluationEvent));
+  return createEvent(evaluationEvent);
 }
