@@ -19,6 +19,7 @@ import {
   SizeMetricsEvent,
   InternalSdkErrorMetricsEvent,
   TimeoutErrorMetricsEvent,
+	MetricsEvent,
 } from '../objects/metricsEvent';
 import { ApiId } from '../objects/apiId';
 
@@ -71,7 +72,7 @@ test('createGoalEvent', (t) => {
     '@type': GOAL_EVENT_NAME,
   };
   const actual = createGoalEvent(goalEvent.tag, goalEvent.goalId, user, goalEvent.value);
-  t.deepEqual(JSON.parse(actual.event), goalEvent);
+  t.deepEqual(actual.event, goalEvent);
 });
 
 test('createEvaluationEvent', (t) => {
@@ -99,7 +100,7 @@ test('createEvaluationEvent', (t) => {
     variationValue,
   };
   const actual = createEvaluationEvent(tag, user, evaluation);
-  t.deepEqual(JSON.parse(actual.event), evaluationEvent);
+  t.deepEqual(actual.event, evaluationEvent);
 });
 
 test('createDefaultEvaluationEvent', (t) => {
@@ -118,7 +119,7 @@ test('createDefaultEvaluationEvent', (t) => {
     metadata,
   };
   const actual = createDefaultEvaluationEvent(tag, user, featureId);
-  t.deepEqual(JSON.parse(actual.event), evaluationEvent);
+  t.deepEqual(actual.event, evaluationEvent);
 });
 
 test('createLatencyMetricsEvent', (t) => {
@@ -131,8 +132,8 @@ test('createLatencyMetricsEvent', (t) => {
     '@type': LATENCY_METRICS_EVENT_NAME,
   };
   const actual = createLatencyMetricsEvent(tag, second, apiId);
-  const metrics = JSON.parse(actual.event);
-  t.deepEqual(JSON.parse(metrics.event), getEvaluationLatencyMetricsEvent);
+  const metrics = actual.event as MetricsEvent;
+  t.deepEqual(metrics.event, getEvaluationLatencyMetricsEvent);
 });
 
 test('createSizeMetricsEvent', (t) => {
@@ -145,8 +146,8 @@ test('createSizeMetricsEvent', (t) => {
     '@type': SIZE_METRICS_EVENT_NAME,
   };
   const actual = createSizeMetricsEvent(tag, sizeByte, apiId);
-  const metrics = JSON.parse(actual.event);
-  t.deepEqual(JSON.parse(metrics.event), getEvaluationSizeMetricsEvent);
+  const metrics = actual.event as MetricsEvent;
+  t.deepEqual(metrics.event, getEvaluationSizeMetricsEvent);
 });
 
 test('createInternalSdkErrorMetricsEvent', (t) => {
@@ -158,8 +159,8 @@ test('createInternalSdkErrorMetricsEvent', (t) => {
     '@type': INTERNAL_SDK_ERROR_METRICS_EVENT_NAME,
   };
   const actual = createInternalSdkErrorMetricsEvent(tag, apiId);
-  const metrics = JSON.parse(actual.event);
-  t.deepEqual(JSON.parse(metrics.event), internalErrorMetricsEvent);
+  const metrics = actual.event as MetricsEvent;
+  t.deepEqual(metrics.event, internalErrorMetricsEvent);
 });
 
 test('timeoutErrorMetricsEvent', (t) => {
@@ -171,8 +172,8 @@ test('timeoutErrorMetricsEvent', (t) => {
     '@type': TIMEOUT_ERROR_METRICS_EVENT_NAME,
   };
   const actual = createTimeoutErrorMetricsEvent(tag, apiId);
-  const metrics = JSON.parse(actual.event);
-  t.deepEqual(JSON.parse(metrics.event), timeoutErrorMetricsEvent);
+  const metrics = actual.event as MetricsEvent;
+  t.deepEqual(metrics.event, timeoutErrorMetricsEvent);
 });
 
 function convertMS(ms: number): string {
