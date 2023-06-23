@@ -20,20 +20,20 @@ const version: string = require('../../package.json').version;
 
 export type MetricsEvent = {
   timestamp: number;
-  event?: DetailedMetricsEvent | StatusMetricsEvent;
+  event?: SuccessMetricsEvent | ErrorMetricsEvent | StatusMetricsEvent;
   sourceId: typeof SourceId.NODE_SERVER;
   sdkVersion: string;
   metadata: { [key: string]: string };
   '@type': typeof METRICS_EVENT_NAME;
 };
 
-export type DetailedMetricsEvent =
+export type ErrorMetricsEvent =
   | TimeoutErrorMetricsEvent
   | InternalSdkErrorMetricsEvent
   | NetworkErrorMetricsEvent
-  | SizeMetricsEvent
-  | LatencyMetricsEvent
   | UnknownErrorMetricsEvent;
+
+export type SuccessMetricsEvent = SizeMetricsEvent | LatencyMetricsEvent;
 
 export type TimeoutErrorMetricsEvent = {
   apiId: ApiId.GET_EVALUATION | ApiId.REGISTER_EVENTS;
@@ -110,7 +110,9 @@ export function createTimeoutErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
   return createEvent(metricsEvent);
 }
 
-export function createMetricsEvent(b: DetailedMetricsEvent | StatusMetricsEvent): MetricsEvent {
+export function createMetricsEvent(
+  b: SuccessMetricsEvent | ErrorMetricsEvent | StatusMetricsEvent,
+): MetricsEvent {
   return {
     timestamp: createTimestamp(),
     event: b,
