@@ -19,7 +19,7 @@ import {
   SizeMetricsEvent,
   InternalSdkErrorMetricsEvent,
   TimeoutErrorMetricsEvent,
-	MetricsEvent,
+  MetricsEvent,
 } from '../objects/metricsEvent';
 import { ApiId } from '../objects/apiId';
 
