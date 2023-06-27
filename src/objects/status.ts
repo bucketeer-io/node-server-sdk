@@ -61,6 +61,15 @@ export type ServiceUnavailableErrorMetricsEvent = {
   '@type': typeof SERVICE_UNAVAILABLE_ERROR_METRICS_EVENT_NAME;
 };
 
+export type StatusMetricsEvent =
+  | BadRequestErrorMetricsEvent
+  | UnauthorizedErrorMetricsEvent
+  | ForbiddenErrorMetricsEvent
+  | NotFoundErrorMetricsEvent
+  | ClientClosedRequestErrorMetricsEvent
+  | InternalServerErrorMetricsEvent
+  | ServiceUnavailableErrorMetricsEvent;
+
 export function createBadRequestErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
   const internalErrorMetricsEvent: BadRequestErrorMetricsEvent = {
     apiId,
@@ -69,8 +78,8 @@ export function createBadRequestErrorMetricsEvent(tag: string, apiId: NodeApiIds
     },
     '@type': BAD_REQUEST_ERROR_METRICSEVENT_NAME,
   };
-  const metricsEvent = createMetricsEvent(JSON.stringify(internalErrorMetricsEvent));
-  return createEvent(JSON.stringify(metricsEvent));
+  const metricsEvent = createMetricsEvent(internalErrorMetricsEvent);
+  return createEvent(metricsEvent);
 }
 
 export function createUnauthorizedErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
@@ -81,8 +90,8 @@ export function createUnauthorizedErrorMetricsEvent(tag: string, apiId: NodeApiI
     },
     '@type': UNAUTHORIZED_ERROR_METRICS_EVENT_NAME,
   };
-  const metricsEvent = createMetricsEvent(JSON.stringify(internalErrorMetricsEvent));
-  return createEvent(JSON.stringify(metricsEvent));
+  const metricsEvent = createMetricsEvent(internalErrorMetricsEvent);
+  return createEvent(metricsEvent);
 }
 
 export function createForbiddenErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
@@ -93,8 +102,8 @@ export function createForbiddenErrorMetricsEvent(tag: string, apiId: NodeApiIds)
     },
     '@type': FORBIDDEN_ERROR_METRICS_EVENT_NAME,
   };
-  const metricsEvent = createMetricsEvent(JSON.stringify(internalErrorMetricsEvent));
-  return createEvent(JSON.stringify(metricsEvent));
+  const metricsEvent = createMetricsEvent(internalErrorMetricsEvent);
+  return createEvent(metricsEvent);
 }
 
 export function createNotFoundErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
@@ -105,8 +114,8 @@ export function createNotFoundErrorMetricsEvent(tag: string, apiId: NodeApiIds) 
     },
     '@type': NOT_FOUND_ERROR_METRICS_EVENT_NAME,
   };
-  const metricsEvent = createMetricsEvent(JSON.stringify(internalErrorMetricsEvent));
-  return createEvent(JSON.stringify(metricsEvent));
+  const metricsEvent = createMetricsEvent(internalErrorMetricsEvent);
+  return createEvent(metricsEvent);
 }
 
 export function createClientClosedRequestErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
@@ -117,8 +126,8 @@ export function createClientClosedRequestErrorMetricsEvent(tag: string, apiId: N
     },
     '@type': CLIENT_CLOSED_REQUEST_ERROR_METRICS_EVENT_NAME,
   };
-  const metricsEvent = createMetricsEvent(JSON.stringify(internalErrorMetricsEvent));
-  return createEvent(JSON.stringify(metricsEvent));
+  const metricsEvent = createMetricsEvent(internalErrorMetricsEvent);
+  return createEvent(metricsEvent);
 }
 
 export function createInternalServerErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
@@ -129,8 +138,8 @@ export function createInternalServerErrorMetricsEvent(tag: string, apiId: NodeAp
     },
     '@type': INTERNAL_SERVER_ERROR_METRICS_EVENT_NAME,
   };
-  const metricsEvent = createMetricsEvent(JSON.stringify(internalErrorMetricsEvent));
-  return createEvent(JSON.stringify(metricsEvent));
+  const metricsEvent = createMetricsEvent(internalErrorMetricsEvent);
+  return createEvent(metricsEvent);
 }
 
 export function createServiceUnavailableErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
@@ -141,6 +150,6 @@ export function createServiceUnavailableErrorMetricsEvent(tag: string, apiId: No
     },
     '@type': SERVICE_UNAVAILABLE_ERROR_METRICS_EVENT_NAME,
   };
-  const metricsEvent = createMetricsEvent(JSON.stringify(internalErrorMetricsEvent));
-  return createEvent(JSON.stringify(metricsEvent));
+  const metricsEvent = createMetricsEvent(internalErrorMetricsEvent);
+  return createEvent(metricsEvent);
 }
