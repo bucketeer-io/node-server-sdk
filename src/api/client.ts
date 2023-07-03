@@ -18,7 +18,11 @@ export class Client {
     this.apiKey = apiKey;
   }
 
-  getEvaluation(tag: string, user: User, featureId: string): Promise<GetEvaluationResponse> {
+  getEvaluation(
+    tag: string,
+    user: User,
+    featureId: string,
+  ): Promise<[GetEvaluationResponse, number]> {
     const req: GetEvaluationRequest = {
       tag,
       user,
@@ -29,10 +33,10 @@ export class Client {
     const url = scheme.concat(this.host, evaluationAPI);
     return new Promise((resolve, reject) => {
       this.postRequest(url, chunk)
-        .then((res) => {
+        .then(([res, size]) => {
           try {
             const msg = JSON.parse(res) as GetEvaluationResponse;
-            resolve(msg);
+            resolve([msg, size]);
           } catch (error) {
             reject(error);
           }
@@ -43,7 +47,7 @@ export class Client {
     });
   }
 
-  registerEvents(events: Array<Event>): Promise<RegisterEventsResponse> {
+  registerEvents(events: Array<Event>): Promise<[RegisterEventsResponse, number]> {
     const req: RegisterEventsRequest = {
       events,
     };
@@ -51,10 +55,10 @@ export class Client {
     const url = scheme.concat(this.host, eventsAPI);
     return new Promise((resolve, reject) => {
       this.postRequest(url, chunk)
-        .then((res) => {
+        .then(([res, size]) => {
           try {
             const msg = JSON.parse(res) as RegisterEventsResponse;
-            resolve(msg);
+            resolve([msg, size]);
           } catch (error) {
             reject(error);
           }
@@ -65,7 +69,7 @@ export class Client {
     });
   }
 
-  private postRequest(url: string, chunk: string): Promise<string> {
+  private postRequest(url: string, chunk: string): Promise<[string, number]> {
     const opts: https.RequestOptions = {
       method: 'POST',
       headers: {
@@ -90,11 +94,8 @@ export class Client {
           rawData += chunk.toString();
         });
         res.on('end', () => {
-          try {
-            resolve(rawData);
-          } catch (error) {
-            reject(error);
-          }
+          const header = res.headers['content-length'];
+          resolve([rawData, Number(header || 0)]);
         });
       });
       clientReq.on('error', (e) => {

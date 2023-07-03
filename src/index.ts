@@ -282,19 +282,21 @@ export function initialize(config: Config): Bucketeer {
   return {
     async getStringVariation(user: User, featureId: string, defaultValue: string): Promise<string> {
       const startTime: number = Date.now();
-      const res: GetEvaluationResponse | null = await client
-        .getEvaluation(tag, user, featureId)
-        .catch((e) => {
-          saveErrorMetricsEvent(e, ApiId.GET_EVALUATION);
-          return null;
-        });
+      let res: GetEvaluationResponse;
+      let size: number;
+      try {
+        [res, size] = await client.getEvaluation(tag, user, featureId);
+      } catch (error) {
+        saveErrorMetricsEvent(error, ApiId.GET_EVALUATION);
+        saveDefaultEvaluationEvent(user, featureId);
+        return defaultValue;
+      }
       const evaluation = res?.evaluation;
       if (evaluation == null) {
         saveDefaultEvaluationEvent(user, featureId);
         return defaultValue;
       }
       const second = (Date.now() - startTime) / 1000;
-      const size = lengthInUtf8Bytes(JSON.stringify(res));
       saveEvaluationEvent(user, evaluation);
       saveEvaluationMetricsEvent(tag, second, size);
       return evaluation.variationValue;
