@@ -37,6 +37,7 @@ jobs:
         if: ${{ steps.release.outputs.release_created }}
         with:
           node-version: ${{ env.NODE_VERSION }}
+          registry-url: 'https://registry.npmjs.org'
       - name: Publish to npm registry
         if: ${{ steps.release.outputs.release_created }}
         run: |
