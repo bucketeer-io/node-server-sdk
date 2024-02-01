@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/bucketeer-io/node-server-sdk/compare/v0.3.0...v0.3.0) (2024-02-01)
+
+
+### Miscellaneous
+
+* add codeowners file ([#22](https://github.com/bucketeer-io/node-server-sdk/issues/22)) ([89145cd](https://github.com/bucketeer-io/node-server-sdk/commit/89145cdddfbcb670448b5c0d3f892c76723a8676))
+
 ## 0.3.0 (2023-07-03)
 
 
