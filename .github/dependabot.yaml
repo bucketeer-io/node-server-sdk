@@ -1,0 +1,20 @@
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+      time: "10:00"
+      timezone: "Asia/Tokyo"
+    commit-message:
+      prefix: "build"
+      include: "scope"
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+      time: "10:00"
+      timezone: "Asia/Tokyo"
+    commit-message:
+      prefix: "build"
+      include: "scope"
