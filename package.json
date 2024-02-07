@@ -22,7 +22,7 @@
     "@bazel/hide-bazel-files": "1.7.0",
     "@bazel/rollup": "5.8.1",
     "@bazel/terser": "4.4.5",
-    "@bazel/typescript": "4.4.5",
+    "@bazel/typescript": "5.8.1",
     "@rollup/plugin-commonjs": "^21.0.1",
     "@rollup/plugin-node-resolve": "^13.1.1",
     "@rollup/plugin-replace": "^5.0.5",
