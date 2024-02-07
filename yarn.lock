@@ -1193,12 +1193,12 @@
   resolved "https://registry.yarnpkg.com/@bazel/hide-bazel-files/-/hide-bazel-files-1.7.0.tgz#7cb140c23c4269d6464c24be0a2acf0241d2a31d"
   integrity sha512-pvdyRX/EsU8n+oElFb+OZ9i5M48HNFR+Z4D3vc0qDGiJ8oly9fZcUb2gbw4CzyeovJz0IzjSxjqMS6cp5gKoeg==
 
-"@bazel/rollup@4.4.5":
-  version "4.4.5"
-  resolved "https://registry.yarnpkg.com/@bazel/rollup/-/rollup-4.4.5.tgz#3a2aded5fcc130624e5242a0574424033e90ddb4"
-  integrity sha512-zt3HZXq4Zfgnxr/ASirzv2YKCcQhvKvbAXC9NKvzzo352Uw3CfdfR9V9FuN8OsiBYYAsONSBKvmWMq0LeDC8ZQ==
+"@bazel/rollup@5.8.1":
+  version "5.8.1"
+  resolved "https://registry.yarnpkg.com/@bazel/rollup/-/rollup-5.8.1.tgz#ee876c35595b456f700d258385412e4f0dd57c15"
+  integrity sha512-Ys+UWbRp1TY2j+z15N+SZgID/nuqAtJTgJDsz0NZVjm8F8KzmgXxLDnBb/cUKFVk83pNOAi84G/bq1tINjMSNA==
   dependencies:
-    "@bazel/worker" "4.4.5"
+    "@bazel/worker" "5.8.1"
 
 "@bazel/terser@4.4.5":
   version "4.4.5"
@@ -1220,6 +1220,13 @@
   version "4.4.5"
   resolved "https://registry.yarnpkg.com/@bazel/worker/-/worker-4.4.5.tgz#1f9292c31615dff8a7297960f7f520bf9febf428"
   integrity sha512-PoBMiN0SGSb1Qn/SabiM9HWC5nqwyWn0yTJgz6Vq2GMHo1UG7olVHuIfDb2ScFx9jY+mJ3wSyxQ4htlTGldedA==
+  dependencies:
+    google-protobuf "^3.6.1"
+
+"@bazel/worker@5.8.1":
+  version "5.8.1"
+  resolved "https://registry.yarnpkg.com/@bazel/worker/-/worker-5.8.1.tgz#65af7a70dd2f1aaedd6c19330abd9a198f96e7b2"
+  integrity sha512-GMyZSNW3F34f9GjbJqvs1aHyed5BNrNeiDzNJhC1fIizo/UeBM21oBBONIYLBDoBtq936U85VyPZ76JaP/83hw==
   dependencies:
     google-protobuf "^3.6.1"
 
