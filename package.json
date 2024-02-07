@@ -41,7 +41,7 @@
     "rollup": "^2.60.2",
     "semver": "7.3.5",
     "terser": "4.8.0",
-    "typescript": "3.9.10",
+    "typescript": "4.3.5",
     "uglify-es": "3.3.9"
   }
 }
