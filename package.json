@@ -17,7 +17,7 @@
     "@ava/babel": "1.0.1",
     "@babel/cli": "7.16.0",
     "@babel/core": "7.16.0",
-    "@babel/preset-env": "7.16.0",
+    "@babel/preset-env": "7.23.9",
     "@babel/preset-typescript": "7.16.0",
     "@bazel/hide-bazel-files": "1.7.0",
     "@bazel/rollup": "4.4.5",
