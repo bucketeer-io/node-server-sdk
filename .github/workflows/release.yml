@@ -33,7 +33,7 @@ jobs:
           release-as: 0.3.0
       - uses: actions/checkout@v4
         if: ${{ steps.release.outputs.release_created }}
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         if: ${{ steps.release.outputs.release_created }}
         with:
           node-version: ${{ env.NODE_VERSION }}
