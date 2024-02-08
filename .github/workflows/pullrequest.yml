@@ -118,3 +118,13 @@ jobs:
       - name: Example Build
         working-directory: ${{ env.EXAMPLE_PATH }}
         run: make build
+
+  e2e:
+    name: E2E tests
+    needs: install-dependencies
+    uses: ./.github/workflows/e2e.yml
+    secrets:
+      E2E_HOST: ${{ secrets.E2E_HOST }}
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN}}
+
+
