@@ -125,6 +125,7 @@ jobs:
     uses: ./.github/workflows/e2e.yml
     secrets:
       E2E_HOST: ${{ secrets.E2E_HOST }}
+      E2E_TOKEN: ${{ secrets.E2E_TOKEN }}
       NPM_TOKEN: ${{ secrets.NPM_TOKEN}}
 
 
