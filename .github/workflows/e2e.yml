@@ -2,9 +2,14 @@ name: e2e
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - master
+  workflow_call:
+    secrets:
+      E2E_HOST:
+        required: true
+      E2E_TOKEN:
+        required: true
+      NPM_TOKEN:
+        required: true
 
 env:
   NODE_VERSION: 16
