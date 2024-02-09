@@ -35,7 +35,7 @@ jobs:
 
   publish:
     name: Publish
-    needs: e2e
+    needs: release_please
     if: ${{ needs.release_please.outputs.release_created }}
     runs-on: ubuntu-latest
     steps:
