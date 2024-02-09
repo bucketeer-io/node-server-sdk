@@ -1,15 +1,12 @@
-name: Pull Request
+name: Push
 
 on:
-  pull_request:
-    branches:
-      - master
+  workflow_dispatch:
+  push:
     paths-ignore:
       - "**/**.md"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+    branches:
+      - master
 
 env:
   NODE_VERSION: 16
@@ -118,3 +115,14 @@ jobs:
       - name: Example Build
         working-directory: ${{ env.EXAMPLE_PATH }}
         run: make build
+
+  e2e:
+    name: E2E tests
+    needs: release_please
+    if: ${{ steps.release.outputs.release_created }}
+    uses: ./.github/workflows/e2e.yml
+    secrets:
+      E2E_HOST: ${{ secrets.E2E_HOST }}
+      E2E_TOKEN: ${{ secrets.E2E_TOKEN }}
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN}}
+
