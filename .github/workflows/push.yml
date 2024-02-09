@@ -118,7 +118,7 @@ jobs:
 
   e2e:
     name: E2E tests
-    needs: release_please
+    needs: install-dependencies
     if: ${{ steps.release.outputs.release_created }}
     uses: ./.github/workflows/e2e.yml
     secrets:
