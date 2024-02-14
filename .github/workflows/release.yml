@@ -14,6 +14,8 @@ jobs:
   release_please:
     name: Release Please
     runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
     steps:
       - uses: google-github-actions/release-please-action@cc61a07e2da466bebbc19b3a7dd01d6aecb20d1e # v4.0.2
         id: release
@@ -30,24 +32,25 @@ jobs:
           release-type: node
           package-name: "@bucketeer/node-server-sdk"
           bump-minor-pre-major: true
-          release-as: 0.3.0
+
+  publish:
+    name: Publish
+    needs: release_please
+    if: ${{ needs.release_please.outputs.release_created }}
+    runs-on: ubuntu-latest
+    steps:
       - uses: actions/checkout@v4
-        if: ${{ steps.release.outputs.release_created }}
       - uses: actions/setup-node@v4
-        if: ${{ steps.release.outputs.release_created }}
         with:
           node-version: ${{ env.NODE_VERSION }}
           registry-url: 'https://registry.npmjs.org'
       - name: Publish to npm registry
-        if: ${{ steps.release.outputs.release_created }}
         run: |
           make init
       - name: Build
-        if: ${{ steps.release.outputs.release_created }}
         run: |
           make build
       - name: Publish to npm registry
-        if: ${{ steps.release.outputs.release_created }}
         run: |
           make copy-genfiles
           npm publish --access public
