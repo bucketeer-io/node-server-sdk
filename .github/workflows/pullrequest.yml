@@ -12,7 +12,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  NODE_VERSION: 16
+  NODE_VERSION: 18
   NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
   EXAMPLE_PATH: ./example
 
