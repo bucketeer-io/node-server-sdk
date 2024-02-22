@@ -43,5 +43,5 @@ jobs:
         run: make build
       - name: e2e test
         run: |
-          sed -i -e "s|<HOST>|${{ secrets.E2E_HOST }}|" -e "s|<TOKEN>|${{ secrets.E2E_TOKEN }}|" ava-e2e.config.js
+          sed -i -e "s|<HOST>|${{ secrets.E2E_HOST }}|" -e "s|<TOKEN>|${{ secrets.E2E_TOKEN }}|" ava-e2e.config.mjs
           make e2e
