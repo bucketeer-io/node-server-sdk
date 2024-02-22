@@ -98,7 +98,7 @@ make test
 ```
 
 Run e2e tests.
-First, replace placeholders in [ava-e2e.config.js](./ava-e2e.config.js), then run the command below.
+First, replace placeholders in [ava-e2e.config.mjs](./ava-e2e.config.mjs), then run the command below.
 
 ```bash
 make e2e
