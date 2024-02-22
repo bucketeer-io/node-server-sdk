@@ -49,14 +49,14 @@ rename-js:
 test:
 	rm -rf $(CURDIR)/__test
 	$(NPM_BIN_DIR)/babel src --extensions '.ts' --config-file "$(CURDIR)/babel-test.config.js" --out-dir "__test"
-	$(NPM_BIN_DIR)/ava --config ava-test.config.js
+	$(NPM_BIN_DIR)/ava --config ava-test.config.mjs
 
 .PHONY: e2e
 e2e: copy-genfiles
 	rm -rf $(CURDIR)/__e2e
 	$(NPM_BIN_DIR)/babel e2e --extensions '.ts' --config-file "$(CURDIR)/babel-e2e.config.js" --out-dir "__e2e/__test__"
 	$(NPM_BIN_DIR)/babel lib --extensions '.mjs' --config-file "$(CURDIR)/babel-e2e.config.js" --out-dir "__e2e/lib"
-	$(NPM_BIN_DIR)/ava --config ava-e2e.config.js
+	$(NPM_BIN_DIR)/ava --config ava-e2e.config.mjs
 
 .PHONY: fmt
 fmt: tsfmt
