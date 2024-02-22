@@ -21,6 +21,7 @@ module.exports = {
       files: ['*.ts', '*.tsx'],
       rules: {
         'no-dupe-class-members': 0,
+        'no-undef': 'off',
       },
     },
   ],

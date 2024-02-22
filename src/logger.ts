@@ -52,7 +52,7 @@ export class DefaultLogger implements Logger {
     this.write(args, DEBUG);
   }
 
-  write(args: any[], logLevel: typeof logLevels[number]): void {
+  write(args: any[], logLevel: (typeof logLevels)[number]): void {
     if (this.minLevel > logLevels.indexOf(logLevel)) {
       return;
     }
