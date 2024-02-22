@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.3.0](https://github.com/bucketeer-io/node-server-sdk/compare/v0.3.0...v0.3.0) (2024-02-07)
+
+
+### Miscellaneous
+
+* add codeowners file ([#22](https://github.com/bucketeer-io/node-server-sdk/issues/22)) ([89145cd](https://github.com/bucketeer-io/node-server-sdk/commit/89145cdddfbcb670448b5c0d3f892c76723a8676))
+
+
+### Build System
+
+* **deps-dev:** bump @babel/preset-env from 7.16.0 to 7.23.9 ([#36](https://github.com/bucketeer-io/node-server-sdk/issues/36)) ([5137b28](https://github.com/bucketeer-io/node-server-sdk/commit/5137b28d0a2ed0d4a35d0f93b0f0f13f2da898b7))
+* **deps:** bump actions/cache from 3 to 4 ([#28](https://github.com/bucketeer-io/node-server-sdk/issues/28)) ([ec2d4e9](https://github.com/bucketeer-io/node-server-sdk/commit/ec2d4e95cdf6be5daa7f541dcb764e5bc84500f3))
+* **deps:** bump actions/checkout from 3 to 4 ([#29](https://github.com/bucketeer-io/node-server-sdk/issues/29)) ([c3478fc](https://github.com/bucketeer-io/node-server-sdk/commit/c3478fcdff4e9486215b9c320e5fb8607d9d73f2))
+* **deps:** bump actions/setup-node from 3 to 4 ([#30](https://github.com/bucketeer-io/node-server-sdk/issues/30)) ([430a5d5](https://github.com/bucketeer-io/node-server-sdk/commit/430a5d54f6fc55e765648a638d04cca021b9afd7))
+* **deps:** bump amannn/action-semantic-pull-request ([#26](https://github.com/bucketeer-io/node-server-sdk/issues/26)) ([86ca6b6](https://github.com/bucketeer-io/node-server-sdk/commit/86ca6b6be7c604429e7ce3fc08bb2e03afc0b6e6))
+
 ## 0.3.0 (2023-07-03)
 
 
