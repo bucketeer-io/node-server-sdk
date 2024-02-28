@@ -32,6 +32,7 @@ jobs:
           release-type: node
           package-name: "@bucketeer/node-server-sdk"
           bump-minor-pre-major: true
+          token: ${{ secrets.WORKFLOW_TOKEN }} # We need to set the PAT so the update changelog docs page workflow can be triggered
 
   publish:
     name: Publish
