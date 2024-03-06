@@ -35,7 +35,7 @@ jobs:
           DOC_REPO: bucketeer-io/bucketeer-docs
           DOC_FILENAME: node-js.mdx
           DOC_FILEPATH: docs/changelog/server-side
-          DOC_TITLE: Node JS
+          DOC_TITLE: Node.js
           DOC_SLUG: /changelog/server-side/node-js
           CHANGELOG_URL: https://raw.githubusercontent.com/bucketeer-io/node-server-sdk/master/CHANGELOG.md
           FROM_REPOSITORY_NAME: bucketeer-io/node-server-sdk
