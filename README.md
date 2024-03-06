@@ -1,6 +1,6 @@
 [![npm version](https://badge.fury.io/js/@bucketeer%2Fnode-server-sdk.svg)](https://badge.fury.io/js/@bucketeer%2Fnode-server-sdk)
 
-# Bucketeer Server-Side SDK for Node JS
+# Bucketeer Server-Side SDK for Node.js
 
 [Bucketeer](https://bucketeer.io) is an open-source platform created by [CyberAgent](https://www.cyberagent.co.jp/en) to help teams make better decisions, reduce deployment lead time and release risk through feature flags. Bucketeer offers advanced features like dark launches and staged rollouts that perform limited releases based on user attributes, devices, and other segments.
 
@@ -44,8 +44,10 @@ Install the prerequisite tools.
 
 #### Setup node version
 
+Please look at the [.nvmrc](./.nvmrc) file to check the node version.
+
 ```bash
-nvm use 16.11.12
+nvm use
 ```
 
 #### Install dependencies
