@@ -1,10 +1,8 @@
-import { createTimestamp } from '../utils/time';
 import { ApiId, NodeApiIds } from './apiId';
 import { createEvent } from './event';
 import { createMetricsEvent } from './metricsEvent';
-import { SourceId } from './sourceId';
 
-const BAD_REQUEST_ERROR_METRICSEVENT_NAME =
+const BAD_REQUEST_ERROR_METRICS_EVENT_NAME =
   'type.googleapis.com/bucketeer.event.client.BadRequestErrorMetricsEvent';
 const UNAUTHORIZED_ERROR_METRICS_EVENT_NAME =
   'type.googleapis.com/bucketeer.event.client.UnauthorizedErrorMetricsEvent';
@@ -26,7 +24,7 @@ const PAYLOAD_TOO_LARGE_ERROR_METRICS_EVENT_NAME =
 export type BadRequestErrorMetricsEvent = {
   apiId: ApiId.GET_EVALUATION | ApiId.REGISTER_EVENTS;
   labels: { [key: string]: string };
-  '@type': typeof BAD_REQUEST_ERROR_METRICSEVENT_NAME;
+  '@type': typeof BAD_REQUEST_ERROR_METRICS_EVENT_NAME;
 };
 
 export type UnauthorizedErrorMetricsEvent = {
@@ -94,7 +92,7 @@ export function createBadRequestErrorMetricsEvent(tag: string, apiId: NodeApiIds
     labels: {
       tag,
     },
-    '@type': BAD_REQUEST_ERROR_METRICSEVENT_NAME,
+    '@type': BAD_REQUEST_ERROR_METRICS_EVENT_NAME,
   };
   const metricsEvent = createMetricsEvent(internalErrorMetricsEvent);
   return createEvent(metricsEvent);

@@ -187,7 +187,7 @@ function convertMS(ms: number): string {
   return (ms / 1000).toString() + 's';
 }
 
-export const toErrorMetricsEvent = (e: any, tag: string, apiId: NodeApiIds): Event | undefined => {
+export const toErrorMetricsEvent = (e: any, tag: string, apiId: NodeApiIds): Event => {
   if (e instanceof InvalidStatusError) {
     const statusCode = e.code ?? 0;
     switch (true) {
@@ -225,10 +225,10 @@ export const toErrorMetricsEvent = (e: any, tag: string, apiId: NodeApiIds): Eve
       case 'ECONNREFUSED':
         return createNetworkErrorMetricsEvent(tag, apiId);
       default:
-        return createInternalSdkErrorMetricsEvent(tag, apiId);
+        return createUnknownErrorMetricsEvent(tag, apiId, undefined, e.message);
     }
   }
-  return;
+  return createUnknownErrorMetricsEvent(tag, apiId, undefined, e.message);
 };
 
 function isNodeError(error: unknown): error is NodeJS.ErrnoException {
