@@ -1,13 +1,13 @@
 export const HOST = process.env.HOST!;
 export const TOKEN = process.env.TOKEN!;
-export const FEATURE_TAG = 'javascript'
-export const USER_ID = 'bucketeer-js-user-id-1'
+export const FEATURE_TAG = 'nodejs'
+export const USER_ID = 'bucketeer-nodejs-server-user-id-1'
 
-export const FEATURE_ID_BOOLEAN = 'feature-js-e2e-boolean'
-export const FEATURE_ID_STRING = 'feature-js-e2e-string'
-export const FEATURE_ID_INT = 'feature-js-e2e-int'
-export const FEATURE_ID_DOUBLE = 'feature-js-e2e-double'
-export const FEATURE_ID_JSON = 'feature-js-e2e-json'
+export const FEATURE_ID_BOOLEAN = 'feature-nodejs-server-e2e-boolean'
+export const FEATURE_ID_STRING = 'feature-nodejs-server-e2e-string'
+export const FEATURE_ID_INT = 'feature-nodejs-server-e2e-int'
+export const FEATURE_ID_FLOAT = 'feature-nodejs-server-e2e-float'
+export const FEATURE_ID_JSON = 'feature-nodejs-server-e2e-json'
 
-export const GOAL_ID = 'goal-js-e2e-1'
+export const GOAL_ID = 'goal-nodejs-server-e2e-1'
 export const GOAL_VALUE = 1.0
