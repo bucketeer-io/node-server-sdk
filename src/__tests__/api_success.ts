@@ -58,7 +58,7 @@ test.before((t) => {
         req.on('end', () => {
           try {
             let jsonBody = JSON.parse(body) as BaseRequest;
-            // Verify the request needs to inclued `sdkVersion` and `sourceId`
+            // Verify the request needs to include `sdkVersion` and `sourceId`
             t.is(jsonBody.sdkVersion, version);
             t.is(jsonBody.sourceId, SourceId.NODE_SERVER);
           } catch (error) {
