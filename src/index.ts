@@ -26,6 +26,8 @@ import {
   createForbiddenErrorMetricsEvent,
   createInternalServerErrorMetricsEvent,
   createNotFoundErrorMetricsEvent,
+  createPayloadTooLargeErrorMetricsEvent,
+  createRedirectRequestErrorMetricsEvent,
   createServiceUnavailableErrorMetricsEvent,
   createUnauthorizedErrorMetricsEvent,
 } from './objects/status';
@@ -220,8 +222,23 @@ export function initialize(config: Config): Bucketeer {
     registerEvents();
   }
 
-  function saveUnknownErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
-    eventStore.add(createUnknownErrorMetricsEvent(tag, apiId));
+  function saveUnknownErrorMetricsEvent(
+    tag: string,
+    apiId: NodeApiIds,
+    statusCode?: number,
+    errorMessage?: string,
+  ) {
+    eventStore.add(createUnknownErrorMetricsEvent(tag, apiId, statusCode, errorMessage));
+    registerEvents();
+  }
+
+  function saveRedirectMetricsEvent(tag: string, apiId: NodeApiIds, statusCode: number) {
+    eventStore.add(createRedirectRequestErrorMetricsEvent(tag, apiId, statusCode));
+    registerEvents();
+  }
+
+  function savePayloadTooLargeErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
+    eventStore.add(createPayloadTooLargeErrorMetricsEvent(tag, apiId));
     registerEvents();
   }
 
@@ -231,33 +248,43 @@ export function initialize(config: Config): Bucketeer {
 
   function saveErrorMetricsEvent(e: any, apiId: NodeApiIds) {
     if (e instanceof InvalidStatusError) {
-      switch (e.code) {
-        case 400:
+      const statusCode = e.code ?? 0;
+      switch (true) {
+        case statusCode >= 300 && statusCode < 400:
+          saveRedirectMetricsEvent(tag, apiId, statusCode);
+          break;
+        case statusCode == 400:
           saveBadRequestErrorMetricsEvent(tag, apiId);
           break;
-        case 401:
+        case statusCode == 401:
           saveUnauthorizedErrorMetricsEvent(tag, apiId);
           break;
-        case 403:
+        case statusCode == 403:
           saveForbiddenErrorMetricsEvent(tag, apiId);
           break;
-        case 404:
+        case statusCode == 404:
           saveNotFoundErrorMetricsEvent(tag, apiId);
           break;
-        case 499:
-          saveClientClosedRequestErrorMetricsEvent(tag, apiId);
+        case statusCode == 405:
+          saveInternalSdkErrorMetricsEvent(tag, apiId);
           break;
-        case 500:
-          saveInternalServerErrorMetricsEvent(tag, apiId);
-          break;
-        case 503:
-          saveServiceUnavailableErrorMetricsEvent(tag, apiId);
-          break;
-        case 504:
+        case statusCode == 408:
           saveTimeoutErrorMetricsEvent(tag, apiId);
           break;
+        case statusCode == 413:
+          savePayloadTooLargeErrorMetricsEvent(tag, apiId);
+          break;
+        case statusCode == 499:
+          saveClientClosedRequestErrorMetricsEvent(tag, apiId);
+          break;
+        case statusCode == 500:
+          saveInternalServerErrorMetricsEvent(tag, apiId);
+          break;
+        case [502, 503, 504].includes(statusCode):
+          saveServiceUnavailableErrorMetricsEvent(tag, apiId);
+          break;
         default:
-          saveUnknownErrorMetricsEvent(tag, apiId);
+          saveUnknownErrorMetricsEvent(tag, apiId, statusCode, e.message);
           break;
       }
       return;

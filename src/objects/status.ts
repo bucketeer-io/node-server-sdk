@@ -18,6 +18,10 @@ const INTERNAL_SERVER_ERROR_METRICS_EVENT_NAME =
   'type.googleapis.com/bucketeer.event.client.InternalServerErrorMetricsEvent';
 const SERVICE_UNAVAILABLE_ERROR_METRICS_EVENT_NAME =
   'type.googleapis.com/bucketeer.event.client.ServiceUnavailableErrorMetricsEvent';
+const REDIRECT_REQUEST_ERROR_METRICS_EVENT_NAME =
+  'type.googleapis.com/bucketeer.event.client.RedirectionRequestExceptionEvent';
+const PAYLOAD_TOO_LARGE_ERROR_METRICS_EVENT_NAME =
+  'type.googleapis.com/bucketeer.event.client.PayloadTooLargeExceptionEvent';
 
 export type BadRequestErrorMetricsEvent = {
   apiId: ApiId.GET_EVALUATION | ApiId.REGISTER_EVENTS;
@@ -61,7 +65,21 @@ export type ServiceUnavailableErrorMetricsEvent = {
   '@type': typeof SERVICE_UNAVAILABLE_ERROR_METRICS_EVENT_NAME;
 };
 
+export type RedirectRequestErrorMetricsEvent = {
+  apiId: ApiId.GET_EVALUATION | ApiId.REGISTER_EVENTS;
+  labels: { [key: string]: string };
+  '@type': typeof REDIRECT_REQUEST_ERROR_METRICS_EVENT_NAME;
+};
+
+export type PayLoadTooLargetErrorMetricsEvent = {
+  apiId: ApiId.GET_EVALUATION | ApiId.REGISTER_EVENTS;
+  labels: { [key: string]: string };
+  '@type': typeof PAYLOAD_TOO_LARGE_ERROR_METRICS_EVENT_NAME;
+};
+
 export type StatusMetricsEvent =
+  | RedirectRequestErrorMetricsEvent
+  | PayLoadTooLargetErrorMetricsEvent
   | BadRequestErrorMetricsEvent
   | UnauthorizedErrorMetricsEvent
   | ForbiddenErrorMetricsEvent
@@ -151,5 +169,34 @@ export function createServiceUnavailableErrorMetricsEvent(tag: string, apiId: No
     '@type': SERVICE_UNAVAILABLE_ERROR_METRICS_EVENT_NAME,
   };
   const metricsEvent = createMetricsEvent(internalErrorMetricsEvent);
+  return createEvent(metricsEvent);
+}
+
+export function createRedirectRequestErrorMetricsEvent(
+  tag: string,
+  apiId: NodeApiIds,
+  statusCode: number,
+) {
+  const redirectRequestErrorMetricsEvent: RedirectRequestErrorMetricsEvent = {
+    apiId,
+    labels: {
+      tag,
+      response_code: statusCode.toString(),
+    },
+    '@type': REDIRECT_REQUEST_ERROR_METRICS_EVENT_NAME,
+  };
+  const metricsEvent = createMetricsEvent(redirectRequestErrorMetricsEvent);
+  return createEvent(metricsEvent);
+}
+
+export function createPayloadTooLargeErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
+  const payloadTooLargeMetricsEvent: PayLoadTooLargetErrorMetricsEvent = {
+    apiId,
+    labels: {
+      tag,
+    },
+    '@type': PAYLOAD_TOO_LARGE_ERROR_METRICS_EVENT_NAME,
+  };
+  const metricsEvent = createMetricsEvent(payloadTooLargeMetricsEvent);
   return createEvent(metricsEvent);
 }

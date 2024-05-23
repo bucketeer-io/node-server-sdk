@@ -148,7 +148,12 @@ export function createNetworkErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
   return createEvent(metricsEvent);
 }
 
-export function createUnknownErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
+export function createUnknownErrorMetricsEvent(
+  tag: string,
+  apiId: NodeApiIds,
+  statusCode?: number,
+  errorMessage?: string,
+) {
   const unknownErrorMetricsEvent: UnknownErrorMetricsEvent = {
     apiId,
     labels: {
@@ -156,6 +161,12 @@ export function createUnknownErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
     },
     '@type': UNKNOWN_ERROR_METRICS_EVENT_NAME,
   };
+  if (statusCode !== undefined) {
+    unknownErrorMetricsEvent.labels.response_code = statusCode.toString();
+  }
+  if (errorMessage != undefined && errorMessage.length > 0) {
+    unknownErrorMetricsEvent.labels.error_message = errorMessage;
+  }
   const metricsEvent = createMetricsEvent(unknownErrorMetricsEvent);
   return createEvent(metricsEvent);
 }
