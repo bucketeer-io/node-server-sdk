@@ -1,8 +1,20 @@
+import { InvalidStatusError } from '../api/client';
 import { createTimestamp } from '../utils/time';
 import { ApiId, NodeApiIds } from './apiId';
-import { createEvent } from './event';
+import { createEvent, Event } from './event';
 import { SourceId } from './sourceId';
-import { StatusMetricsEvent } from './status';
+import {
+  StatusMetricsEvent,
+  createBadRequestErrorMetricsEvent,
+  createClientClosedRequestErrorMetricsEvent,
+  createForbiddenErrorMetricsEvent,
+  createNotFoundErrorMetricsEvent,
+  createPayloadTooLargeErrorMetricsEvent,
+  createRedirectRequestErrorMetricsEvent,
+  createServiceUnavailableErrorMetricsEvent,
+  createUnauthorizedErrorMetricsEvent,
+} from './status';
+import typeUtils from 'node:util/types';
 
 const METRICS_EVENT_NAME = 'type.googleapis.com/bucketeer.event.client.MetricsEvent';
 const LATENCY_METRICS_EVENT_NAME = 'type.googleapis.com/bucketeer.event.client.LatencyMetricsEvent';
@@ -173,4 +185,52 @@ export function createUnknownErrorMetricsEvent(
 
 function convertMS(ms: number): string {
   return (ms / 1000).toString() + 's';
+}
+
+export const toErrorMetricsEvent = (e: any, tag: string, apiId: NodeApiIds): Event | undefined => {
+  if (e instanceof InvalidStatusError) {
+    const statusCode = e.code ?? 0;
+    switch (true) {
+      case statusCode >= 300 && statusCode < 400:
+        return createRedirectRequestErrorMetricsEvent(tag, apiId, statusCode);
+      case statusCode == 400:
+        return createBadRequestErrorMetricsEvent(tag, apiId);
+      case statusCode == 401:
+        return createUnauthorizedErrorMetricsEvent(tag, apiId);
+      case statusCode == 403:
+        return createForbiddenErrorMetricsEvent(tag, apiId);
+      case statusCode == 404:
+        return createNotFoundErrorMetricsEvent(tag, apiId);
+      case statusCode == 405:
+        return createInternalSdkErrorMetricsEvent(tag, apiId);
+      case statusCode == 408:
+        return createTimeoutErrorMetricsEvent(tag, apiId);
+      case statusCode == 413:
+        return createPayloadTooLargeErrorMetricsEvent(tag, apiId);
+      case statusCode == 499:
+        return createClientClosedRequestErrorMetricsEvent(tag, apiId);
+      case statusCode == 500:
+        return createInternalSdkErrorMetricsEvent(tag, apiId);
+      case [502, 503, 504].includes(statusCode):
+        return createServiceUnavailableErrorMetricsEvent(tag, apiId);
+      default:
+        return createUnknownErrorMetricsEvent(tag, apiId, statusCode, e.message);
+    }
+  }
+  if (isNodeError(e)) {
+    switch (e.code) {
+      case 'ECONNRESET':
+        return createTimeoutErrorMetricsEvent(tag, apiId);
+      case 'EHOSTUNREACH':
+      case 'ECONNREFUSED':
+        return createNetworkErrorMetricsEvent(tag, apiId);
+      default:
+        return createInternalSdkErrorMetricsEvent(tag, apiId);
+    }
+  }
+  return;
+};
+
+function isNodeError(error: unknown): error is NodeJS.ErrnoException {
+  return typeUtils.isNativeError(error);
 }

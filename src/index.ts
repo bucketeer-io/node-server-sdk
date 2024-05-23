@@ -14,11 +14,11 @@ import {
   createTimeoutErrorMetricsEvent,
   createNetworkErrorMetricsEvent,
   createUnknownErrorMetricsEvent,
+  toErrorMetricsEvent,
 } from './objects/metricsEvent';
 import { Evaluation } from './objects/evaluation';
 import { Event } from './objects/event';
 import { GetEvaluationResponse } from './objects/response';
-import typeUtils from 'node:util/types';
 import { ApiId, NodeApiIds } from './objects/apiId';
 import {
   createBadRequestErrorMetricsEvent,
@@ -172,137 +172,11 @@ export function initialize(config: Config): Bucketeer {
     registerEvents();
   }
 
-  function saveInternalSdkErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
-    eventStore.add(createInternalSdkErrorMetricsEvent(tag, apiId));
-    registerEvents();
-  }
-
-  function saveTimeoutErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
-    eventStore.add(createTimeoutErrorMetricsEvent(tag, apiId));
-    registerEvents();
-  }
-
-  function saveNetworkErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
-    eventStore.add(createNetworkErrorMetricsEvent(tag, apiId));
-    registerEvents();
-  }
-
-  function saveBadRequestErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
-    eventStore.add(createBadRequestErrorMetricsEvent(tag, apiId));
-    registerEvents();
-  }
-
-  function saveUnauthorizedErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
-    eventStore.add(createUnauthorizedErrorMetricsEvent(tag, apiId));
-    registerEvents();
-  }
-
-  function saveForbiddenErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
-    eventStore.add(createForbiddenErrorMetricsEvent(tag, apiId));
-    registerEvents();
-  }
-
-  function saveNotFoundErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
-    eventStore.add(createNotFoundErrorMetricsEvent(tag, apiId));
-    registerEvents();
-  }
-
-  function saveClientClosedRequestErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
-    eventStore.add(createClientClosedRequestErrorMetricsEvent(tag, apiId));
-    registerEvents();
-  }
-
-  function saveInternalServerErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
-    eventStore.add(createInternalServerErrorMetricsEvent(tag, apiId));
-    registerEvents();
-  }
-
-  function saveServiceUnavailableErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
-    eventStore.add(createServiceUnavailableErrorMetricsEvent(tag, apiId));
-    registerEvents();
-  }
-
-  function saveUnknownErrorMetricsEvent(
-    tag: string,
-    apiId: NodeApiIds,
-    statusCode?: number,
-    errorMessage?: string,
-  ) {
-    eventStore.add(createUnknownErrorMetricsEvent(tag, apiId, statusCode, errorMessage));
-    registerEvents();
-  }
-
-  function saveRedirectMetricsEvent(tag: string, apiId: NodeApiIds, statusCode: number) {
-    eventStore.add(createRedirectRequestErrorMetricsEvent(tag, apiId, statusCode));
-    registerEvents();
-  }
-
-  function savePayloadTooLargeErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
-    eventStore.add(createPayloadTooLargeErrorMetricsEvent(tag, apiId));
-    registerEvents();
-  }
-
-  function isNodeError(error: unknown): error is NodeJS.ErrnoException {
-    return typeUtils.isNativeError(error);
-  }
-
   function saveErrorMetricsEvent(e: any, apiId: NodeApiIds) {
-    if (e instanceof InvalidStatusError) {
-      const statusCode = e.code ?? 0;
-      switch (true) {
-        case statusCode >= 300 && statusCode < 400:
-          saveRedirectMetricsEvent(tag, apiId, statusCode);
-          break;
-        case statusCode == 400:
-          saveBadRequestErrorMetricsEvent(tag, apiId);
-          break;
-        case statusCode == 401:
-          saveUnauthorizedErrorMetricsEvent(tag, apiId);
-          break;
-        case statusCode == 403:
-          saveForbiddenErrorMetricsEvent(tag, apiId);
-          break;
-        case statusCode == 404:
-          saveNotFoundErrorMetricsEvent(tag, apiId);
-          break;
-        case statusCode == 405:
-          saveInternalSdkErrorMetricsEvent(tag, apiId);
-          break;
-        case statusCode == 408:
-          saveTimeoutErrorMetricsEvent(tag, apiId);
-          break;
-        case statusCode == 413:
-          savePayloadTooLargeErrorMetricsEvent(tag, apiId);
-          break;
-        case statusCode == 499:
-          saveClientClosedRequestErrorMetricsEvent(tag, apiId);
-          break;
-        case statusCode == 500:
-          saveInternalServerErrorMetricsEvent(tag, apiId);
-          break;
-        case [502, 503, 504].includes(statusCode):
-          saveServiceUnavailableErrorMetricsEvent(tag, apiId);
-          break;
-        default:
-          saveUnknownErrorMetricsEvent(tag, apiId, statusCode, e.message);
-          break;
-      }
-      return;
-    }
-    if (isNodeError(e)) {
-      switch (e.code) {
-        case 'ECONNRESET':
-          saveTimeoutErrorMetricsEvent(tag, apiId);
-          break;
-        case 'EHOSTUNREACH':
-        case 'ECONNREFUSED':
-          saveNetworkErrorMetricsEvent(tag, apiId);
-          break;
-        default:
-          saveInternalSdkErrorMetricsEvent(tag, apiId);
-          break;
-      }
-      return;
+    const event = toErrorMetricsEvent(e, tag, apiId);
+    if (event != undefined) {
+      eventStore.add(event);
+      registerEvents();
     }
   }
 
