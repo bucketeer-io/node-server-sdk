@@ -19,7 +19,7 @@ test.beforeEach((t) => {
 
 test('boolVariation', async (t) => {
   const { bktClient, user } = t.context;
-  t.is(await bktClient.getBoolVariation(user, FEATURE_ID_BOOLEAN, true), true);
+  t.is(await bktClient.getBoolVariation(user, FEATURE_ID_BOOLEAN, false), true);
 });
 
 test('stringVariation', async (t) => {
