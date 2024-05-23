@@ -62,7 +62,7 @@ test.before((t) => {
             t.is(jsonBody.sdkVersion, version);
             t.is(jsonBody.sourceId, SourceId.NODE_SERVER);
           } catch (error) {
-            t.fail('Invalid JSON or data structure ');
+            t.fail('Invalid JSON or data structure');
           }
           switch (req.url) {
             case evaluationAPI:
