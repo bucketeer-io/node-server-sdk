@@ -4,6 +4,8 @@ import { User } from './user';
 
 export type RegisterEventsRequest = {
   events: Event[];
+  sdkVersion: String;
+  sourceId: SourceId;
 };
 
 export type GetEvaluationRequest = {
@@ -11,4 +13,5 @@ export type GetEvaluationRequest = {
   user?: User;
   featureId: string;
   sourceId: SourceId;
+  sdkVersion: String;
 };
