@@ -1,4 +1,4 @@
-import anyTest, { TestInterface } from 'ava';
+import anyTest, { TestFn } from 'ava';
 import https from 'https';
 import fs from 'fs';
 import { Client } from '../api/client';
@@ -6,6 +6,9 @@ import { User } from '../bootstrap';
 import path from 'path';
 import { v4 } from 'uuid';
 import { GetEvaluationResponse, RegisterEventsResponse } from '../objects/response';
+import { BaseRequest } from '../objects/request';
+import { version } from '../objects/version';
+import { SourceId } from '../objects/sourceId';
 
 const evaluationAPI = '/get_evaluation';
 const eventsAPI = '/register_events';
@@ -14,7 +17,7 @@ const apiKey = '';
 const port = 9990;
 const host = `localhost:${port}`;
 
-const test = anyTest as TestInterface<{ server: https.Server }>;
+const test = anyTest as TestFn<{ server: https.Server }>;
 const projectRoot = path.join(__dirname, '..', '..');
 const serverKey = path.join(projectRoot, 'src', '__tests__', 'testdata', 'server.key');
 const serverCrt = path.join(projectRoot, 'src', '__tests__', 'testdata', 'server.crt');
@@ -46,20 +49,36 @@ test.before((t) => {
   t.context = {
     server: https
       .createServer(opts, (req, res) => {
-        switch (req.url) {
-          case evaluationAPI:
-            res.setHeader('Content-Type', 'application/json');
-            res.end(JSON.stringify(dummyEvalResponse));
-            break;
-          case eventsAPI:
-            res.setHeader('Content-Type', 'application/json');
-            res.end(JSON.stringify(dummpyRegisterEvtsResponse));
-            break;
-          default:
-            res.writeHead(400);
-            res.end();
-            break;
-        }
+        let body = '';
+
+        req.on('data', (chunk) => {
+          body += chunk.toString();
+        });
+
+        req.on('end', () => {
+          try {
+            let jsonBody = JSON.parse(body) as BaseRequest;
+            // Verify the request needs to inclued `sdkVersion` and `sourceId`
+            t.is(jsonBody.sdkVersion, version);
+            t.is(jsonBody.sourceId, SourceId.NODE_SERVER);
+          } catch (error) {
+            t.fail('Invalid JSON or data structure ');
+          }
+          switch (req.url) {
+            case evaluationAPI:
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify(dummyEvalResponse));
+              break;
+            case eventsAPI:
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify(dummpyRegisterEvtsResponse));
+              break;
+            default:
+              res.writeHead(400);
+              res.end();
+              break;
+          }
+        });
       })
       .listen(port),
   };
