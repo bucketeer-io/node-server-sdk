@@ -3,7 +3,6 @@ import { EventStore } from './stores/EventStore';
 import { createSchedule, removeSchedule } from './schedule';
 import { GIT_REVISION } from './shared';
 import { Client, InvalidStatusError } from './api/client';
-import { lengthInUtf8Bytes } from './utils/byte';
 import { Config, defaultConfig } from './config';
 import { createDefaultEvaluationEvent, createEvaluationEvent } from './objects/evaluationEvent';
 import { createGoalEvent } from './objects/goalEvent';
