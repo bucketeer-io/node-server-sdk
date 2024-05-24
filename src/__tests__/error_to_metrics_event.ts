@@ -97,17 +97,6 @@ test('toErrorMetricsEvent returns correct event for InvalidStatusError with 5xx 
   });
 });
 
-test('toErrorMetricsEvent returns correct event for unknown status code', (t) => {
-  const error = new InvalidStatusError('Unknown Error', 999);
-  const tag = 'test-tag';
-  const apiId = ApiId.GET_EVALUATION;
-
-  const expectedEvent = createUnknownErrorMetricsEvent(tag, apiId, 999, 'Unknown Error').event;
-  const actualEvent = toErrorMetricsEvent(error, tag, apiId).event;
-
-  t.deepEqual(actualEvent, expectedEvent);
-});
-
 test('toErrorMetricsEvent returns correct event for node error ECONNRESET', (t) => {
   const error = createNodeJSError('Connection reset by peer', 'ECONNRESET');
   error.code = 'ECONNRESET';
@@ -126,6 +115,17 @@ test('toErrorMetricsEvent returns correct event for node error ECONNREFUSED', (t
   const apiId = ApiId.GET_EVALUATION;
 
   const expectedEvent = createNetworkErrorMetricsEvent(tag, apiId).event;
+  const actualEvent = toErrorMetricsEvent(error, tag, apiId).event;
+
+  t.deepEqual(actualEvent, expectedEvent);
+});
+
+test('toErrorMetricsEvent returns correct event for unknown status code', (t) => {
+  const error = new InvalidStatusError('Unknown Error', 999);
+  const tag = 'test-tag';
+  const apiId = ApiId.GET_EVALUATION;
+
+  const expectedEvent = createUnknownErrorMetricsEvent(tag, apiId, 999, 'Unknown Error').event;
   const actualEvent = toErrorMetricsEvent(error, tag, apiId).event;
 
   t.deepEqual(actualEvent, expectedEvent);
