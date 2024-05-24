@@ -14,11 +14,11 @@ import {
   createTimeoutErrorMetricsEvent,
   createNetworkErrorMetricsEvent,
   createUnknownErrorMetricsEvent,
+  toErrorMetricsEvent,
 } from './objects/metricsEvent';
 import { Evaluation } from './objects/evaluation';
 import { Event } from './objects/event';
 import { GetEvaluationResponse } from './objects/response';
-import typeUtils from 'node:util/types';
 import { ApiId, NodeApiIds } from './objects/apiId';
 import {
   createBadRequestErrorMetricsEvent,
@@ -26,6 +26,8 @@ import {
   createForbiddenErrorMetricsEvent,
   createInternalServerErrorMetricsEvent,
   createNotFoundErrorMetricsEvent,
+  createPayloadTooLargeErrorMetricsEvent,
+  createRedirectRequestErrorMetricsEvent,
   createServiceUnavailableErrorMetricsEvent,
   createUnauthorizedErrorMetricsEvent,
 } from './objects/status';
@@ -170,113 +172,10 @@ export function initialize(config: Config): Bucketeer {
     registerEvents();
   }
 
-  function saveInternalSdkErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
-    eventStore.add(createInternalSdkErrorMetricsEvent(tag, apiId));
-    registerEvents();
-  }
-
-  function saveTimeoutErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
-    eventStore.add(createTimeoutErrorMetricsEvent(tag, apiId));
-    registerEvents();
-  }
-
-  function saveNetworkErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
-    eventStore.add(createNetworkErrorMetricsEvent(tag, apiId));
-    registerEvents();
-  }
-
-  function saveBadRequestErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
-    eventStore.add(createBadRequestErrorMetricsEvent(tag, apiId));
-    registerEvents();
-  }
-
-  function saveUnauthorizedErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
-    eventStore.add(createUnauthorizedErrorMetricsEvent(tag, apiId));
-    registerEvents();
-  }
-
-  function saveForbiddenErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
-    eventStore.add(createForbiddenErrorMetricsEvent(tag, apiId));
-    registerEvents();
-  }
-
-  function saveNotFoundErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
-    eventStore.add(createNotFoundErrorMetricsEvent(tag, apiId));
-    registerEvents();
-  }
-
-  function saveClientClosedRequestErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
-    eventStore.add(createClientClosedRequestErrorMetricsEvent(tag, apiId));
-    registerEvents();
-  }
-
-  function saveInternalServerErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
-    eventStore.add(createInternalServerErrorMetricsEvent(tag, apiId));
-    registerEvents();
-  }
-
-  function saveServiceUnavailableErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
-    eventStore.add(createServiceUnavailableErrorMetricsEvent(tag, apiId));
-    registerEvents();
-  }
-
-  function saveUnknownErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
-    eventStore.add(createUnknownErrorMetricsEvent(tag, apiId));
-    registerEvents();
-  }
-
-  function isNodeError(error: unknown): error is NodeJS.ErrnoException {
-    return typeUtils.isNativeError(error);
-  }
-
   function saveErrorMetricsEvent(e: any, apiId: NodeApiIds) {
-    if (e instanceof InvalidStatusError) {
-      switch (e.code) {
-        case 400:
-          saveBadRequestErrorMetricsEvent(tag, apiId);
-          break;
-        case 401:
-          saveUnauthorizedErrorMetricsEvent(tag, apiId);
-          break;
-        case 403:
-          saveForbiddenErrorMetricsEvent(tag, apiId);
-          break;
-        case 404:
-          saveNotFoundErrorMetricsEvent(tag, apiId);
-          break;
-        case 499:
-          saveClientClosedRequestErrorMetricsEvent(tag, apiId);
-          break;
-        case 500:
-          saveInternalServerErrorMetricsEvent(tag, apiId);
-          break;
-        case 503:
-          saveServiceUnavailableErrorMetricsEvent(tag, apiId);
-          break;
-        case 504:
-          saveTimeoutErrorMetricsEvent(tag, apiId);
-          break;
-        default:
-          saveUnknownErrorMetricsEvent(tag, apiId);
-          break;
-      }
-      return;
-    }
-    if (isNodeError(e)) {
-      switch (e.code) {
-        case 'ECONNRESET':
-          saveTimeoutErrorMetricsEvent(tag, apiId);
-          break;
-        case 'EHOSTUNREACH':
-        case 'ECONNREFUSED':
-          saveNetworkErrorMetricsEvent(tag, apiId);
-          break;
-        default:
-          saveInternalSdkErrorMetricsEvent(tag, apiId);
-          break;
-      }
-      return;
-    }
+    const event = toErrorMetricsEvent(e, tag, apiId);
+    eventStore.add(event);
+    registerEvents();
   }
 
   return {
