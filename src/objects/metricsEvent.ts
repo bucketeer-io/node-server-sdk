@@ -8,6 +8,7 @@ import {
   createBadRequestErrorMetricsEvent,
   createClientClosedRequestErrorMetricsEvent,
   createForbiddenErrorMetricsEvent,
+  createInternalServerErrorMetricsEvent,
   createNotFoundErrorMetricsEvent,
   createPayloadTooLargeErrorMetricsEvent,
   createRedirectRequestErrorMetricsEvent,
@@ -210,7 +211,7 @@ export const toErrorMetricsEvent = (e: any, tag: string, apiId: NodeApiIds): Eve
       case statusCode == 499:
         return createClientClosedRequestErrorMetricsEvent(tag, apiId);
       case statusCode == 500:
-        return createInternalSdkErrorMetricsEvent(tag, apiId);
+        return createInternalServerErrorMetricsEvent(tag, apiId);
       case [502, 503, 504].includes(statusCode):
         return createServiceUnavailableErrorMetricsEvent(tag, apiId);
       default:

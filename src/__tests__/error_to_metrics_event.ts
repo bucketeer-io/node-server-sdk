@@ -9,6 +9,7 @@ import {
 import { ApiId } from '../objects/apiId';
 import {
   createBadRequestErrorMetricsEvent,
+  createInternalServerErrorMetricsEvent,
   createNotFoundErrorMetricsEvent,
   createPayloadTooLargeErrorMetricsEvent,
   createServiceUnavailableErrorMetricsEvent,
@@ -76,21 +77,24 @@ test('toErrorMetricsEvent returns correct event for InvalidStatusError with 500 
   const tag = 'test-tag';
   const apiId = ApiId.GET_EVALUATION;
 
-  const expectedEvent = createInternalSdkErrorMetricsEvent(tag, apiId).event;
+  const expectedEvent = createInternalServerErrorMetricsEvent(tag, apiId).event;
   const actualEvent = toErrorMetricsEvent(error, tag, apiId).event;
 
   t.deepEqual(actualEvent, expectedEvent);
 });
 
-test('toErrorMetricsEvent returns correct event for InvalidStatusError with 503 status code', (t) => {
-  const error = new InvalidStatusError('Service Unavailable', 503);
-  const tag = 'test-tag';
-  const apiId = ApiId.GET_EVALUATION;
+test('toErrorMetricsEvent returns correct event for InvalidStatusError with 5xx ServiceUnavailableCodes status code', (t) => {
+  const serviceUnavailableCodes = [502, 503, 504];
+  serviceUnavailableCodes.forEach((element) => {
+    const error = new InvalidStatusError('Service Unavailable', element);
+    const tag = 'test-tag';
+    const apiId = ApiId.GET_EVALUATION;
 
-  const expectedEvent = createServiceUnavailableErrorMetricsEvent(tag, apiId).event;
-  const actualEvent = toErrorMetricsEvent(error, tag, apiId).event;
+    const expectedEvent = createServiceUnavailableErrorMetricsEvent(tag, apiId).event;
+    const actualEvent = toErrorMetricsEvent(error, tag, apiId).event;
 
-  t.deepEqual(actualEvent, expectedEvent);
+    t.deepEqual(actualEvent, expectedEvent);
+  });
 });
 
 test('toErrorMetricsEvent returns correct event for unknown status code', (t) => {
