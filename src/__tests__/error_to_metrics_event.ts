@@ -105,7 +105,7 @@ test('toErrorMetricsEvent returns correct event for unknown status code', (t) =>
 });
 
 test('toErrorMetricsEvent returns correct event for node error ECONNRESET', (t) => {
-  const error = createErrnoException('Connection reset by peer', 'ECONNRESET');
+  const error = createNodeJSError('Connection reset by peer', 'ECONNRESET');
   error.code = 'ECONNRESET';
   const tag = 'test-tag';
   const apiId = ApiId.GET_EVALUATION;
@@ -117,7 +117,7 @@ test('toErrorMetricsEvent returns correct event for node error ECONNRESET', (t) 
 });
 
 test('toErrorMetricsEvent returns correct event for node error ECONNREFUSED', (t) => {
-  const error = createErrnoException('Connection refused', 'ECONNREFUSED');
+  const error = createNodeJSError('Connection refused', 'ECONNREFUSED');
   const tag = 'test-tag';
   const apiId = ApiId.GET_EVALUATION;
 
@@ -143,17 +143,16 @@ test('toErrorMetricsEvent returns correct event for unknown error', (t) => {
   t.deepEqual(actualEvent, expectedEvent);
 });
 
-class MyError extends Error {
+class CustomError extends Error {
   code: string;
 
   constructor(message: string, code: string) {
     super(message);
-    this.name = 'MyError';
+    this.name = 'CustomError';
     this.code = code;
-    Object.setPrototypeOf(this, MyError.prototype);
   }
 }
 
-function createErrnoException(message: string, code: string): MyError {
-  return new MyError(message, code);
+function createNodeJSError(message: string, code: string): CustomError {
+  return new CustomError(message, code);
 }

@@ -176,7 +176,7 @@ export function createUnknownErrorMetricsEvent(
   if (statusCode !== undefined) {
     unknownErrorMetricsEvent.labels.response_code = statusCode.toString();
   }
-  if (errorMessage != undefined && errorMessage.length > 0) {
+  if (errorMessage !== undefined && errorMessage.length > 0) {
     unknownErrorMetricsEvent.labels.error_message = errorMessage;
   }
   const metricsEvent = createMetricsEvent(unknownErrorMetricsEvent);
