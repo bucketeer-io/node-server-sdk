@@ -174,10 +174,8 @@ export function initialize(config: Config): Bucketeer {
 
   function saveErrorMetricsEvent(e: any, apiId: NodeApiIds) {
     const event = toErrorMetricsEvent(e, tag, apiId);
-    if (event !== undefined) {
-      eventStore.add(event);
-      registerEvents();
-    }
+    eventStore.add(event);
+    registerEvents();
   }
 
   return {
