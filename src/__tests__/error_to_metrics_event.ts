@@ -147,6 +147,17 @@ test('toErrorMetricsEvent returns correct event for unknown error', (t) => {
   t.deepEqual(actualEvent, expectedEvent);
 });
 
+test('toErrorMetricsEvent returns correct event for unknown object', (t) => {
+  const error = new Object();
+  const tag = 'test-tag';
+  const apiId = ApiId.GET_EVALUATION;
+
+  const expectedEvent = createUnknownErrorMetricsEvent(tag, apiId, undefined, undefined).event;
+  const actualEvent = toErrorMetricsEvent(error, tag, apiId).event;
+
+  t.deepEqual(actualEvent, expectedEvent);
+});
+
 class CustomError extends Error {
   code: string;
 

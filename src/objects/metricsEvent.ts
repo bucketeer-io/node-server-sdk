@@ -229,7 +229,7 @@ export const toErrorMetricsEvent = (e: any, tag: string, apiId: NodeApiIds): Eve
         return createUnknownErrorMetricsEvent(tag, apiId, undefined, e.message);
     }
   }
-  return createUnknownErrorMetricsEvent(tag, apiId, undefined, e.message);
+  return createUnknownErrorMetricsEvent(tag, apiId, undefined, undefined);
 };
 
 function isNodeError(error: unknown): error is NodeJS.ErrnoException {
