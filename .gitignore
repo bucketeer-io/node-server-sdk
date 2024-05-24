@@ -8,3 +8,4 @@ __lib
 __test
 __e2e
 lib
+.vscode/launch.json

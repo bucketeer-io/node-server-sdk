@@ -12,5 +12,5 @@
     "preserveConstEnums": true,
     "esModuleInterop": true,
     "outDir": "__build"
-  }
+  },
 }
