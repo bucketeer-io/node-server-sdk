@@ -20,12 +20,27 @@ test.beforeEach((t) => {
 
 
 test('goal event', async (t) => {
-    const { bktClient, targetedUser } = t.context;
-    t.is(await bktClient.getBoolVariation(targetedUser, FEATURE_ID_BOOLEAN, true), false);
-    bktClient.track(targetedUser, GOAL_ID, GOAL_VALUE)
-    const bktClientImpl = bktClient as BKTClientImpl
-    const events = bktClientImpl.eventStore.getAll()
+  const { bktClient, targetedUser } = t.context;
+  t.is(await bktClient.getBoolVariation(targetedUser, FEATURE_ID_BOOLEAN, true), false);
+  bktClient.track(targetedUser, GOAL_ID, GOAL_VALUE)
+  const bktClientImpl = bktClient as BKTClientImpl
+  const events = bktClientImpl.eventStore.getAll()
   // EvaluationEvent, Metrics Event - Latency, Metrics Event - Metrics Size, Goal Event
-    t.is(events.length, 4);
-    t.true(events.some((e) => (isGoalEvent(e.event))))
-  });
+  t.is(events.length, 4);
+  t.true(events.some((e: { event: any; }) => (isGoalEvent(e.event))))
+});
+
+test('default evaluation event', async (t) => {
+  const { bktClient, targetedUser } = t.context;
+  t.is(await bktClient.getBoolVariation(targetedUser, FEATURE_ID_BOOLEAN, true), false);
+  t.deepEqual(await bktClient.getJsonVariation(targetedUser, FEATURE_ID_JSON, {}), { "str": "str2", "int": "int2" });
+  t.is(await bktClient.getNumberVariation(targetedUser, FEATURE_ID_INT, 0), 20);
+  t.is(await bktClient.getNumberVariation(targetedUser, FEATURE_ID_FLOAT, 0.0), 3.1);
+  t.is(await bktClient.getStringVariation(targetedUser, FEATURE_ID_STRING, ''), 'value-2');
+  const bktClientImpl = bktClient as BKTClientImpl
+  const events = bktClientImpl.eventStore.getAll()
+  // (EvaluationEvent, Metrics Event - Latency, Metrics Event - Metrics Size, Goal Event) x 5
+  t.is(events.length, 15);
+  t.true(events.some((e: { event: any; }) => (isGoalEvent(e.event))));
+  t.true(events.some((e: { event: any; }) => (isGoalEvent(e.event))));
+});

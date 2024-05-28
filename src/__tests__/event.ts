@@ -9,6 +9,7 @@ import {
   EvaluationEvent,
   createEvaluationEvent,
   createDefaultEvaluationEvent,
+  isEvaluationEvent,
 } from '../objects/evaluationEvent';
 import {
   createInternalSdkErrorMetricsEvent,
@@ -22,9 +23,12 @@ import {
   MetricsEvent,
   createUnknownErrorMetricsEvent,
   createNetworkErrorMetricsEvent,
+  isMetricsEvent,
+  createMetricsEvent,
 } from '../objects/metricsEvent';
 import { ApiId } from '../objects/apiId';
 import {
+  RedirectRequestErrorMetricsEvent,
   createBadRequestErrorMetricsEvent,
   createClientClosedRequestErrorMetricsEvent,
   createForbiddenErrorMetricsEvent,
@@ -164,7 +168,48 @@ test('createEvaluationEvent', (t) => {
     variationValue,
   };
   const actual = createEvaluationEvent(tag, user, evaluation);
+  t.true(isEvaluationEvent(actual.event));
   t.deepEqual(actual.event, evaluationEvent);
+});
+
+test('isEvaluationEvent', (t) => {
+  const evaluationEvent: EvaluationEvent = {
+    tag,
+    user,
+    timestamp: createTimestamp(),
+    featureId,
+    featureVersion,
+    userId,
+    variationId,
+    sourceId,
+    reason,
+    '@type': EVALUATION_EVENT_NAME,
+    sdkVersion,
+    metadata,
+  };
+  const getEvaluationLatencyMetricsEvent: LatencyMetricsEvent = {
+    apiId,
+    latencySecond: second,
+    labels: {
+      tag,
+    },
+    '@type': LATENCY_METRICS_EVENT_NAME,
+  };
+  const goalEvent: GoalEvent = {
+    tag,
+    goalId,
+    user,
+    value,
+    sourceId,
+    timestamp: createTimestamp(),
+    userId,
+    sdkVersion,
+    metadata,
+    '@type': GOAL_EVENT_NAME,
+  };
+  t.true(isEvaluationEvent(evaluationEvent));
+  t.false(isEvaluationEvent(goalEvent));
+  t.false(isEvaluationEvent(getEvaluationLatencyMetricsEvent));
 });
 
 test('createDefaultEvaluationEvent', (t) => {
@@ -202,6 +247,72 @@ test('createLatencyMetricsEvent', (t) => {
   t.is(metrics.sdkVersion, version);
   t.deepEqual(metrics.metadata, {});
   t.deepEqual(metrics.event, getEvaluationLatencyMetricsEvent);
+  t.true(isMetricsEvent(metrics));
+});
+
+test('isMetricsEvent', (t) => {
+  const evaluationEvent: EvaluationEvent = {
+    tag,
+    user,
+    timestamp: createTimestamp(),
+    featureId,
+    featureVersion,
+    userId,
+    variationId,
+    sourceId,
+    reason,
+    '@type': EVALUATION_EVENT_NAME,
+    sdkVersion,
+    metadata,
+  };
+  const goalEvent: GoalEvent = {
+    tag,
+    goalId,
+    user,
+    value,
+    sourceId,
+    timestamp: createTimestamp(),
+    userId,
+    sdkVersion,
+    metadata,
+    '@type': GOAL_EVENT_NAME,
+  };
+  const getEvaluationLatencyMetricsEvent: LatencyMetricsEvent = {
+    apiId,
+    latencySecond: second,
+    labels: {
+      tag,
+    },
+    '@type': LATENCY_METRICS_EVENT_NAME,
+  };
+
+  const timeoutErrorMetricsEvent: TimeoutErrorMetricsEvent = {
+    apiId,
+    labels: {
+      tag,
+    },
+    '@type': TIMEOUT_ERROR_METRICS_EVENT_NAME,
+  };
+
+  const redirectRequestErrorMetricsEvent: RedirectRequestErrorMetricsEvent = {
+    apiId,
+    labels: {
+      tag,
+      response_code: '301',
+    },
+    '@type': REDIRECT_REQUEST_ERROR_METRICS_EVENT_NAME,
+  };
+
+  const successMetrics = createMetricsEvent(getEvaluationLatencyMetricsEvent);
+  const errorMetrics = createMetricsEvent(timeoutErrorMetricsEvent);
+  const statusMetrics = createMetricsEvent(redirectRequestErrorMetricsEvent);
+
+  t.true(isMetricsEvent(successMetrics));
+  t.true(isMetricsEvent(errorMetrics));
+  t.true(isMetricsEvent(statusMetrics));
+
+  t.false(isMetricsEvent(goalEvent));
+  t.false(isMetricsEvent(evaluationEvent));
 });
 
 test('createSizeMetricsEvent', (t) => {

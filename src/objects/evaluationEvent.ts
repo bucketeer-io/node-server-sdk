@@ -60,3 +60,38 @@ export function createDefaultEvaluationEvent(tag: string, user: User, featureId:
   };
   return createEvent(evaluationEvent);
 }
+
+export function isEvaluationEvent(obj: any): obj is EvaluationEvent {
+  const isObject = typeof obj === 'object' && obj !== null;
+  const hasTimestamp = typeof obj.timestamp === 'number';
+  const hasFeatureId = typeof obj.featureId === 'string';
+  const hasFeatureVersion = typeof obj.featureVersion === 'number';
+  const hasUserId = typeof obj.userId === 'string';
+  const hasVariationId = typeof obj.variationId === 'string';
+  const hasUser = obj.user === undefined || typeof obj.user === 'object';
+  const hasReason = obj.reason === undefined || typeof obj.reason === 'object';
+  const hasTag = typeof obj.tag === 'string';
+  const hasSourceId = obj.sourceId === SourceId.NODE_SERVER;
+  const hasSdkVersion = typeof obj.sdkVersion === 'string';
+  const hasMetadata = typeof obj.metadata === 'object' && obj.metadata !== null;
+  const hasValidMetadata =
+    hasMetadata && Object.values(obj.metadata).every((value) => typeof value === 'string');
+  const hasCorrectType = obj['@type'] === EVALUATION_EVENT_NAME;
+
+  return (
+    isObject &&
+    hasTimestamp &&
+    hasFeatureId &&
+    hasFeatureVersion &&
+    hasUserId &&
+    hasVariationId &&
+    hasUser &&
+    hasReason &&
+    hasTag &&
+    hasSourceId &&
+    hasSdkVersion &&
+    hasMetadata &&
+    hasValidMetadata &&
+    hasCorrectType
+  );
+}

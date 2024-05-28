@@ -235,3 +235,26 @@ export const toErrorMetricsEvent = (e: any, tag: string, apiId: NodeApiIds): Eve
 function isNodeError(error: unknown): error is NodeJS.ErrnoException {
   return typeUtils.isNativeError(error);
 }
+
+export function isMetricsEvent(obj: any): obj is MetricsEvent {
+  const isObject = typeof obj === 'object' && obj !== null;
+  const hasTimestamp = typeof obj.timestamp === 'number';
+  const hasEvent = obj.event !== undefined;
+  const hasSourceId = obj.sourceId === SourceId.NODE_SERVER;
+  const hasSdkVersion = typeof obj.sdkVersion === 'string';
+  const hasMetadata = typeof obj.metadata === 'object' && obj.metadata !== null;
+  const hasValidMetadata =
+    hasMetadata && Object.values(obj.metadata).every((value) => typeof value === 'string');
+  const hasCorrectType = obj['@type'] === METRICS_EVENT_NAME;
+
+  return (
+    isObject &&
+    hasTimestamp &&
+    hasEvent &&
+    hasSourceId &&
+    hasSdkVersion &&
+    hasMetadata &&
+    hasValidMetadata &&
+    hasCorrectType
+  );
+}
