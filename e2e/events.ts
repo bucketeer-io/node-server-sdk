@@ -3,6 +3,8 @@ import { Bucketeer, DefaultLogger, User, initialize } from '../lib';
 import { HOST, TOKEN, FEATURE_TAG, TARGETED_USER_ID, FEATURE_ID_BOOLEAN, FEATURE_ID_STRING, FEATURE_ID_INT, FEATURE_ID_JSON, FEATURE_ID_FLOAT, GOAL_ID, GOAL_VALUE } from './constants/constants';
 import { BKTClientImpl } from '../lib';
 import { isGoalEvent } from '../lib/objects/goalEvent';
+import { isMetricsEvent } from '../lib/objects/metricsEvent';
+import { isEvaluationEvent } from '../lib/objects/evaluationEvent';
 
 const test = anyTest as TestFn<{ bktClient: Bucketeer; targetedUser: User }>;
 
@@ -25,7 +27,7 @@ test('goal event', async (t) => {
   bktClient.track(targetedUser, GOAL_ID, GOAL_VALUE)
   const bktClientImpl = bktClient as BKTClientImpl
   const events = bktClientImpl.eventStore.getAll()
-  // EvaluationEvent, Metrics Event - Latency, Metrics Event - Metrics Size, Goal Event
+  // (EvaluationEvent, Metrics Event - Latency, Metrics Event - Metrics Size, Goal Event)
   t.is(events.length, 4);
   t.true(events.some((e: { event: any; }) => (isGoalEvent(e.event))))
 });
@@ -39,8 +41,8 @@ test('default evaluation event', async (t) => {
   t.is(await bktClient.getStringVariation(targetedUser, FEATURE_ID_STRING, ''), 'value-2');
   const bktClientImpl = bktClient as BKTClientImpl
   const events = bktClientImpl.eventStore.getAll()
-  // (EvaluationEvent, Metrics Event - Latency, Metrics Event - Metrics Size, Goal Event) x 5
+  // (EvaluationEvent, Metrics Event - Latency, Metrics Event - Metrics Size) x 5
   t.is(events.length, 15);
-  t.true(events.some((e: { event: any; }) => (isGoalEvent(e.event))));
-  t.true(events.some((e: { event: any; }) => (isGoalEvent(e.event))));
+  t.true(events.some((e) => (isEvaluationEvent(e.event))));
+  t.true(events.some((e) => (isMetricsEvent(e.event))));
 });

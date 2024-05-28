@@ -1,6 +1,15 @@
 import test from 'ava'
-import { initialize, DefaultLogger } from '../lib';
+import { initialize, DefaultLogger, BKTClientImpl } from '../lib';
 import { HOST, TOKEN, FEATURE_TAG, TARGETED_USER_ID, FEATURE_ID_BOOLEAN } from './constants/constants';
+import { MetricsEvent, isMetricsEvent } from '../lib/objects/metricsEvent';
+import { ApiId } from '../lib/objects/apiId';
+
+const FORBIDDEN_ERROR_METRICS_EVENT_NAME =
+  'type.googleapis.com/bucketeer.event.client.ForbiddenErrorMetricsEvent';
+const NOT_FOUND_ERROR_METRICS_EVENT_NAME =
+  'type.googleapis.com/bucketeer.event.client.NotFoundErrorMetricsEvent';
+const UNKNOWN_ERROR_METRICS_EVENT_NAME =
+  'type.googleapis.com/bucketeer.event.client.UnknownErrorMetricsEvent';
 
 //Note: This is different compared to other SDK clients.
 test('Using a random string in the api key setting should not throw exception', async (t) => {
@@ -58,4 +67,15 @@ test('Using a random string in the featureTag setting should affect api request'
   const result = await t.notThrowsAsync(bktClient.getBoolVariation(user, FEATURE_ID_BOOLEAN, true));
   // Can not load the evaluation (the correct value should be `false`, but we will received the default value `true`)
   t.true(result);
+
+  const bktClientImpl = bktClient as BKTClientImpl
+  const events = bktClientImpl.eventStore.getAll()
+  t.true(events.some((e) => {
+
+    if (isMetricsEvent(e.event)) {
+      const metrics = e.event as MetricsEvent
+      return metrics.event?.['@type'] === UNKNOWN_ERROR_METRICS_EVENT_NAME && metrics.event?.apiId === ApiId.GET_EVALUATION
+    }
+    return false;
+  }));
 });
