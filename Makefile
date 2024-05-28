@@ -56,6 +56,7 @@ e2e: copy-genfiles
 	rm -rf $(CURDIR)/__e2e
 	$(NPM_BIN_DIR)/babel e2e --extensions '.ts' --config-file "$(CURDIR)/babel-e2e.config.js" --out-dir "__e2e/__test__"
 	$(NPM_BIN_DIR)/babel lib --extensions '.mjs' --config-file "$(CURDIR)/babel-e2e.config.js" --out-dir "__e2e/lib"
+	cp package.json __e2e
 	$(NPM_BIN_DIR)/ava --config ava-e2e.config.mjs
 
 .PHONY: fmt

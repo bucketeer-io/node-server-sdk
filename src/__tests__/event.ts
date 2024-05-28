@@ -20,8 +20,21 @@ import {
   InternalSdkErrorMetricsEvent,
   TimeoutErrorMetricsEvent,
   MetricsEvent,
+  createUnknownErrorMetricsEvent,
+  createNetworkErrorMetricsEvent,
 } from '../objects/metricsEvent';
 import { ApiId } from '../objects/apiId';
+import {
+  createBadRequestErrorMetricsEvent,
+  createClientClosedRequestErrorMetricsEvent,
+  createForbiddenErrorMetricsEvent,
+  createInternalServerErrorMetricsEvent,
+  createNotFoundErrorMetricsEvent,
+  createPayloadTooLargeErrorMetricsEvent,
+  createRedirectRequestErrorMetricsEvent,
+  createServiceUnavailableErrorMetricsEvent,
+  createUnauthorizedErrorMetricsEvent,
+} from '../objects/status';
 
 const version: string = require('../../package.json').version;
 
@@ -34,6 +47,28 @@ const INTERNAL_SDK_ERROR_METRICS_EVENT_NAME =
   'type.googleapis.com/bucketeer.event.client.InternalSdkErrorMetricsEvent';
 const TIMEOUT_ERROR_METRICS_EVENT_NAME =
   'type.googleapis.com/bucketeer.event.client.TimeoutErrorMetricsEvent';
+const BAD_REQUEST_ERROR_METRICS_EVENT_NAME =
+  'type.googleapis.com/bucketeer.event.client.BadRequestErrorMetricsEvent';
+const UNAUTHORIZED_ERROR_METRICS_EVENT_NAME =
+  'type.googleapis.com/bucketeer.event.client.UnauthorizedErrorMetricsEvent';
+const FORBIDDEN_ERROR_METRICS_EVENT_NAME =
+  'type.googleapis.com/bucketeer.event.client.ForbiddenErrorMetricsEvent';
+const NOT_FOUND_ERROR_METRICS_EVENT_NAME =
+  'type.googleapis.com/bucketeer.event.client.NotFoundErrorMetricsEvent';
+const CLIENT_CLOSED_REQUEST_ERROR_METRICS_EVENT_NAME =
+  'type.googleapis.com/bucketeer.event.client.ClientClosedRequestErrorMetricsEvent';
+const INTERNAL_SERVER_ERROR_METRICS_EVENT_NAME =
+  'type.googleapis.com/bucketeer.event.client.InternalServerErrorMetricsEvent';
+const SERVICE_UNAVAILABLE_ERROR_METRICS_EVENT_NAME =
+  'type.googleapis.com/bucketeer.event.client.ServiceUnavailableErrorMetricsEvent';
+const REDIRECT_REQUEST_ERROR_METRICS_EVENT_NAME =
+  'type.googleapis.com/bucketeer.event.client.RedirectionRequestExceptionEvent';
+const PAYLOAD_TOO_LARGE_ERROR_METRICS_EVENT_NAME =
+  'type.googleapis.com/bucketeer.event.client.PayloadTooLargeExceptionEvent';
+const NETWORK_ERROR_METRICS_EVENT_NAME =
+  'type.googleapis.com/bucketeer.event.client.NetworkErrorMetricsEvent';
+const UNKNOWN_ERROR_METRICS_EVENT_NAME =
+  'type.googleapis.com/bucketeer.event.client.UnknownErrorMetricsEvent';
 
 const tag = 'tag';
 const goalId = 'goalId';
@@ -133,6 +168,10 @@ test('createLatencyMetricsEvent', (t) => {
   };
   const actual = createLatencyMetricsEvent(tag, second, apiId);
   const metrics = actual.event as MetricsEvent;
+  t.is(metrics['@type'], METRICS_EVENT_NAME);
+  t.is(metrics.sourceId, SourceId.NODE_SERVER);
+  t.is(metrics.sdkVersion, version);
+  t.deepEqual(metrics.metadata, {});
   t.deepEqual(metrics.event, getEvaluationLatencyMetricsEvent);
 });
 
@@ -176,6 +215,157 @@ test('timeoutErrorMetricsEvent', (t) => {
   t.deepEqual(metrics.event, timeoutErrorMetricsEvent);
 });
 
-function convertMS(ms: number): string {
-  return (ms / 1000).toString() + 's';
-}
+test('createRedirectRequestErrorMetricsEvent', (t) => {
+  const redirectRequestErrorMetricsEvent = {
+    apiId,
+    labels: {
+      tag,
+      response_code: '301',
+    },
+    '@type': REDIRECT_REQUEST_ERROR_METRICS_EVENT_NAME,
+  };
+  const actual = createRedirectRequestErrorMetricsEvent(tag, apiId, 301);
+  const metrics = actual.event as MetricsEvent;
+  t.deepEqual(metrics.event, redirectRequestErrorMetricsEvent);
+});
+
+test('createPayloadTooLargeErrorMetricsEvent', (t) => {
+  const payloadTooLargeErrorMetricsEvent = {
+    apiId,
+    labels: {
+      tag,
+    },
+    '@type': PAYLOAD_TOO_LARGE_ERROR_METRICS_EVENT_NAME,
+  };
+  const actual = createPayloadTooLargeErrorMetricsEvent(tag, apiId);
+  const metrics = actual.event as MetricsEvent;
+  t.deepEqual(metrics.event, payloadTooLargeErrorMetricsEvent);
+});
+
+test('createForbiddenErrorMetricsEvent', (t) => {
+  const forbidenErrorMetricsEvent = {
+    apiId,
+    labels: {
+      tag,
+    },
+    '@type': FORBIDDEN_ERROR_METRICS_EVENT_NAME,
+  };
+  const actual = createForbiddenErrorMetricsEvent(tag, apiId);
+  const metrics = actual.event as MetricsEvent;
+  t.deepEqual(metrics.event, forbidenErrorMetricsEvent);
+});
+
+test('createNotFoundErrorMetricsEvent', (t) => {
+  const requestNotFoundErrorMetricsEvent = {
+    apiId,
+    labels: {
+      tag,
+    },
+    '@type': NOT_FOUND_ERROR_METRICS_EVENT_NAME,
+  };
+  const actual = createNotFoundErrorMetricsEvent(tag, apiId);
+  const metrics = actual.event as MetricsEvent;
+  t.deepEqual(metrics.event, requestNotFoundErrorMetricsEvent);
+});
+
+test('createServiceUnavailableErrorMetricsEvent', (t) => {
+  const serviceUnavailableErrorMetricsEvent = {
+    apiId,
+    labels: {
+      tag,
+    },
+    '@type': SERVICE_UNAVAILABLE_ERROR_METRICS_EVENT_NAME,
+  };
+  const actual = createServiceUnavailableErrorMetricsEvent(tag, apiId);
+  const metrics = actual.event as MetricsEvent;
+  t.deepEqual(metrics.event, serviceUnavailableErrorMetricsEvent);
+});
+
+test('createUnauthorizedErrorMetricsEvent', (t) => {
+  const unauthorizedErrorMetricsEvent = {
+    apiId,
+    labels: {
+      tag,
+    },
+    '@type': UNAUTHORIZED_ERROR_METRICS_EVENT_NAME,
+  };
+  const actual = createUnauthorizedErrorMetricsEvent(tag, apiId);
+  const metrics = actual.event as MetricsEvent;
+  t.deepEqual(metrics.event, unauthorizedErrorMetricsEvent);
+});
+
+test('createInternalServerErrorMetricsEvent', (t) => {
+  const internalServerErrorMetricsEvent = {
+    apiId,
+    labels: {
+      tag,
+    },
+    '@type': INTERNAL_SERVER_ERROR_METRICS_EVENT_NAME,
+  };
+  const actual = createInternalServerErrorMetricsEvent(tag, apiId);
+  const metrics = actual.event as MetricsEvent;
+  t.deepEqual(metrics.event, internalServerErrorMetricsEvent);
+});
+
+test('createClientClosedRequestErrorMetricsEvent', (t) => {
+  const clientClosedRequestErrorMetricsEvent = {
+    apiId,
+    labels: {
+      tag,
+    },
+    '@type': CLIENT_CLOSED_REQUEST_ERROR_METRICS_EVENT_NAME,
+  };
+  const actual = createClientClosedRequestErrorMetricsEvent(tag, apiId);
+  const metrics = actual.event as MetricsEvent;
+  t.deepEqual(metrics.event, clientClosedRequestErrorMetricsEvent);
+});
+
+test('createBadRequestErrorMetricsEvent', (t) => {
+  const badRequestErrorMetricsEvent = {
+    apiId,
+    labels: {
+      tag,
+    },
+    '@type': BAD_REQUEST_ERROR_METRICS_EVENT_NAME,
+  };
+  const actual = createBadRequestErrorMetricsEvent(tag, apiId);
+  const metrics = actual.event as MetricsEvent;
+  t.deepEqual(metrics.event, badRequestErrorMetricsEvent);
+});
+
+test('createNetworkErrorMetricsEvent', (t) => {
+  const expectedEvent = {
+    apiId,
+    labels: { tag },
+    '@type': NETWORK_ERROR_METRICS_EVENT_NAME,
+  };
+  const actual = createNetworkErrorMetricsEvent(tag, apiId);
+  const metrics = actual.event as MetricsEvent;
+  t.deepEqual(metrics.event, expectedEvent);
+});
+
+test('createUnknownErrorMetricsEvent without statusCode and errorMessage', (t) => {
+  const expectedEvent = {
+    apiId,
+    labels: { tag },
+    '@type': UNKNOWN_ERROR_METRICS_EVENT_NAME,
+  };
+  const actual = createUnknownErrorMetricsEvent(tag, apiId);
+  const metrics = actual.event as MetricsEvent;
+  t.deepEqual(metrics.event, expectedEvent);
+});
+
+test('createUnknownErrorMetricsEvent with statusCode and errorMessage', (t) => {
+  const expectedEvent = {
+    apiId,
+    labels: {
+      tag,
+      response_code: '599',
+      error_message: 'unknown error',
+    },
+    '@type': UNKNOWN_ERROR_METRICS_EVENT_NAME,
+  };
+  const actual = createUnknownErrorMetricsEvent(tag, apiId, 599, 'unknown error');
+  const metrics = actual.event as MetricsEvent;
+  t.deepEqual(metrics.event, expectedEvent);
+});

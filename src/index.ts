@@ -2,8 +2,7 @@ import { User } from './objects/user';
 import { EventStore } from './stores/EventStore';
 import { createSchedule, removeSchedule } from './schedule';
 import { GIT_REVISION } from './shared';
-import { Client, InvalidStatusError } from './api/client';
-import { lengthInUtf8Bytes } from './utils/byte';
+import { Client as APIClient, InvalidStatusError } from './api/client';
 import { Config, defaultConfig } from './config';
 import { createDefaultEvaluationEvent, createEvaluationEvent } from './objects/evaluationEvent';
 import { createGoalEvent } from './objects/goalEvent';
@@ -14,11 +13,11 @@ import {
   createTimeoutErrorMetricsEvent,
   createNetworkErrorMetricsEvent,
   createUnknownErrorMetricsEvent,
+  toErrorMetricsEvent,
 } from './objects/metricsEvent';
 import { Evaluation } from './objects/evaluation';
 import { Event } from './objects/event';
 import { GetEvaluationResponse } from './objects/response';
-import typeUtils from 'node:util/types';
 import { ApiId, NodeApiIds } from './objects/apiId';
 import {
   createBadRequestErrorMetricsEvent,
@@ -26,6 +25,8 @@ import {
   createForbiddenErrorMetricsEvent,
   createInternalServerErrorMetricsEvent,
   createNotFoundErrorMetricsEvent,
+  createPayloadTooLargeErrorMetricsEvent,
+  createRedirectRequestErrorMetricsEvent,
   createServiceUnavailableErrorMetricsEvent,
   createUnauthorizedErrorMetricsEvent,
 } from './objects/status';
@@ -111,7 +112,7 @@ export function initialize(config: Config): Bucketeer {
 }
 
 export class BKTClientImpl implements Bucketeer {
-  client: Client;
+  apiClient: APIClient;
   eventStore: EventStore;
   config: Config;
   registerEventsScheduleID: NodeJS.Timeout;
@@ -122,7 +123,7 @@ export class BKTClientImpl implements Bucketeer {
       ...config,
     };
 
-    this.client = new Client(this.config.host, this.config.token);
+    this.apiClient = new APIClient(this.config.host, this.config.token);
     this.eventStore = new EventStore();
     this.registerEventsScheduleID = createSchedule(() => {
       if (this.eventStore.size() > 0) {
@@ -144,8 +145,8 @@ export class BKTClientImpl implements Bucketeer {
   }
 
   callRegisterEvents(events: Array<Event>): void {
-    this.client.registerEvents(events).catch((e) => {
-      this.saveErrorMetricsEvent(e, ApiId.REGISTER_EVENTS);
+    this.apiClient.registerEvents(events).catch((e) => {
+      this.saveErrorMetricsEvent(this.config.tag, e, ApiId.REGISTER_EVENTS);
       this.config.logger?.warn('register events failed', e);
     });
   }
@@ -180,113 +181,10 @@ export class BKTClientImpl implements Bucketeer {
     this.registerEvents();
   }
 
-  saveInternalSdkErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
-    this.eventStore.add(createInternalSdkErrorMetricsEvent(tag, apiId));
+  saveErrorMetricsEvent(tag: string, e: any, apiId: NodeApiIds) {
+    const event = toErrorMetricsEvent(e, tag, apiId);
+    this.eventStore.add(event);
     this.registerEvents();
-  }
-
-  saveTimeoutErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
-    this.eventStore.add(createTimeoutErrorMetricsEvent(tag, apiId));
-    this.registerEvents();
-  }
-
-  saveNetworkErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
-    this.eventStore.add(createNetworkErrorMetricsEvent(tag, apiId));
-    this.registerEvents();
-  }
-
-  saveBadRequestErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
-    this.eventStore.add(createBadRequestErrorMetricsEvent(tag, apiId));
-    this.registerEvents();
-  }
-
-  saveUnauthorizedErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
-    this.eventStore.add(createUnauthorizedErrorMetricsEvent(tag, apiId));
-    this.registerEvents();
-  }
-
-  saveForbiddenErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
-    this.eventStore.add(createForbiddenErrorMetricsEvent(tag, apiId));
-    this.registerEvents();
-  }
-
-  saveNotFoundErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
-    this.eventStore.add(createNotFoundErrorMetricsEvent(tag, apiId));
-    this.registerEvents();
-  }
-
-  saveClientClosedRequestErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
-    this.eventStore.add(createClientClosedRequestErrorMetricsEvent(tag, apiId));
-    this.registerEvents();
-  }
-
-  saveInternalServerErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
-    this.eventStore.add(createInternalServerErrorMetricsEvent(tag, apiId));
-    this.registerEvents();
-  }
-
-  saveServiceUnavailableErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
-    this.eventStore.add(createServiceUnavailableErrorMetricsEvent(tag, apiId));
-    this.registerEvents();
-  }
-
-  saveUnknownErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
-    this.eventStore.add(createUnknownErrorMetricsEvent(tag, apiId));
-    this.registerEvents();
-  }
-
-  isNodeError(error: unknown): error is NodeJS.ErrnoException {
-    return typeUtils.isNativeError(error);
-  }
-
-  saveErrorMetricsEvent(e: any, apiId: NodeApiIds) {
-    if (e instanceof InvalidStatusError) {
-      switch (e.code) {
-        case 400:
-          this.saveBadRequestErrorMetricsEvent(this.config.tag, apiId);
-          break;
-        case 401:
-          this.saveUnauthorizedErrorMetricsEvent(this.config.tag, apiId);
-          break;
-        case 403:
-          this.saveForbiddenErrorMetricsEvent(this.config.tag, apiId);
-          break;
-        case 404:
-          this.saveNotFoundErrorMetricsEvent(this.config.tag, apiId);
-          break;
-        case 499:
-          this.saveClientClosedRequestErrorMetricsEvent(this.config.tag, apiId);
-          break;
-        case 500:
-          this.saveInternalServerErrorMetricsEvent(this.config.tag, apiId);
-          break;
-        case 503:
-          this.saveServiceUnavailableErrorMetricsEvent(this.config.tag, apiId);
-          break;
-        case 504:
-          this.saveTimeoutErrorMetricsEvent(this.config.tag, apiId);
-          break;
-        default:
-          this.saveUnknownErrorMetricsEvent(this.config.tag, apiId);
-          break;
-      }
-      return;
-    }
-    if (this.isNodeError(e)) {
-      switch (e.code) {
-        case 'ECONNRESET':
-          this.saveTimeoutErrorMetricsEvent(this.config.tag, apiId);
-          break;
-        case 'EHOSTUNREACH':
-        case 'ECONNREFUSED':
-          this.saveNetworkErrorMetricsEvent(this.config.tag, apiId);
-          break;
-        default:
-          this.saveInternalSdkErrorMetricsEvent(this.config.tag, apiId);
-          break;
-      }
-      return;
-    }
   }
 
   async getStringVariation(user: User, featureId: string, defaultValue: string): Promise<string> {
@@ -294,9 +192,9 @@ export class BKTClientImpl implements Bucketeer {
     let res: GetEvaluationResponse;
     let size: number;
     try {
-      [res, size] = await this.client.getEvaluation(this.config.tag, user, featureId);
+      [res, size] = await this.apiClient.getEvaluation(this.config.tag, user, featureId);
     } catch (error) {
-      this.saveErrorMetricsEvent(error, ApiId.GET_EVALUATION);
+      this.saveErrorMetricsEvent(this.config.tag, error, ApiId.GET_EVALUATION);
       this.saveDefaultEvaluationEvent(user, featureId);
       return defaultValue;
     }
@@ -349,7 +247,7 @@ export class BKTClientImpl implements Bucketeer {
   }
 
   async destroy(): Promise<void> {
-    await this.registerAllEvents();
+    this.registerAllEvents();
     removeSchedule(this.registerEventsScheduleID);
     this.config.logger?.info('destroy finished', this.registerEventsScheduleID);
   }

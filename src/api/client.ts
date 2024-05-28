@@ -4,6 +4,7 @@ import { Event } from '../objects/event';
 import { SourceId } from '../objects/sourceId';
 import { GetEvaluationRequest, RegisterEventsRequest } from '../objects/request';
 import { GetEvaluationResponse, RegisterEventsResponse } from '../objects/response';
+import { version } from '../objects/version';
 
 const scheme = 'https://';
 const evaluationAPI = '/get_evaluation';
@@ -28,6 +29,7 @@ export class Client {
       user,
       featureId,
       sourceId: SourceId.NODE_SERVER,
+      sdkVersion: version,
     };
     const chunk = JSON.stringify(req);
     const url = scheme.concat(this.host, evaluationAPI);
@@ -50,6 +52,8 @@ export class Client {
   registerEvents(events: Array<Event>): Promise<[RegisterEventsResponse, number]> {
     const req: RegisterEventsRequest = {
       events,
+      sdkVersion: version,
+      sourceId: SourceId.NODE_SERVER,
     };
     const chunk = JSON.stringify(req);
     const url = scheme.concat(this.host, eventsAPI);

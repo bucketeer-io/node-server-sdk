@@ -4,7 +4,7 @@ import { Event, createEvent } from './event';
 import { Reason, ReasonType } from './reason';
 import { SourceId } from './sourceId';
 import { User } from './user';
-const version: string = require('../../package.json').version;
+import { version } from './version';
 
 const EVALUATION_EVENT_NAME = 'type.googleapis.com/bucketeer.event.client.EvaluationEvent';
 
