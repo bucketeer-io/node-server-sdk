@@ -2,7 +2,7 @@ import test from 'ava';
 import { Evaluation } from '../objects/evaluation';
 import { SourceId } from '../objects/sourceId';
 import { ReasonType, Reason } from '../objects/reason';
-import { GoalEvent, createGoalEvent } from '../objects/goalEvent';
+import { GoalEvent, createGoalEvent, isGoalEvent } from '../objects/goalEvent';
 import { User } from '../objects/user';
 import { createTimestamp } from '../utils/time';
 import {
@@ -107,7 +107,36 @@ test('createGoalEvent', (t) => {
     '@type': GOAL_EVENT_NAME,
   };
   const actual = createGoalEvent(goalEvent.tag, goalEvent.goalId, user, goalEvent.value);
+  t.true(isGoalEvent(goalEvent));
+  t.true(isGoalEvent(actual.event));
   t.deepEqual(actual.event, goalEvent);
+});
+
+test('isGoalEvent', (t) => {
+  const evaluationEvent: EvaluationEvent = {
+    tag,
+    user,
+    timestamp: createTimestamp(),
+    featureId,
+    featureVersion,
+    userId,
+    variationId,
+    sourceId,
+    reason,
+    '@type': EVALUATION_EVENT_NAME,
+    sdkVersion,
+    metadata,
+  };
+  const getEvaluationLatencyMetricsEvent: LatencyMetricsEvent = {
+    apiId,
+    latencySecond: second,
+    labels: {
+      tag,
+    },
+    '@type': LATENCY_METRICS_EVENT_NAME,
+  };
+  t.false(isGoalEvent(evaluationEvent));
+  t.false(isGoalEvent(getEvaluationLatencyMetricsEvent));
 });
 
 test('createEvaluationEvent', (t) => {

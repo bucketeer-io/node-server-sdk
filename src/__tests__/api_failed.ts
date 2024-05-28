@@ -1,7 +1,7 @@
-import anyTest, { TestInterface } from 'ava';
+import anyTest, { TestFn } from 'ava';
 import https from 'https';
 import fs from 'fs';
-import { Client } from '../api/client';
+import { APIClient } from '../api/client';
 import { User } from '../bootstrap';
 import path from 'path';
 
@@ -10,7 +10,7 @@ const apiKey = '';
 const port = 9999;
 const host = `localhost:${port}`;
 
-const test = anyTest as TestInterface<{ server: https.Server }>;
+const test = anyTest as TestFn<{ server: https.Server }>;
 const projectRoot = path.join(__dirname, '..', '..');
 const serverKey = path.join(projectRoot, 'src', '__tests__', 'testdata', 'server.key');
 const serverCrt = path.join(projectRoot, 'src', '__tests__', 'testdata', 'server.crt');
@@ -40,7 +40,7 @@ test.after.always((t) => {
 });
 
 test('getEvaluation: 500', async (t) => {
-  const client = new Client(host, apiKey);
+  const client = new APIClient(host, apiKey);
   const user: User = {
     id: '',
     data: {
@@ -60,7 +60,7 @@ test('getEvaluation: 500', async (t) => {
 });
 
 test('registerEvents: 500', async (t) => {
-  const client = new Client(host, apiKey);
+  const client = new APIClient(host, apiKey);
   let err = '';
   try {
     await client.registerEvents([]);
