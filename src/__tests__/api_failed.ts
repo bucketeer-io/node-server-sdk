@@ -4,6 +4,7 @@ import fs from 'fs';
 import { APIClient } from '../api/client';
 import { User } from '../bootstrap';
 import path from 'path';
+import { InvalidStatusError } from '../api/client';
 
 const apiKey = '';
 
@@ -52,9 +53,11 @@ test('getEvaluation: 500', async (t) => {
   try {
     await client.getEvaluation('', user, '');
   } catch (error) {
+    t.true(error instanceof InvalidStatusError);
     err = error.message;
     code = error.code;
   }
+
   t.is(err, 'bucketeer/api: send HTTP request failed: 500');
   t.is(code, 500);
 });
@@ -65,6 +68,7 @@ test('registerEvents: 500', async (t) => {
   try {
     await client.registerEvents([]);
   } catch (error) {
+    t.true(error instanceof InvalidStatusError);
     err = error.message;
   }
   t.is(err, 'bucketeer/api: send HTTP request failed: 500');
