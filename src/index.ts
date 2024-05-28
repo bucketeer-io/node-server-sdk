@@ -2,35 +2,19 @@ import { User } from './objects/user';
 import { EventStore } from './stores/EventStore';
 import { createSchedule, removeSchedule } from './schedule';
 import { GIT_REVISION } from './shared';
-import { Client as APIClient, InvalidStatusError } from './api/client';
+import { APIClient } from './api/client';
 import { Config, defaultConfig } from './config';
 import { createDefaultEvaluationEvent, createEvaluationEvent } from './objects/evaluationEvent';
 import { createGoalEvent } from './objects/goalEvent';
 import {
   createLatencyMetricsEvent,
   createSizeMetricsEvent,
-  createInternalSdkErrorMetricsEvent,
-  createTimeoutErrorMetricsEvent,
-  createNetworkErrorMetricsEvent,
-  createUnknownErrorMetricsEvent,
   toErrorMetricsEvent,
 } from './objects/metricsEvent';
 import { Evaluation } from './objects/evaluation';
 import { Event } from './objects/event';
 import { GetEvaluationResponse } from './objects/response';
 import { ApiId, NodeApiIds } from './objects/apiId';
-import {
-  createBadRequestErrorMetricsEvent,
-  createClientClosedRequestErrorMetricsEvent,
-  createForbiddenErrorMetricsEvent,
-  createInternalServerErrorMetricsEvent,
-  createNotFoundErrorMetricsEvent,
-  createPayloadTooLargeErrorMetricsEvent,
-  createRedirectRequestErrorMetricsEvent,
-  createServiceUnavailableErrorMetricsEvent,
-  createUnauthorizedErrorMetricsEvent,
-} from './objects/status';
-import { Logger } from './logger';
 
 export interface BuildInfo {
   readonly GIT_REVISION: string;
