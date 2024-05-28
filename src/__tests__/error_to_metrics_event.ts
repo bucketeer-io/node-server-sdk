@@ -1,6 +1,5 @@
 import test from 'ava';
 import {
-  createInternalSdkErrorMetricsEvent,
   createTimeoutErrorMetricsEvent,
   createUnknownErrorMetricsEvent,
   createNetworkErrorMetricsEvent,

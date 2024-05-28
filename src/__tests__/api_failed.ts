@@ -1,16 +1,17 @@
-import anyTest, { TestInterface } from 'ava';
+import anyTest, { TestFn } from 'ava';
 import https from 'https';
 import fs from 'fs';
 import { Client } from '../api/client';
 import { User } from '../bootstrap';
 import path from 'path';
+import { InvalidStatusError } from '../api/client';
 
 const apiKey = '';
 
 const port = 9999;
 const host = `localhost:${port}`;
 
-const test = anyTest as TestInterface<{ server: https.Server }>;
+const test = anyTest as TestFn<{ server: https.Server }>;
 const projectRoot = path.join(__dirname, '..', '..');
 const serverKey = path.join(projectRoot, 'src', '__tests__', 'testdata', 'server.key');
 const serverCrt = path.join(projectRoot, 'src', '__tests__', 'testdata', 'server.crt');
@@ -52,9 +53,11 @@ test('getEvaluation: 500', async (t) => {
   try {
     await client.getEvaluation('', user, '');
   } catch (error) {
+    t.true(error instanceof InvalidStatusError);
     err = error.message;
     code = error.code;
   }
+
   t.is(err, 'bucketeer/api: send HTTP request failed: 500');
   t.is(code, 500);
 });
@@ -65,6 +68,7 @@ test('registerEvents: 500', async (t) => {
   try {
     await client.registerEvents([]);
   } catch (error) {
+    t.true(error instanceof InvalidStatusError);
     err = error.message;
   }
   t.is(err, 'bucketeer/api: send HTTP request failed: 500');

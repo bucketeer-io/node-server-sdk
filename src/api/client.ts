@@ -119,5 +119,7 @@ export class InvalidStatusError extends Error {
   constructor(message: string, code: number | undefined) {
     super(message);
     this.code = code;
+    // Set the prototype explicitly.
+    Object.setPrototypeOf(this, InvalidStatusError.prototype);
   }
 }
