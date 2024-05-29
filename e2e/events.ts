@@ -46,3 +46,9 @@ test('default evaluation event', async (t) => {
   t.true(events.some((e) => (isEvaluationEvent(e.event))));
   t.true(events.some((e) => (isMetricsEvent(e.event))));
 });
+
+test.afterEach(async (t) => {
+  const { bktClient } = t.context;
+  bktClient.destroy();
+});
+

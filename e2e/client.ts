@@ -35,6 +35,8 @@ test('Using a random string in the api key setting should not throw exception', 
     }
     return false;
   }));
+
+  bktClient.destroy()
 });
 
 test('altering featureTag should not affect api request', async (t) => {
@@ -52,6 +54,8 @@ test('altering featureTag should not affect api request', async (t) => {
 
   const resultAfterAlterAPIKey = await t.notThrowsAsync(bktClient.getBoolVariation(user, FEATURE_ID_BOOLEAN, false));
   t.true(resultAfterAlterAPIKey);
+
+  bktClient.destroy()
 });
 
 test('Altering the api key should not affect api request', async (t) => {
@@ -69,6 +73,8 @@ test('Altering the api key should not affect api request', async (t) => {
 
   const resultAfterAlterAPIKey = await t.notThrowsAsync(bktClient.getBoolVariation(user, FEATURE_ID_BOOLEAN, false));
   t.true(resultAfterAlterAPIKey);
+
+  bktClient.destroy()
 });
 
 //Note: There is a different compared to other SDK clients.
@@ -94,4 +100,6 @@ test('Using a random string in the featureTag setting should affect api request'
     }
     return false;
   }));
+
+  bktClient.destroy()
 });
