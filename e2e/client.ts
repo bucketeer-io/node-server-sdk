@@ -74,7 +74,7 @@ test('Using a random string in the featureTag setting should affect api request'
 
     if (isMetricsEvent(e.event)) {
       const metrics = e.event as MetricsEvent
-      return metrics.event?.['@type'] === UNKNOWN_ERROR_METRICS_EVENT_NAME && metrics.event?.apiId === ApiId.GET_EVALUATION
+      return metrics.event?.['@type'] === NOT_FOUND_ERROR_METRICS_EVENT_NAME && metrics.event?.apiId === ApiId.GET_EVALUATION
     }
     return false;
   }));
