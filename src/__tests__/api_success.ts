@@ -1,7 +1,7 @@
 import anyTest, { TestFn } from 'ava';
 import https from 'https';
 import fs from 'fs';
-import { Client } from '../api/client';
+import { APIClient } from '../api/client';
 import { User } from '../bootstrap';
 import path from 'path';
 import { v4 } from 'uuid';
@@ -89,7 +89,7 @@ test.after.always((t) => {
 });
 
 test('getEvaluation: success', async (t) => {
-  const client = new Client(host, apiKey);
+  const client = new APIClient(host, apiKey);
   const user: User = {
     id: '',
     data: {
@@ -101,7 +101,7 @@ test('getEvaluation: success', async (t) => {
 });
 
 test('registerEvents', async (t) => {
-  const client = new Client(host, apiKey);
+  const client = new APIClient(host, apiKey);
   const [res] = await client.registerEvents([]);
   t.is(res.errors.key.message, dummpyRegisterEvtsResponse.errors.key.message);
   t.is(res.errors.key.retriable, dummpyRegisterEvtsResponse.errors.key.retriable);

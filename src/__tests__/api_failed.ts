@@ -1,7 +1,7 @@
 import anyTest, { TestFn } from 'ava';
 import https from 'https';
 import fs from 'fs';
-import { Client } from '../api/client';
+import { APIClient } from '../api/client';
 import { User } from '../bootstrap';
 import path from 'path';
 import { InvalidStatusError } from '../api/client';
@@ -41,7 +41,7 @@ test.after.always((t) => {
 });
 
 test('getEvaluation: 500', async (t) => {
-  const client = new Client(host, apiKey);
+  const client = new APIClient(host, apiKey);
   const user: User = {
     id: '',
     data: {
@@ -63,7 +63,7 @@ test('getEvaluation: 500', async (t) => {
 });
 
 test('registerEvents: 500', async (t) => {
-  const client = new Client(host, apiKey);
+  const client = new APIClient(host, apiKey);
   let err = '';
   try {
     await client.registerEvents([]);

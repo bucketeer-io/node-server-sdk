@@ -2,12 +2,12 @@ import { ApiId, NodeApiIds } from './apiId';
 import { createEvent } from './event';
 import { createMetricsEvent } from './metricsEvent';
 
+const FORBIDDEN_ERROR_METRICS_EVENT_NAME =
+  'type.googleapis.com/bucketeer.event.client.ForbiddenErrorMetricsEvent';
 const BAD_REQUEST_ERROR_METRICS_EVENT_NAME =
   'type.googleapis.com/bucketeer.event.client.BadRequestErrorMetricsEvent';
 const UNAUTHORIZED_ERROR_METRICS_EVENT_NAME =
   'type.googleapis.com/bucketeer.event.client.UnauthorizedErrorMetricsEvent';
-const FORBIDDEN_ERROR_METRICS_EVENT_NAME =
-  'type.googleapis.com/bucketeer.event.client.ForbiddenErrorMetricsEvent';
 const NOT_FOUND_ERROR_METRICS_EVENT_NAME =
   'type.googleapis.com/bucketeer.event.client.NotFoundErrorMetricsEvent';
 const CLIENT_CLOSED_REQUEST_ERROR_METRICS_EVENT_NAME =

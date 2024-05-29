@@ -35,7 +35,7 @@ test('numberVariation', async (t) => {
 
 test('jsonVariation', async (t) => {
   const { bktClient, defaultUser } = t.context;
-  t.deepEqual(await bktClient.getJsonVariation(defaultUser, FEATURE_ID_JSON, {}),  {"str":"str1", "int": "int1"});
+  t.deepEqual(await bktClient.getJsonVariation(defaultUser, FEATURE_ID_JSON, {}), { "str": "str1", "int": "int1" });
 });
 
 test.afterEach(async (t) => {

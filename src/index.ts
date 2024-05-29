@@ -2,34 +2,19 @@ import { User } from './objects/user';
 import { EventStore } from './stores/EventStore';
 import { createSchedule, removeSchedule } from './schedule';
 import { GIT_REVISION } from './shared';
-import { Client, InvalidStatusError } from './api/client';
+import { APIClient } from './api/client';
 import { Config, defaultConfig } from './config';
 import { createDefaultEvaluationEvent, createEvaluationEvent } from './objects/evaluationEvent';
 import { createGoalEvent } from './objects/goalEvent';
 import {
   createLatencyMetricsEvent,
   createSizeMetricsEvent,
-  createInternalSdkErrorMetricsEvent,
-  createTimeoutErrorMetricsEvent,
-  createNetworkErrorMetricsEvent,
-  createUnknownErrorMetricsEvent,
   toErrorMetricsEvent,
 } from './objects/metricsEvent';
 import { Evaluation } from './objects/evaluation';
 import { Event } from './objects/event';
 import { GetEvaluationResponse } from './objects/response';
 import { ApiId, NodeApiIds } from './objects/apiId';
-import {
-  createBadRequestErrorMetricsEvent,
-  createClientClosedRequestErrorMetricsEvent,
-  createForbiddenErrorMetricsEvent,
-  createInternalServerErrorMetricsEvent,
-  createNotFoundErrorMetricsEvent,
-  createPayloadTooLargeErrorMetricsEvent,
-  createRedirectRequestErrorMetricsEvent,
-  createServiceUnavailableErrorMetricsEvent,
-  createUnauthorizedErrorMetricsEvent,
-} from './objects/status';
 
 export interface BuildInfo {
   readonly GIT_REVISION: string;
@@ -107,140 +92,153 @@ const COUNT_PER_REGISTER_EVENT = 100;
  * @returns Bucketeer SDK instance.
  */
 export function initialize(config: Config): Bucketeer {
-  const { host, token, tag, pollingIntervalForRegisterEvents, logger } = {
-    ...defaultConfig,
-    ...config,
-  };
+  return new BKTClientImpl(config);
+}
 
-  const client = new Client(host, token);
+export class BKTClientImpl implements Bucketeer {
+  apiClient: APIClient;
+  eventStore: EventStore;
+  config: Config;
+  registerEventsScheduleID: NodeJS.Timeout;
 
-  const eventStore = new EventStore();
+  constructor(config: Config) {
+    this.config = {
+      ...defaultConfig,
+      ...config,
+    };
 
-  function registerEvents(): void {
-    if (eventStore.size() >= COUNT_PER_REGISTER_EVENT) {
-      callRegisterEvents(eventStore.takeout(COUNT_PER_REGISTER_EVENT));
+    this.apiClient = new APIClient(this.config.host, this.config.token);
+    this.eventStore = new EventStore();
+    this.registerEventsScheduleID = createSchedule(() => {
+      if (this.eventStore.size() > 0) {
+        this.callRegisterEvents(this.eventStore.takeout(this.eventStore.size()));
+      }
+    }, this.config.pollingIntervalForRegisterEvents!);
+  }
+
+  registerEvents(): void {
+    if (this.eventStore.size() >= COUNT_PER_REGISTER_EVENT) {
+      this.callRegisterEvents(this.eventStore.takeout(COUNT_PER_REGISTER_EVENT));
     }
   }
 
-  function registerAllEvents(): void {
-    if (eventStore.size() > 0) {
-      callRegisterEvents(eventStore.getAll());
+  registerAllEvents(): void {
+    if (this.eventStore.size() > 0) {
+      this.callRegisterEvents(this.eventStore.getAll());
     }
   }
 
-  const registerEventsScheduleID = createSchedule(() => {
-    if (eventStore.size() > 0) {
-      callRegisterEvents(eventStore.takeout(eventStore.size()));
-    }
-  }, pollingIntervalForRegisterEvents);
-
-  function callRegisterEvents(events: Array<Event>): void {
-    client.registerEvents(events).catch((e) => {
-      saveErrorMetricsEvent(e, ApiId.REGISTER_EVENTS);
-      logger.warn('register events failed', e);
+  callRegisterEvents(events: Array<Event>): void {
+    this.apiClient.registerEvents(events).catch((e) => {
+      this.saveErrorMetricsEvent(this.config.tag, e, ApiId.REGISTER_EVENTS);
+      this.config.logger?.warn('register events failed', e);
     });
   }
 
-  function saveDefaultEvaluationEvent(user: User, featureId: string) {
-    eventStore.add(createDefaultEvaluationEvent(tag, user, featureId));
-    registerEvents();
+  saveDefaultEvaluationEvent(user: User, featureId: string) {
+    this.eventStore.add(createDefaultEvaluationEvent(this.config.tag, user, featureId));
+    this.registerEvents();
   }
 
-  function saveEvaluationEvent(user: User, evaluation: Evaluation) {
-    eventStore.add(createEvaluationEvent(tag, user, evaluation));
-    registerEvents();
+  saveEvaluationEvent(user: User, evaluation: Evaluation) {
+    this.eventStore.add(createEvaluationEvent(this.config.tag, user, evaluation));
+    this.registerEvents();
   }
 
-  function saveGoalEvent(user: User, goalId: string, value?: number) {
-    eventStore.add(createGoalEvent(tag, goalId, user, value ? value : 0));
-    registerEvents();
+  saveGoalEvent(user: User, goalId: string, value?: number) {
+    this.eventStore.add(createGoalEvent(this.config.tag, goalId, user, value ? value : 0));
+    this.registerEvents();
   }
 
-  function saveEvaluationMetricsEvent(tag: string, second: number, size: number) {
-    saveLatencyMetricsEvent(tag, second, ApiId.GET_EVALUATION);
-    saveSizeMetricsEvent(tag, size, ApiId.GET_EVALUATION);
+  saveEvaluationMetricsEvent(tag: string, second: number, size: number) {
+    this.saveLatencyMetricsEvent(tag, second, ApiId.GET_EVALUATION);
+    this.saveSizeMetricsEvent(tag, size, ApiId.GET_EVALUATION);
   }
 
-  function saveLatencyMetricsEvent(tag: string, second: number, apiId: NodeApiIds) {
-    eventStore.add(createLatencyMetricsEvent(tag, second, apiId));
-    registerEvents();
+  saveLatencyMetricsEvent(tag: string, second: number, apiId: NodeApiIds) {
+    this.eventStore.add(createLatencyMetricsEvent(tag, second, apiId));
+    this.registerEvents();
   }
 
-  function saveSizeMetricsEvent(tag: string, size: number, apiId: NodeApiIds) {
-    eventStore.add(createSizeMetricsEvent(tag, size, apiId));
-    registerEvents();
+  saveSizeMetricsEvent(tag: string, size: number, apiId: NodeApiIds) {
+    this.eventStore.add(createSizeMetricsEvent(tag, size, apiId));
+    this.registerEvents();
   }
 
-  function saveErrorMetricsEvent(e: any, apiId: NodeApiIds) {
+  saveErrorMetricsEvent(tag: string, e: any, apiId: NodeApiIds) {
     const event = toErrorMetricsEvent(e, tag, apiId);
-    eventStore.add(event);
-    registerEvents();
+    this.eventStore.add(event);
+    this.registerEvents();
   }
 
-  return {
-    async getStringVariation(user: User, featureId: string, defaultValue: string): Promise<string> {
-      const startTime: number = Date.now();
-      let res: GetEvaluationResponse;
-      let size: number;
-      try {
-        [res, size] = await client.getEvaluation(tag, user, featureId);
-      } catch (error) {
-        saveErrorMetricsEvent(error, ApiId.GET_EVALUATION);
-        saveDefaultEvaluationEvent(user, featureId);
+  async getStringVariation(user: User, featureId: string, defaultValue: string): Promise<string> {
+    const startTime: number = Date.now();
+    let res: GetEvaluationResponse;
+    let size: number;
+    try {
+      [res, size] = await this.apiClient.getEvaluation(this.config.tag, user, featureId);
+    } catch (error) {
+      this.saveErrorMetricsEvent(this.config.tag, error, ApiId.GET_EVALUATION);
+      this.saveDefaultEvaluationEvent(user, featureId);
+      return defaultValue;
+    }
+    const evaluation = res?.evaluation;
+    if (evaluation == null) {
+      this.saveDefaultEvaluationEvent(user, featureId);
+      return defaultValue;
+    }
+    const second = (Date.now() - startTime) / 1000;
+    this.saveEvaluationEvent(user, evaluation);
+    this.saveEvaluationMetricsEvent(this.config.tag, second, size);
+    return evaluation.variationValue;
+  }
+
+  async getBoolVariation(user: User, featureId: string, defaultValue: boolean): Promise<boolean> {
+    const valueStr = await this.getStringVariation(user, featureId, '');
+    switch (valueStr.toLowerCase()) {
+      case 'true':
+        return true;
+      case 'false':
+        return false;
+      default:
         return defaultValue;
-      }
-      const evaluation = res?.evaluation;
-      if (evaluation == null) {
-        saveDefaultEvaluationEvent(user, featureId);
-        return defaultValue;
-      }
-      const second = (Date.now() - startTime) / 1000;
-      saveEvaluationEvent(user, evaluation);
-      saveEvaluationMetricsEvent(tag, second, size);
-      return evaluation.variationValue;
-    },
-    async getBoolVariation(user: User, featureId: string, defaultValue: boolean): Promise<boolean> {
-      const valueStr = await this.getStringVariation(user, featureId, '');
-      switch (valueStr.toLowerCase()) {
-        case 'true':
-          return true;
-        case 'false':
-          return false;
-        default:
-          return defaultValue;
-      }
-    },
-    async getNumberVariation(user: User, featureId: string, defaultValue: number): Promise<number> {
-      const valueStr = await this.getStringVariation(user, featureId, '');
-      const value = parseFloat(valueStr);
-      if (isNaN(value)) {
-        logger.debug('getNumberVariation failed to parseFloat');
-        return defaultValue;
-      }
-      return value;
-    },
-    async getJsonVariation(user: User, featureId: string, defaultValue: object): Promise<object> {
-      const valueStr = await this.getStringVariation(user, featureId, '');
-      try {
-        return JSON.parse(valueStr);
-      } catch (e) {
-        logger.debug('getJsonVariation failed to parse', e);
-        return defaultValue;
-      }
-    },
-    track(user: User, goalId: string, value?: number): void {
-      logger.debug('track is called', goalId, value);
-      saveGoalEvent(user, goalId, value);
-    },
-    async destroy(): Promise<void> {
-      await registerAllEvents();
-      removeSchedule(registerEventsScheduleID);
-      logger.info('destroy finished', registerEventsScheduleID);
-    },
-    getBuildInfo(): BuildInfo {
-      return {
-        GIT_REVISION,
-      };
-    },
-  };
+    }
+  }
+
+  async getNumberVariation(user: User, featureId: string, defaultValue: number): Promise<number> {
+    const valueStr = await this.getStringVariation(user, featureId, '');
+    const value = parseFloat(valueStr);
+    if (isNaN(value)) {
+      this.config.logger?.debug('getNumberVariation failed to parseFloat');
+      return defaultValue;
+    }
+    return value;
+  }
+
+  async getJsonVariation(user: User, featureId: string, defaultValue: object): Promise<object> {
+    const valueStr = await this.getStringVariation(user, featureId, '');
+    try {
+      return JSON.parse(valueStr);
+    } catch (e) {
+      this.config.logger?.debug('getJsonVariation failed to parse', e);
+      return defaultValue;
+    }
+  }
+
+  track(user: User, goalId: string, value?: number): void {
+    this.config.logger?.debug('track is called', goalId, value);
+    this.saveGoalEvent(user, goalId, value);
+  }
+
+  async destroy(): Promise<void> {
+    this.registerAllEvents();
+    removeSchedule(this.registerEventsScheduleID);
+    this.config.logger?.info('destroy finished', this.registerEventsScheduleID);
+  }
+
+  getBuildInfo(): BuildInfo {
+    return {
+      GIT_REVISION,
+    };
+  }
 }

@@ -10,7 +10,7 @@ const scheme = 'https://';
 const evaluationAPI = '/get_evaluation';
 const eventsAPI = '/register_events';
 
-export class Client {
+export class APIClient {
   private readonly host: string;
   private readonly apiKey: string;
 

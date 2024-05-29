@@ -34,3 +34,34 @@ export type GoalEvent = {
   metadata: { [key: string]: string };
   '@type': typeof GOAL_EVENT_NAME;
 };
+
+export function isGoalEvent(obj: any): obj is GoalEvent {
+  const isObject = typeof obj === 'object' && obj !== null;
+  const hasTimestamp = typeof obj.timestamp === 'number';
+  const hasGoalId = typeof obj.goalId === 'string';
+  const hasUserId = typeof obj.userId === 'string';
+  const hasValue = typeof obj.value === 'number';
+  const hasUser = obj.user === undefined || typeof obj.user === 'object';
+  const hasTag = typeof obj.tag === 'string';
+  const hasSourceId = obj.sourceId === SourceId.NODE_SERVER;
+  const hasSdkVersion = typeof obj.sdkVersion === 'string';
+  const hasMetadata = typeof obj.metadata === 'object' && obj.metadata !== null;
+  const hasValidMetadata =
+    hasMetadata && Object.values(obj.metadata).every((value) => typeof value === 'string');
+  const hasCorrectType = obj['@type'] === GOAL_EVENT_NAME;
+
+  return (
+    isObject &&
+    hasTimestamp &&
+    hasGoalId &&
+    hasUserId &&
+    hasValue &&
+    hasUser &&
+    hasTag &&
+    hasSourceId &&
+    hasSdkVersion &&
+    hasMetadata &&
+    hasValidMetadata &&
+    hasCorrectType
+  );
+}
