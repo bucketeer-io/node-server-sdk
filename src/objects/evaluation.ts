@@ -6,6 +6,7 @@ export type Evaluation = {
   featureVersion: number;
   userId: string;
   variationId: string;
+  variationName: string;
   reason?: Reason;
   variationValue: string;
 };

@@ -58,7 +58,7 @@ const html = ({ label }: { label: string }) => `
 
 const controller = (_: express.Request, res: express.Response, next: express.NextFunction) => {
   (async () => {
-    const label = await bucketeer.getStringVariation(
+    const label = await bucketeer.stringVariation(
       { id: 'uid', data: {} },
       'node-server-debug',
       'defaultValue',

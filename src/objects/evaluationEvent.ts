@@ -52,7 +52,7 @@ export function createDefaultEvaluationEvent(tag: string, user: User, featureId:
     variationId: '',
     sourceId: SourceId.NODE_SERVER,
     reason: {
-      type: ReasonType.CLIENT,
+      type: 'CLIENT',
     },
     '@type': EVALUATION_EVENT_NAME,
     sdkVersion: version,

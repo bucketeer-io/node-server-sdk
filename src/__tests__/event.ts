@@ -1,7 +1,7 @@
 import test from 'ava';
 import { Evaluation } from '../objects/evaluation';
 import { SourceId } from '../objects/sourceId';
-import { ReasonType, Reason } from '../objects/reason';
+import { Reason } from '../objects/reason';
 import { GoalEvent, createGoalEvent, isGoalEvent } from '../objects/goalEvent';
 import { User } from '../objects/user';
 import { createTimestamp } from '../utils/time';
@@ -87,7 +87,7 @@ const sdkVersion = version;
 const metadata = {};
 const featureId = 'featureId';
 const reason: Reason = {
-  type: ReasonType.CLIENT,
+  type: 'CLIENT',
 };
 const id = 'id';
 const featureVersion = 7;

@@ -19,23 +19,23 @@ test.beforeEach((t) => {
 
 test('boolVariation', async (t) => {
   const { bktClient, targetedUser } = t.context;
-  t.is(await bktClient.getBoolVariation(targetedUser, FEATURE_ID_BOOLEAN, true), false);
+  t.is(await bktClient.booleanVariation(targetedUser, FEATURE_ID_BOOLEAN, true), false);
 });
 
 test('stringVariation', async (t) => {
   const { bktClient, targetedUser } = t.context;
-  t.is(await bktClient.getStringVariation(targetedUser, FEATURE_ID_STRING, ''), 'value-2');
+  t.is(await bktClient.stringVariation(targetedUser, FEATURE_ID_STRING, ''), 'value-2');
 });
 
 test('numberVariation', async (t) => {
   const { bktClient, targetedUser } = t.context;
-  t.is(await bktClient.getNumberVariation(targetedUser, FEATURE_ID_INT, 0), 20);
-  t.is(await bktClient.getNumberVariation(targetedUser, FEATURE_ID_FLOAT, 0.0), 3.1);
+  t.is(await bktClient.numberVariation(targetedUser, FEATURE_ID_INT, 0), 20);
+  t.is(await bktClient.numberVariation(targetedUser, FEATURE_ID_FLOAT, 0.0), 3.1);
 });
 
-test('jsonVariation', async (t) => {
+test('objectVariation', async (t) => {
   const { bktClient, targetedUser } = t.context;
-  t.deepEqual(await bktClient.getJsonVariation(targetedUser, FEATURE_ID_JSON, {}), { "str": "str2", "int": "int2" });
+  t.deepEqual(await bktClient.objectVariation(targetedUser, FEATURE_ID_JSON, {}), { "str": "str2", "int": "int2" });
 });
 
 test.afterEach(async (t) => {
