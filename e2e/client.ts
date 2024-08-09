@@ -22,7 +22,7 @@ test('Using a random string in the api key setting should not throw exception', 
   const user = { id: TARGETED_USER_ID, data: {} }
   // The client can not load the evaluation, we will received the default value `true`
   // Other SDK clients e2e test will expect the value is `false`
-  const result = await t.notThrowsAsync(bktClient.getBoolVariation(user, FEATURE_ID_BOOLEAN, true));
+  const result = await t.notThrowsAsync(bktClient.booleanVariation(user, FEATURE_ID_BOOLEAN, true));
   t.true(result);
 
   const bktClientImpl = bktClient as BKTClientImpl
@@ -48,11 +48,11 @@ test('altering featureTag should not affect api request', async (t) => {
   }
   const bktClient = initialize(config);
   const user = { id: TARGETED_USER_ID, data: {} }
-  const result = await t.notThrowsAsync(bktClient.getBoolVariation(user, FEATURE_ID_BOOLEAN, false));
+  const result = await t.notThrowsAsync(bktClient.booleanVariation(user, FEATURE_ID_BOOLEAN, false));
   t.true(result);
   config.tag = "RANDOME"
 
-  const resultAfterAlterAPIKey = await t.notThrowsAsync(bktClient.getBoolVariation(user, FEATURE_ID_BOOLEAN, false));
+  const resultAfterAlterAPIKey = await t.notThrowsAsync(bktClient.booleanVariation(user, FEATURE_ID_BOOLEAN, false));
   t.true(resultAfterAlterAPIKey);
 
   bktClient.destroy()
@@ -67,11 +67,11 @@ test('Altering the api key should not affect api request', async (t) => {
   }
   const bktClient = initialize(config);
   const user = { id: TARGETED_USER_ID, data: {} }
-  const result = await t.notThrowsAsync(bktClient.getBoolVariation(user, FEATURE_ID_BOOLEAN, false));
+  const result = await t.notThrowsAsync(bktClient.booleanVariation(user, FEATURE_ID_BOOLEAN, false));
   t.true(result);
   config.token = "RANDOME"
 
-  const resultAfterAlterAPIKey = await t.notThrowsAsync(bktClient.getBoolVariation(user, FEATURE_ID_BOOLEAN, false));
+  const resultAfterAlterAPIKey = await t.notThrowsAsync(bktClient.booleanVariation(user, FEATURE_ID_BOOLEAN, false));
   t.true(resultAfterAlterAPIKey);
 
   bktClient.destroy()
@@ -86,7 +86,7 @@ test('Using a random string in the featureTag setting should affect api request'
     logger: new DefaultLogger("error")
   });
   const user = { id: TARGETED_USER_ID, data: {} }
-  const result = await t.notThrowsAsync(bktClient.getBoolVariation(user, FEATURE_ID_BOOLEAN, true));
+  const result = await t.notThrowsAsync(bktClient.booleanVariation(user, FEATURE_ID_BOOLEAN, true));
   // The client can not load the evaluation, we will received the default value `true`
   // Other SDK clients e2e test will expect the value is `false`
   t.true(result);

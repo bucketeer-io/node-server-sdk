@@ -1,7 +1,7 @@
 import test from 'ava';
 import { Evaluation } from '../objects/evaluation';
 import { SourceId } from '../objects/sourceId';
-import { ReasonType, Reason } from '../objects/reason';
+import { Reason } from '../objects/reason';
 import { GoalEvent, createGoalEvent, isGoalEvent } from '../objects/goalEvent';
 import { User } from '../objects/user';
 import { createTimestamp } from '../utils/time';
