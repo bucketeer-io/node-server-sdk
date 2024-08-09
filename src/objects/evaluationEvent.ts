@@ -1,4 +1,3 @@
-import { clearLine } from 'readline';
 import { createTimestamp } from '../utils/time';
 import { Evaluation } from './evaluation';
 import { Event, createEvent } from './event';
