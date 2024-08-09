@@ -15,8 +15,16 @@ import { Evaluation } from './objects/evaluation';
 import { Event } from './objects/event';
 import { GetEvaluationResponse } from './objects/response';
 import { ApiId, NodeApiIds } from './objects/apiId';
-import { BKTEvaluationDetail } from './evaluationDetails';
+import { BKTEvaluationDetails, newDefaultBKTEvaluationDetails } from './evaluationDetails';
 import { BKTValue } from './types';
+import {
+  defaultStringToTypeConverter,
+  stringToBoolConverter,
+  stringToNumberConverter,
+  stringToObjectConverter,
+  StringToTypeConverter,
+} from './converter';
+import { error } from 'console';
 
 export interface BuildInfo {
   readonly GIT_REVISION: string;
@@ -42,7 +50,7 @@ export interface Bucketeer {
   /**
    * @deprecated use objectVariation(featureId: string, defaultValue: string) instead.
    */
-  getJsonVariation(user: User, featureId: string, defaultValue: object): Promise<object>;
+  getJsonVariation(user: User, featureId: string, defaultValue: BKTValue): Promise<BKTValue>;
 
   /**
    * @deprecated use numberVariation(featureId: string, defaultValue: string) instead.
@@ -93,19 +101,25 @@ export interface Bucketeer {
     user: User,
     featureId: string,
     defaultValue: string,
-  ) => BKTEvaluationDetail<string>;
+  ) => Promise<BKTEvaluationDetails<string>>;
 
-  numberVariationDetails: (featureId: string, defaultValue: number) => BKTEvaluationDetail<number>;
+  numberVariationDetails: (
+    user: User,
+    featureId: string,
+    defaultValue: number,
+  ) => Promise<BKTEvaluationDetails<number>>;
 
   booleanVariationDetails: (
+    user: User,
     featureId: string,
     defaultValue: boolean,
-  ) => BKTEvaluationDetail<boolean>;
+  ) => Promise<BKTEvaluationDetails<boolean>>;
 
   objectVariationDetails: (
+    user: User,
     featureId: string,
     defaultValue: BKTValue,
-  ) => BKTEvaluationDetail<BKTValue>;
+  ) => Promise<BKTEvaluationDetails<BKTValue>>;
 
   /**
    * track records a goal event.
@@ -159,21 +173,37 @@ export class BKTClientImpl implements Bucketeer {
       }
     }, this.config.pollingIntervalForRegisterEvents!);
   }
-  stringVariationDetails(
+
+  async stringVariationDetails(
     user: User,
     featureId: string,
     defaultValue: string,
-  ): BKTEvaluationDetail<string> {
-    throw '';
+  ): Promise<BKTEvaluationDetails<string>> {
+    return this.getVariationDetails(user, featureId, defaultValue, defaultStringToTypeConverter);
   }
-  numberVariationDetails(featureId: string, defaultValue: number): BKTEvaluationDetail<number> {
-    throw '';
+
+  async numberVariationDetails(
+    user: User,
+    featureId: string,
+    defaultValue: number,
+  ): Promise<BKTEvaluationDetails<number>> {
+    return this.getVariationDetails(user, featureId, defaultValue, stringToNumberConverter);
   }
-  booleanVariationDetails(featureId: string, defaultValue: boolean): BKTEvaluationDetail<boolean> {
-    throw '';
+
+  async booleanVariationDetails(
+    user: User,
+    featureId: string,
+    defaultValue: boolean,
+  ): Promise<BKTEvaluationDetails<boolean>> {
+    return this.getVariationDetails(user, featureId, defaultValue, stringToBoolConverter);
   }
-  objectVariationDetails(featureId: string, defaultValue: BKTValue): BKTEvaluationDetail<BKTValue> {
-    throw '';
+
+  async objectVariationDetails(
+    user: User,
+    featureId: string,
+    defaultValue: BKTValue,
+  ): Promise<BKTEvaluationDetails<BKTValue>> {
+    return this.getVariationDetails(user, featureId, defaultValue, stringToObjectConverter);
   }
 
   registerEvents(): void {
@@ -231,11 +261,7 @@ export class BKTClientImpl implements Bucketeer {
     this.registerEvents();
   }
 
-  async getStringVariation(user: User, featureId: string, defaultValue: string): Promise<string> {
-    return this.stringVariation(user, featureId, defaultValue);
-  }
-
-  async stringVariation(user: User, featureId: string, defaultValue: string): Promise<string> {
+  async getEvaluation(user: User, featureId: string): Promise<Evaluation | null> {
     const startTime: number = Date.now();
     let res: GetEvaluationResponse;
     let size: number;
@@ -243,18 +269,66 @@ export class BKTClientImpl implements Bucketeer {
       [res, size] = await this.apiClient.getEvaluation(this.config.tag, user, featureId);
     } catch (error) {
       this.saveErrorMetricsEvent(this.config.tag, error, ApiId.GET_EVALUATION);
-      this.saveDefaultEvaluationEvent(user, featureId);
-      return defaultValue;
+      return null;
     }
     const evaluation = res?.evaluation;
     if (evaluation == null) {
-      this.saveDefaultEvaluationEvent(user, featureId);
-      return defaultValue;
+      const error = Error('Fail to get evaluation. Reason: null response.');
+      this.saveErrorMetricsEvent(this.config.tag, error, ApiId.GET_EVALUATION);
+      return null;
     }
     const second = (Date.now() - startTime) / 1000;
-    this.saveEvaluationEvent(user, evaluation);
     this.saveEvaluationMetricsEvent(this.config.tag, second, size);
-    return evaluation.variationValue;
+    return evaluation;
+  }
+
+  async getVariationDetails<T extends BKTValue>(
+    user: User,
+    featureId: string,
+    defaultValue: T,
+    typeConverter: StringToTypeConverter<T>,
+  ): Promise<BKTEvaluationDetails<T>> {
+    const evaluation = await this.getEvaluation(user, featureId);
+    const variationValue = evaluation?.variationValue;
+
+    // Handle conversion based on the type of T
+    let result: T | null = null;
+
+    if (variationValue !== undefined && variationValue !== null) {
+      try {
+        result = typeConverter(variationValue);
+      } catch (err) {
+        result = null;
+        this.saveErrorMetricsEvent(this.config.tag, error, ApiId.GET_EVALUATION);
+        this.config.logger?.debug(
+          `getVariationDetails failed to parse: ${variationValue} using: ${typeof typeConverter} with error: ${error.toString()}`,
+        );
+      }
+    }
+
+    if (evaluation !== null && result !== null) {
+      this.saveEvaluationEvent(user, evaluation);
+      return {
+        featureId: evaluation.featureId,
+        featureVersion: evaluation.featureVersion,
+        userId: evaluation.userId,
+        variationId: evaluation.variationId,
+        variationName: evaluation.variationName,
+        variationValue: result,
+        reason: evaluation.reason?.type || 'DEFAULT',
+      } satisfies BKTEvaluationDetails<T>;
+    } else {
+      this.saveDefaultEvaluationEvent(user, featureId);
+      return newDefaultBKTEvaluationDetails(user.id, featureId, defaultValue);
+    }
+  }
+
+  async getStringVariation(user: User, featureId: string, defaultValue: string): Promise<string> {
+    return this.stringVariation(user, featureId, defaultValue);
+  }
+
+  async stringVariation(user: User, featureId: string, defaultValue: string): Promise<string> {
+    return (await this.stringVariationDetails(user, featureId, defaultValue)).variationValue;
   }
 
   async getBoolVariation(user: User, featureId: string, defaultValue: boolean): Promise<boolean> {
@@ -262,15 +336,7 @@ export class BKTClientImpl implements Bucketeer {
   }
 
   async booleanVariation(user: User, featureId: string, defaultValue: boolean): Promise<boolean> {
-    const valueStr = await this.stringVariation(user, featureId, '');
-    switch (valueStr.toLowerCase()) {
-      case 'true':
-        return true;
-      case 'false':
-        return false;
-      default:
-        return defaultValue;
-    }
+    return (await this.booleanVariationDetails(user, featureId, defaultValue)).variationValue;
   }
 
   async getNumberVariation(user: User, featureId: string, defaultValue: number): Promise<number> {
@@ -278,23 +344,11 @@ export class BKTClientImpl implements Bucketeer {
   }
 
   async numberVariation(user: User, featureId: string, defaultValue: number): Promise<number> {
-    const valueStr = await this.stringVariation(user, featureId, '');
-    const value = parseFloat(valueStr);
-    if (isNaN(value)) {
-      this.config.logger?.debug('getNumberVariation failed to parseFloat');
-      return defaultValue;
-    }
-    return value;
+    return (await this.numberVariationDetails(user, featureId, defaultValue)).variationValue;
   }
 
-  async getJsonVariation(user: User, featureId: string, defaultValue: object): Promise<object> {
-    const valueStr = await this.stringVariation(user, featureId, '');
-    try {
-      return JSON.parse(valueStr);
-    } catch (e) {
-      this.config.logger?.debug('getJsonVariation failed to parse', e);
-      return defaultValue;
-    }
+  async getJsonVariation(user: User, featureId: string, defaultValue: BKTValue): Promise<BKTValue> {
+    return await this.objectVariation(user, featureId, defaultValue);
   }
 
   async objectVariation(user: User, featureId: string, defaultValue: BKTValue): Promise<BKTValue> {

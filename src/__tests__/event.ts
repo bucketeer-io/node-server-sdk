@@ -87,7 +87,7 @@ const sdkVersion = version;
 const metadata = {};
 const featureId = 'featureId';
 const reason: Reason = {
-  type: ReasonType.CLIENT,
+  type: 'CLIENT',
 };
 const id = 'id';
 const featureVersion = 7;

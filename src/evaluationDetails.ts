@@ -1,6 +1,6 @@
 import { BKTValue } from './types';
 
-export interface BKTEvaluationDetail<T extends BKTValue> {
+export interface BKTEvaluationDetails<T extends BKTValue> {
   readonly featureId: string;
   readonly featureVersion: number;
   readonly userId: string;
@@ -9,3 +9,19 @@ export interface BKTEvaluationDetail<T extends BKTValue> {
   readonly variationValue: T;
   readonly reason: 'TARGET' | 'RULE' | 'DEFAULT' | 'CLIENT' | 'OFF_VARIATION' | 'PREREQUISITE';
 }
+
+export const newDefaultBKTEvaluationDetails = <T extends BKTValue>(
+  userId: string,
+  featureId: string,
+  defaultValue: T,
+): BKTEvaluationDetails<T> => {
+  return {
+    featureId: featureId,
+    featureVersion: 0,
+    userId: userId,
+    variationId: '',
+    variationName: '',
+    variationValue: defaultValue,
+    reason: 'CLIENT',
+  } satisfies BKTEvaluationDetails<T>;
+};
