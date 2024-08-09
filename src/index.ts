@@ -97,29 +97,29 @@ export interface Bucketeer {
    */
   objectVariation(user: User, featureId: string, defaultValue: BKTValue): Promise<BKTValue>;
 
-  stringVariationDetails: (
+  stringVariationDetails(
     user: User,
     featureId: string,
     defaultValue: string,
-  ) => Promise<BKTEvaluationDetails<string>>;
+  ): Promise<BKTEvaluationDetails<string>>;
 
-  numberVariationDetails: (
+  numberVariationDetails(
     user: User,
     featureId: string,
     defaultValue: number,
-  ) => Promise<BKTEvaluationDetails<number>>;
+  ): Promise<BKTEvaluationDetails<number>>;
 
-  booleanVariationDetails: (
+  booleanVariationDetails(
     user: User,
     featureId: string,
     defaultValue: boolean,
-  ) => Promise<BKTEvaluationDetails<boolean>>;
+  ): Promise<BKTEvaluationDetails<boolean>>;
 
-  objectVariationDetails: (
+  objectVariationDetails(
     user: User,
     featureId: string,
     defaultValue: BKTValue,
-  ) => Promise<BKTEvaluationDetails<BKTValue>>;
+  ): Promise<BKTEvaluationDetails<BKTValue>>;
 
   /**
    * track records a goal event.
