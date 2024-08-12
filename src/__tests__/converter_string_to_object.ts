@@ -1,5 +1,5 @@
 import test from 'ava';
-import { stringToBoolConverter, stringToNumberConverter, stringToObjectConverter } from '../converter';
+import { stringToObjectConverter } from '../converter';
 import { BKTValue } from '../types';
 
 type StringToJSonValueConvertTestCase = {
