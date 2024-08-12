@@ -25,7 +25,7 @@ const stringConvertTestCases: StringToNumConvertTestCase[] = [
 ];
 
 stringConvertTestCases.forEach(({ input, expected }, index) => {
-  test(`stringToBoolConverter test case ${index + 1} input: ${input} - expected: ${expected}`, (t) => {
+  test(`stringToNumberConverter test case ${index + 1} input: ${input} - expected: ${expected}`, (t) => {
     try {
       const output = stringToNumberConverter(input);
       t.is(output, expected);

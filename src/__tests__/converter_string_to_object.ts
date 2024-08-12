@@ -39,7 +39,7 @@ const stringConvertTestCases: StringToJSonValueConvertTestCase[] = [
 ];
 
 stringConvertTestCases.forEach(({ input, expected }, index) => {
-  test(`stringToBoolConverter test case ${index + 1} input: ${input} - expected: ${expected}`, (t) => {
+  test(`stringToObjectConverter test case ${index + 1} input: ${input} - expected: ${expected}`, (t) => {
     try {
       const output = stringToObjectConverter(input);
       t.deepEqual(output, expected);
