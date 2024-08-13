@@ -30,9 +30,10 @@ const dummyEvalResponse: GetEvaluationResponse = {
     userId: 'user_id',
     variationId: v4(),
     reason: {
-      type: 3,
+      type: 'DEFAULT',
     },
     variationValue: 'value-1',
+    variationName: 'name',
   },
 };
 
