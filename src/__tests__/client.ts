@@ -129,6 +129,194 @@ test.serial('getEvaluation: stringEvaluationDetails', async (t) => {
   );
 });
 
+test.serial('getEvaluation: boolEvaluationDetails', async (t) => {
+  const featureId = 'boolEvaluationDetails';
+  const dummyEvalResponse: GetEvaluationResponse = {
+    evaluation: {
+      id: 'id_test',
+      featureId: featureId,
+      featureVersion: 2,
+      userId: 'user_id',
+      variationId: 'variationId',
+      reason: {
+        type: 'DEFAULT',
+      },
+      variationValue: 'true',
+      variationName: 'name',
+    },
+  };
+  t.context.server.use(
+    http.post<Record<string, never>, GetEvaluationRequest, GetEvaluationResponse>(
+      evaluationAPI,
+      () => {
+        return HttpResponse.json(dummyEvalResponse);
+      },
+    ),
+  );
+  const client = t.context.bktClient;
+  const user = t.context.targetedUser;
+
+  t.is(await client.booleanVariation(user, featureId, false), true);
+
+  t.deepEqual(await client.booleanVariationDetails(user, featureId, false), {
+    featureId: featureId,
+    featureVersion: 2,
+    userId: user.id,
+    variationId: 'variationId',
+    variationName: 'name',
+    variationValue: true,
+    reason: 'DEFAULT',
+  });
+
+  t.deepEqual(await client.stringVariationDetails(user, featureId, ''), {
+    featureId: featureId,
+    featureVersion: 2,
+    userId: user.id,
+    variationId: 'variationId',
+    variationName: 'name',
+    variationValue: 'true',
+    reason: 'DEFAULT',
+  });
+
+  t.deepEqual(
+    await client.numberVariationDetails(user, featureId, 1),
+    newDefaultBKTEvaluationDetails(user.id, featureId, 1),
+  );
+
+  t.deepEqual(
+    await client.objectVariationDetails(user, featureId, {}),
+    newDefaultBKTEvaluationDetails(user.id, featureId, {}),
+  );
+});
+
+test.serial('getEvaluation: numberEvaluationDetails', async (t) => {
+  const featureId = 'numberEvaluationDetails';
+  const dummyEvalResponse: GetEvaluationResponse = {
+    evaluation: {
+      id: 'id_test',
+      featureId: featureId,
+      featureVersion: 2,
+      userId: 'user_id',
+      variationId: 'variationId',
+      reason: {
+        type: 'DEFAULT',
+      },
+      variationValue: '1.2',
+      variationName: 'name',
+    },
+  };
+  t.context.server.use(
+    http.post<Record<string, never>, GetEvaluationRequest, GetEvaluationResponse>(
+      evaluationAPI,
+      () => {
+        return HttpResponse.json(dummyEvalResponse);
+      },
+    ),
+  );
+  const client = t.context.bktClient;
+  const user = t.context.targetedUser;
+
+  t.is(await client.numberVariation(user, featureId, 1), 1.2);
+
+  t.deepEqual(await client.numberVariationDetails(user, featureId, 2), {
+    featureId: featureId,
+    featureVersion: 2,
+    userId: user.id,
+    variationId: 'variationId',
+    variationName: 'name',
+    variationValue: 1.2,
+    reason: 'DEFAULT',
+  });
+
+  t.deepEqual(await client.stringVariationDetails(user, featureId, ''), {
+    featureId: featureId,
+    featureVersion: 2,
+    userId: user.id,
+    variationId: 'variationId',
+    variationName: 'name',
+    variationValue: '1.2',
+    reason: 'DEFAULT',
+  });
+
+  t.deepEqual(
+    await client.booleanVariationDetails(user, featureId, true),
+    newDefaultBKTEvaluationDetails(user.id, featureId, true),
+  );
+
+  t.deepEqual(
+    await client.objectVariationDetails(user, featureId, {}),
+    newDefaultBKTEvaluationDetails(user.id, featureId, {}),
+  );
+});
+
+test.serial('getEvaluation: objectEvaluationDetails', async (t) => {
+  const featureId = 'stringEvaluationDetails';
+  const dummyEvalResponse: GetEvaluationResponse = {
+    evaluation: {
+      id: 'id_test',
+      featureId: featureId,
+      featureVersion: 2,
+      userId: 'user_id',
+      variationId: 'variationId',
+      reason: {
+        type: 'DEFAULT',
+      },
+      variationValue: JSON.stringify({ key: 'value1', array: [1, 2, 3] }),
+      variationName: 'name',
+    },
+  };
+  t.context.server.use(
+    http.post<Record<string, never>, GetEvaluationRequest, GetEvaluationResponse>(
+      evaluationAPI,
+      () => {
+        return HttpResponse.json(dummyEvalResponse);
+      },
+    ),
+  );
+  const client = t.context.bktClient;
+  const user = t.context.targetedUser;
+
+  t.is(
+    await client.stringVariation(user, featureId, 'default-test'),
+    JSON.stringify({ key: 'value1', array: [1, 2, 3] }),
+  );
+
+  t.deepEqual(await client.stringVariationDetails(user, featureId, 'test'), {
+    featureId: featureId,
+    featureVersion: 2,
+    userId: user.id,
+    variationId: 'variationId',
+    variationName: 'name',
+    variationValue: JSON.stringify({ key: 'value1', array: [1, 2, 3] }),
+    reason: 'DEFAULT',
+  });
+
+  t.deepEqual(
+    await client.booleanVariationDetails(user, featureId, true),
+    newDefaultBKTEvaluationDetails(user.id, featureId, true),
+  );
+
+  t.deepEqual(
+    await client.numberVariationDetails(user, featureId, 1),
+    newDefaultBKTEvaluationDetails(user.id, featureId, 1),
+  );
+
+  t.deepEqual(await client.objectVariation(user, featureId, {}), {
+    key: 'value1',
+    array: [1, 2, 3],
+  });
+
+  t.deepEqual(await client.objectVariationDetails(user, featureId, {}), {
+    featureId: featureId,
+    featureVersion: 2,
+    userId: user.id,
+    variationId: 'variationId',
+    variationName: 'name',
+    variationValue: { key: 'value1', array: [1, 2, 3] },
+    reason: 'DEFAULT',
+  });
+});
+
 test.afterEach.always((t) => {
   t.context.server.resetHandlers();
 });
