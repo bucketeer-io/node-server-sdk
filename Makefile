@@ -68,7 +68,7 @@ tsfmt:
 
 .PHONY: lint
 lint:
-	$(NPM_BIN_DIR)/eslint '$(CURDIR)/src/**/*.ts'
+	$(NPM_BIN_DIR)/eslint
 
 .PHONY: copy-genfiles
 copy-genfiles:
