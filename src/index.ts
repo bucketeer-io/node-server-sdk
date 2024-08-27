@@ -57,15 +57,6 @@ export interface Bucketeer {
    */
   getNumberVariation(user: User, featureId: string, defaultValue: number): Promise<number>;
 
-  /**
-   * stringVariation returns variation as string.
-   * If a variation returned by server is not string, defaultValue is retured.
-   * @param user User information.
-   * @param featureId Feature flag ID to use.
-   * @param defaultValue The variation value that is retured if SDK fails to fetch the variation or the variation is not string.
-   * @returns The variation value returned from server or default value.
-   */
-  stringVariation(user: User, featureId: string, defaultValue: string): Promise<string>;
 
   /**
    * booleanVariation returns variation as boolean.
@@ -77,6 +68,12 @@ export interface Bucketeer {
    */
   booleanVariation(user: User, featureId: string, defaultValue: boolean): Promise<boolean>;
 
+  booleanVariationDetails(
+    user: User,
+    featureId: string,
+    defaultValue: boolean,
+  ): Promise<BKTEvaluationDetails<boolean>>;
+
   /**
    * numberVariation returns variation as number.
    * If a variation returned by server is not number, defaultValue is retured.
@@ -87,6 +84,28 @@ export interface Bucketeer {
    */
   numberVariation(user: User, featureId: string, defaultValue: number): Promise<number>;
 
+  numberVariationDetails(
+    user: User,
+    featureId: string,
+    defaultValue: number,
+  ): Promise<BKTEvaluationDetails<number>>;
+
+  /**
+   * stringVariation returns variation as string.
+   * If a variation returned by server is not string, defaultValue is retured.
+   * @param user User information.
+   * @param featureId Feature flag ID to use.
+   * @param defaultValue The variation value that is retured if SDK fails to fetch the variation or the variation is not string.
+   * @returns The variation value returned from server or default value.
+   */
+  stringVariation(user: User, featureId: string, defaultValue: string): Promise<string>;
+
+  stringVariationDetails(
+    user: User,
+    featureId: string,
+    defaultValue: string,
+  ): Promise<BKTEvaluationDetails<string>>;
+
   /**
    * objectVariation returns variation as json object.
    * If a variation returned by server is not json, defaultValue is retured.
@@ -96,24 +115,6 @@ export interface Bucketeer {
    * @returns The variation value returned from server or default value.
    */
   objectVariation(user: User, featureId: string, defaultValue: BKTValue): Promise<BKTValue>;
-
-  stringVariationDetails(
-    user: User,
-    featureId: string,
-    defaultValue: string,
-  ): Promise<BKTEvaluationDetails<string>>;
-
-  numberVariationDetails(
-    user: User,
-    featureId: string,
-    defaultValue: number,
-  ): Promise<BKTEvaluationDetails<number>>;
-
-  booleanVariationDetails(
-    user: User,
-    featureId: string,
-    defaultValue: boolean,
-  ): Promise<BKTEvaluationDetails<boolean>>;
 
   objectVariationDetails(
     user: User,
@@ -174,12 +175,32 @@ export class BKTClientImpl implements Bucketeer {
     }, this.config.pollingIntervalForRegisterEvents!);
   }
 
+  async stringVariation(user: User, featureId: string, defaultValue: string): Promise<string> {
+    return (await this.stringVariationDetails(user, featureId, defaultValue)).variationValue;
+  }
+
+  async booleanVariationDetails(
+    user: User,
+    featureId: string,
+    defaultValue: boolean,
+  ): Promise<BKTEvaluationDetails<boolean>> {
+    return this.getVariationDetails(user, featureId, defaultValue, stringToBoolConverter);
+  }
+
+  async booleanVariation(user: User, featureId: string, defaultValue: boolean): Promise<boolean> {
+    return (await this.booleanVariationDetails(user, featureId, defaultValue)).variationValue;
+  }
+
   async stringVariationDetails(
     user: User,
     featureId: string,
     defaultValue: string,
   ): Promise<BKTEvaluationDetails<string>> {
     return this.getVariationDetails(user, featureId, defaultValue, defaultStringToTypeConverter);
+  }
+
+  async numberVariation(user: User, featureId: string, defaultValue: number): Promise<number> {
+    return (await this.numberVariationDetails(user, featureId, defaultValue)).variationValue;
   }
 
   async numberVariationDetails(
@@ -190,12 +211,14 @@ export class BKTClientImpl implements Bucketeer {
     return this.getVariationDetails(user, featureId, defaultValue, stringToNumberConverter);
   }
 
-  async booleanVariationDetails(
-    user: User,
-    featureId: string,
-    defaultValue: boolean,
-  ): Promise<BKTEvaluationDetails<boolean>> {
-    return this.getVariationDetails(user, featureId, defaultValue, stringToBoolConverter);
+  async objectVariation(user: User, featureId: string, defaultValue: BKTValue): Promise<BKTValue> {
+    const valueStr = await this.stringVariation(user, featureId, '');
+    try {
+      return JSON.parse(valueStr);
+    } catch (e) {
+      this.config.logger?.debug('objectVariation failed to parse', e);
+      return defaultValue;
+    }
   }
 
   async objectVariationDetails(
@@ -327,38 +350,16 @@ export class BKTClientImpl implements Bucketeer {
     return this.stringVariation(user, featureId, defaultValue);
   }
 
-  async stringVariation(user: User, featureId: string, defaultValue: string): Promise<string> {
-    return (await this.stringVariationDetails(user, featureId, defaultValue)).variationValue;
-  }
-
   async getBoolVariation(user: User, featureId: string, defaultValue: boolean): Promise<boolean> {
     return this.booleanVariation(user, featureId, defaultValue);
-  }
-
-  async booleanVariation(user: User, featureId: string, defaultValue: boolean): Promise<boolean> {
-    return (await this.booleanVariationDetails(user, featureId, defaultValue)).variationValue;
   }
 
   async getNumberVariation(user: User, featureId: string, defaultValue: number): Promise<number> {
     return this.numberVariation(user, featureId, defaultValue);
   }
 
-  async numberVariation(user: User, featureId: string, defaultValue: number): Promise<number> {
-    return (await this.numberVariationDetails(user, featureId, defaultValue)).variationValue;
-  }
-
   async getJsonVariation(user: User, featureId: string, defaultValue: BKTValue): Promise<BKTValue> {
     return await this.objectVariation(user, featureId, defaultValue);
-  }
-
-  async objectVariation(user: User, featureId: string, defaultValue: BKTValue): Promise<BKTValue> {
-    const valueStr = await this.stringVariation(user, featureId, '');
-    try {
-      return JSON.parse(valueStr);
-    } catch (e) {
-      this.config.logger?.debug('objectVariation failed to parse', e);
-      return defaultValue;
-    }
   }
 
   track(user: User, goalId: string, value?: number): void {
