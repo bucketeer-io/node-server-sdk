@@ -1,7 +1,7 @@
 import { createTimestamp } from '../utils/time';
 import { Evaluation } from './evaluation';
 import { Event, createEvent } from './event';
-import { Reason, ReasonType } from './reason';
+import { Reason } from './reason';
 import { SourceId } from './sourceId';
 import { User } from './user';
 import { version } from './version';
@@ -52,7 +52,7 @@ export function createDefaultEvaluationEvent(tag: string, user: User, featureId:
     variationId: '',
     sourceId: SourceId.NODE_SERVER,
     reason: {
-      type: ReasonType.CLIENT,
+      type: 'CLIENT',
     },
     '@type': EVALUATION_EVENT_NAME,
     sdkVersion: version,
