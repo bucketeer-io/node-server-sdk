@@ -75,6 +75,22 @@ export interface Bucketeer {
   ): Promise<BKTEvaluationDetails<boolean>>;
 
   /**
+ * stringVariation returns variation as string.
+ * If a variation returned by server is not string, defaultValue is retured.
+ * @param user User information.
+ * @param featureId Feature flag ID to use.
+ * @param defaultValue The variation value that is retured if SDK fails to fetch the variation or the variation is not string.
+ * @returns The variation value returned from server or default value.
+ */
+  stringVariation(user: User, featureId: string, defaultValue: string): Promise<string>;
+
+  stringVariationDetails(
+    user: User,
+    featureId: string,
+    defaultValue: string,
+  ): Promise<BKTEvaluationDetails<string>>;
+
+  /**
    * numberVariation returns variation as number.
    * If a variation returned by server is not number, defaultValue is retured.
    * @param user User information.
@@ -89,22 +105,6 @@ export interface Bucketeer {
     featureId: string,
     defaultValue: number,
   ): Promise<BKTEvaluationDetails<number>>;
-
-  /**
-   * stringVariation returns variation as string.
-   * If a variation returned by server is not string, defaultValue is retured.
-   * @param user User information.
-   * @param featureId Feature flag ID to use.
-   * @param defaultValue The variation value that is retured if SDK fails to fetch the variation or the variation is not string.
-   * @returns The variation value returned from server or default value.
-   */
-  stringVariation(user: User, featureId: string, defaultValue: string): Promise<string>;
-
-  stringVariationDetails(
-    user: User,
-    featureId: string,
-    defaultValue: string,
-  ): Promise<BKTEvaluationDetails<string>>;
 
   /**
    * objectVariation returns variation as json object.
