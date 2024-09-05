@@ -35,14 +35,15 @@ test('goal event', async (t) => {
 test('default evaluation event', async (t) => {
   const { bktClient, targetedUser } = t.context;
   t.is(await bktClient.booleanVariation(targetedUser, FEATURE_ID_BOOLEAN, true), false);
+  t.deepEqual(await bktClient.getJsonVariation(targetedUser, FEATURE_ID_JSON, {}), { "str": "str2", "int": "int2" });
   t.deepEqual(await bktClient.objectVariation(targetedUser, FEATURE_ID_JSON, {}), { "str": "str2", "int": "int2" });
   t.is(await bktClient.numberVariation(targetedUser, FEATURE_ID_INT, 0), 20);
   t.is(await bktClient.numberVariation(targetedUser, FEATURE_ID_FLOAT, 0.0), 3.1);
   t.is(await bktClient.stringVariation(targetedUser, FEATURE_ID_STRING, ''), 'value-2');
   const bktClientImpl = bktClient as BKTClientImpl
   const events = bktClientImpl.eventStore.getAll()
-  // (EvaluationEvent, Metrics Event - Latency, Metrics Event - Metrics Size) x 5
-  t.is(events.length, 15);
+  // (EvaluationEvent, Metrics Event - Latency, Metrics Event - Metrics Size) x 6
+  t.is(events.length, 18);
   t.true(events.some((e) => (isEvaluationEvent(e.event))));
   t.true(events.some((e) => (isMetricsEvent(e.event))));
 });

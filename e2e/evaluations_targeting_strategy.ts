@@ -85,6 +85,7 @@ test('numberVariation', async (t) => {
 
 test('objectVariation', async (t) => {
   const { bktClient, targetedUser } = t.context;
+  t.deepEqual(await bktClient.getJsonVariation(targetedUser, FEATURE_ID_JSON, {}), { "str": "str2", "int": "int2" });
   t.deepEqual(await bktClient.objectVariation(targetedUser, FEATURE_ID_JSON, {}), { "str": "str2", "int": "int2" });
   t.deepEqual(
     await bktClient.objectVariationDetails(targetedUser, FEATURE_ID_JSON, 99),
