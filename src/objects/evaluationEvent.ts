@@ -1,7 +1,7 @@
 import { createTimestamp } from '../utils/time';
 import { Evaluation } from './evaluation';
 import { Event, createEvent } from './event';
-import { Reason, ReasonType } from './reason';
+import { Reason } from './reason';
 import { SourceId } from './sourceId';
 import { User } from './user';
 import { version } from './version';

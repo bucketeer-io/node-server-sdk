@@ -3,13 +3,11 @@ export type Reason = {
   ruleId?: string;
 };
 
-const ReasonTypeValue = [
-  'TARGET',
-  'RULE',
-  'DEFAULT',
-  'CLIENT',
-  'OFF_VARIATION',
-  'PREREQUISITE',
-] as const;
+type ReasonType =
+  | 'TARGET'
+  | 'RULE'
+  | 'DEFAULT'
+  | 'CLIENT'
+  | 'OFF_VARIATION'
+  | 'PREREQUISITE'
 
-export type ReasonType = (typeof ReasonTypeValue)[number];
