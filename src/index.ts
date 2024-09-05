@@ -50,7 +50,7 @@ export interface Bucketeer {
   /**
    * @deprecated use objectVariation(featureId: string, defaultValue: string) instead.
    */
-  getJsonVariation(user: User, featureId: string, defaultValue: BKTValue): Promise<BKTValue>;
+  getJsonVariation(user: User, featureId: string, defaultValue: object): Promise<object>;
 
   /**
    * @deprecated use numberVariation(featureId: string, defaultValue: string) instead.
@@ -358,8 +358,14 @@ export class BKTClientImpl implements Bucketeer {
     return this.numberVariation(user, featureId, defaultValue);
   }
 
-  async getJsonVariation(user: User, featureId: string, defaultValue: BKTValue): Promise<BKTValue> {
-    return await this.objectVariation(user, featureId, defaultValue);
+  async getJsonVariation(user: User, featureId: string, defaultValue: object): Promise<object> {
+    const valueStr = await this.getStringVariation(user, featureId, '');
+    try {
+      return JSON.parse(valueStr);
+    } catch (e) {
+      this.config.logger?.debug('getJsonVariation failed to parse', e);
+      return defaultValue;
+    }
   }
 
   track(user: User, goalId: string, value?: number): void {
