@@ -13,12 +13,11 @@
     { "type": "revert", "section": "Reverts", "hidden": false },
     { "type": "build", "section": "Build System", "hidden": false }
   ],
-  "release-type": "simple",
+  "release-type": "node",
   "pull-request-title-pattern": "chore: release v${version}",
   "packages": {
     ".": {
-      "changelog-path": "CHANGELOG.md",
-      "extra-files": ["package.json"]
+      "changelog-path": "CHANGELOG.md"
     }
   },
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json"
