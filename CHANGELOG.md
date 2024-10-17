@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.3.1](https://github.com/bucketeer-io/node-server-sdk/compare/node-server-sdk-v0.3.0...node-server-sdk-v0.3.1) (2024-09-05)
+## [0.3.1](https://github.com/bucketeer-io/node-server-sdk/compare/v0.3.0...v0.3.1) (2024-09-05)
 
 
 ### Features
