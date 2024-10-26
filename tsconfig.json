@@ -5,6 +5,8 @@
     "module": "ESNext", /* Specify module code generation. */
     "moduleResolution": "node",
     "lib": [
+      "DOM",
+			"DOM.Iterable",
       "es6"
     ],
     "declaration": true,
