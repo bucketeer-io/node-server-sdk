@@ -353,8 +353,8 @@ export class BKTClientImpl implements Bucketeer {
     }
     return this.getEvaluationRemotely(user, featureId);
   }
-
-  async getEvaluationLocally(user: User, featureId: string): Promise<Evaluation | null> {
+  
+  async getEvaluationRemotely(user: User, featureId: string): Promise<Evaluation | null> {
     const startTime: number = Date.now();
     let res: GetEvaluationResponse;
     let size: number;
@@ -375,7 +375,7 @@ export class BKTClientImpl implements Bucketeer {
     return evaluation;
   }
 
-  async getEvaluationRemotely(user: User, featureId: string): Promise<Evaluation | null> {
+  async getEvaluationLocally(user: User, featureId: string): Promise<Evaluation | null> {
     const startTime: number = Date.now();
     let evaluation: Evaluation | null;
     try {
