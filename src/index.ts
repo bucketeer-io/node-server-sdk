@@ -212,13 +212,7 @@ export class BKTClientImpl implements Bucketeer {
   }
 
   async objectVariation(user: User, featureId: string, defaultValue: BKTValue): Promise<BKTValue> {
-    const valueStr = await this.stringVariation(user, featureId, '');
-    try {
-      return JSON.parse(valueStr);
-    } catch (e) {
-      this.config.logger?.debug('objectVariation failed to parse', e);
-      return defaultValue;
-    }
+    return (await this.objectVariationDetails(user, featureId, defaultValue)).variationValue;
   }
 
   async objectVariationDetails(
