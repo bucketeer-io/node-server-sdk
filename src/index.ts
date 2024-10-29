@@ -39,9 +39,8 @@ import {
   SEGEMENT_USERS_CACHE_TTL,
   SegementUsersCacheProcessor,
 } from './cache/processor/segmentUsersCacheProcessor';
-import { GRPCClient } from './grpc/client';
+import { DefaultGRPCClient, GRPCClient } from './grpc/client';
 import { ProcessorEventsEmitter } from './cache/processor/processorEvents';
-import { version } from './objects/version';
 import { LocalEvaluator, NodeEvaluator } from './evaluator/evaluator';
 
 export interface BuildInfo {
@@ -201,7 +200,7 @@ export class BKTClientImpl implements Bucketeer {
       }
     }, this.config.pollingIntervalForRegisterEvents!);
 
-    this.grpcClient = new GRPCClient(this.config.host, this.config.token);
+    this.grpcClient = new DefaultGRPCClient(this.config.host, this.config.token);
     this.eventEmitter = new ProcessorEventsEmitter();
 
     const inMemoryCache = new InMemoryCache();
@@ -218,7 +217,6 @@ export class BKTClientImpl implements Bucketeer {
       pollingInterval: this.config.cachePollingInterval!,
       grpc: this.grpcClient,
       eventEmitter: this.eventEmitter,
-      version: version,
       featureTag: this.config.tag,
     });
 
@@ -228,7 +226,6 @@ export class BKTClientImpl implements Bucketeer {
       pollingInterval: this.config.cachePollingInterval!,
       grpc: this.grpcClient,
       eventEmitter: this.eventEmitter,
-      version: version,
       featureTag: this.config.tag,
     });
 

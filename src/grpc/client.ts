@@ -8,8 +8,26 @@ import {
 import { grpc } from '@improbable-eng/grpc-web';
 import { NodeHttpTransport } from '@improbable-eng/grpc-web-node-http-transport';
 import { SourceId } from '../objects/sourceId';
+import { version } from '../objects/version';
 
-class GRPCClient {
+interface GRPCClient {
+  getSegmentUsers(
+    options: {
+      segmentIdsList: Array<string>,
+      requestedAt: number,
+    }
+  ): Promise<GetSegmentUsersResponse> 
+
+  getFeatureFlags(
+    options: {
+      tag: string,
+      featureFlagsId: string,
+      requestedAt: number,
+    }
+  ): Promise<GetFeatureFlagsResponse>
+}
+
+class DefaultGRPCClient {
   private readonly apiKey: string;
   private client: GatewayClient;
 
@@ -27,13 +45,15 @@ class GRPCClient {
   }
 
   getSegmentUsers(
-    segmentIdsList: Array<string>,
-    requestedAt: number,
-    version: string,
+    options: {
+      segmentIdsList: Array<string>,
+      requestedAt: number,
+    }
   ): Promise<GetSegmentUsersResponse> {
     const req = new GetSegmentUsersRequest();
-    req.setSegmentIdsList(segmentIdsList);
-    req.setRequestedAt(requestedAt);
+    req.setSegmentIdsList(options.segmentIdsList);
+    req.setRequestedAt(options.requestedAt);
+
     req.setSourceId(SourceId.NODE_SERVER);
     req.setSdkVersion(version);
 
@@ -56,15 +76,15 @@ class GRPCClient {
       tag: string,
       featureFlagsId: string,
       requestedAt: number,
-      version: string,
     }
   ): Promise<GetFeatureFlagsResponse> {
     const req = new GetFeatureFlagsRequest();
     req.setTag(options.tag);
     req.setFeatureFlagsId(options.featureFlagsId);
     req.setRequestedAt(options.requestedAt);
+
     req.setSourceId(SourceId.NODE_SERVER);
-    req.setSdkVersion(options.version);
+    req.setSdkVersion(version);
 
     return new Promise((resolve, reject) => {
       this.client.getFeatureFlags(req, this.getMetadata(), (err, res) => {
@@ -81,4 +101,4 @@ class GRPCClient {
   }
 }
 
-export { GRPCClient };
+export { GRPCClient, DefaultGRPCClient };

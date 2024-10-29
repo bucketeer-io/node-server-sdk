@@ -17,7 +17,6 @@ type SegementUsersCacheProcessorOptions = {
   pollingInterval: number;
   grpc: GRPCClient;
   eventEmitter: ProcessorEventsEmitter;
-  version: string;
   featureTag: string;
 };
 
@@ -36,7 +35,6 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
   private pollingInterval: number;
   private grpc: GRPCClient;
   private eventEmitter: ProcessorEventsEmitter;
-  private version: string;
   private pollingScheduleID?: NodeJS.Timeout;
 
   constructor(options: SegementUsersCacheProcessorOptions) {
@@ -45,7 +43,6 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
     this.pollingInterval = options.pollingInterval;
     this.grpc = options.grpc;
     this.eventEmitter = options.eventEmitter;
-    this.version = options.version;
   }
 
   start() {
@@ -73,7 +70,7 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
     const segmentIds = await this.segmentUsersCache.getIds();
     const startTime: number = Date.now();
 
-    const resp = await this.grpc.getSegmentUsers(segmentIds, requestedAt, this.version);
+    const resp = await this.grpc.getSegmentUsers({segmentIdsList: segmentIds, requestedAt: requestedAt});
 
     const latency = (Date.now() - startTime) / 1000;
 

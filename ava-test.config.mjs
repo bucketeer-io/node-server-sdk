@@ -9,6 +9,7 @@ export default {
     '__test/**/__tests__/**/*.js',
     '!__test/**/__tests__/utils/**',
     '!__test/**/__tests__/testdata/**',
+    '!__test/**/__tests__/mocks/**',
   ],
   "typescript": {
 			"extensions": [

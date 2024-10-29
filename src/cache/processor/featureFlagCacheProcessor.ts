@@ -17,7 +17,6 @@ type FeatureFlagProcessorOptions = {
   pollingInterval: number;
   grpc: GRPCClient;
   eventEmitter: ProcessorEventsEmitter;
-  version: string;
   featureTag: string;
 };
 
@@ -36,7 +35,6 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
   private eventEmitter: ProcessorEventsEmitter;
   private pollingScheduleID?: NodeJS.Timeout;
   private pollingInterval: number;
-  private version: string;
   featureTag: string;
 
   constructor(options: FeatureFlagProcessorOptions) {
@@ -45,12 +43,14 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
     this.grpc = options.grpc;
     this.eventEmitter = options.eventEmitter;
     this.pollingInterval = options.pollingInterval;
-    this.version = options.version;
     this.featureTag = options.featureTag;
   }
 
   start() {
-    this.pollingScheduleID = createSchedule(() => this.runUpdateCache, this.pollingInterval);
+    this.pollingScheduleID = createSchedule(() => {
+      this.runUpdateCache();
+    }, this.pollingInterval);
+    console.log('pollingScheduleID', this.pollingScheduleID);
   }
 
   stop() {
@@ -71,7 +71,6 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
     const startTime: number = Date.now();
     const featureFlags = await this.grpc.getFeatureFlags({
       requestedAt: requestedAt,
-      version: this.version,
       tag: this.featureTag,
       featureFlagsId: featureFlagsId,
     });
