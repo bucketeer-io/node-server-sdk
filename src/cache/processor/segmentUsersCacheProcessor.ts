@@ -18,6 +18,7 @@ type SegementUsersCacheProcessorOptions = {
   grpc: GRPCClient;
   eventEmitter: ProcessorEventsEmitter;
   featureTag: string;
+  clock: Clock;
 };
 
 const SEGEMENT_USERS_REQUESTED_AT = 'bucketeer_segment_users_requested_at';
@@ -36,6 +37,7 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
   private grpc: GRPCClient;
   private eventEmitter: ProcessorEventsEmitter;
   private pollingScheduleID?: NodeJS.Timeout;
+  private clock: Clock;
 
   constructor(options: SegementUsersCacheProcessorOptions) {
     this.cache = options.cache;
@@ -43,6 +45,7 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
     this.pollingInterval = options.pollingInterval;
     this.grpc = options.grpc;
     this.eventEmitter = options.eventEmitter;
+    this.clock = options.clock;
   }
 
   start() {
@@ -68,11 +71,11 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
   private async updateCache() {
     const requestedAt = await this.getSegmentUsersRequestedAt();
     const segmentIds = await this.segmentUsersCache.getIds();
-    const startTime: number = Date.now();
+    const startTime: number = this.clock.getTime();
 
     const resp = await this.grpc.getSegmentUsers({segmentIdsList: segmentIds, requestedAt: requestedAt});
 
-    const latency = (Date.now() - startTime) / 1000;
+    const latency = (this.clock.getTime() - startTime) / 1000;
 
     this.pushLatencyMetricsEvent(latency);
     this.pushSizeMetricsEvent(resp.serializeBinary().length);

@@ -18,6 +18,7 @@ type FeatureFlagProcessorOptions = {
   grpc: GRPCClient;
   eventEmitter: ProcessorEventsEmitter;
   featureTag: string;
+  clock: Clock;
 };
 
 function NewFeatureFlagProcessor(options: FeatureFlagProcessorOptions): FeatureFlagProcessor {
@@ -35,6 +36,7 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
   private eventEmitter: ProcessorEventsEmitter;
   private pollingScheduleID?: NodeJS.Timeout;
   private pollingInterval: number;
+  private clock: Clock;
   featureTag: string;
 
   constructor(options: FeatureFlagProcessorOptions) {
@@ -44,6 +46,7 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
     this.eventEmitter = options.eventEmitter;
     this.pollingInterval = options.pollingInterval;
     this.featureTag = options.featureTag;
+    this.clock = options.clock;
   }
 
   start() {
@@ -68,13 +71,13 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
   private async updateCache() {
     const requestedAt = await this.getFeatureFlagRequestedAt();
     const featureFlagsId = await this.getFeatureFlagId();
-    const startTime: number = Date.now();
+    const startTime: number = this.clock.getTime();
     const featureFlags = await this.grpc.getFeatureFlags({
       requestedAt: requestedAt,
       tag: this.featureTag,
       featureFlagsId: featureFlagsId,
     });
-    const latency = (Date.now() - startTime) / 1000;
+    const latency = (this.clock.getTime() - startTime) / 1000;
 
     this.pushLatencyMetricsEvent(latency);
     this.pushSizeMetricsEvent(featureFlags.serializeBinary().length);
@@ -101,11 +104,11 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
   }
 
   private async getFeatureFlagRequestedAt(): Promise<number> {
-    return this.cache.get(FEATURE_FLAG_REQUESTED_AT) || 0;
+    return await this.cache.get(FEATURE_FLAG_REQUESTED_AT) || 0;
   }
 
   private async getFeatureFlagId(): Promise<string> {
-    return this.cache.get(FEATURE_FLAG_ID) || '';
+    return await this.cache.get(FEATURE_FLAG_ID) || '';
   }
 
   private async deleteAllAndSaveLocalCache(
@@ -149,4 +152,4 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
   }
 }
 
-export { FeatureFlagProcessor, NewFeatureFlagProcessor, FEATURE_FLAG_CACHE_TTL };
+export { FeatureFlagProcessor, NewFeatureFlagProcessor, FEATURE_FLAG_CACHE_TTL, FEATURE_FLAG_ID, FEATURE_FLAG_REQUESTED_AT };
