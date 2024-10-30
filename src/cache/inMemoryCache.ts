@@ -43,7 +43,7 @@ class InMemoryCache<T> implements Cache {
 
   async put(key: string, value: T, ttl: number): Promise<void> {
     const expirationTime = Date.now() + ttl;
-    this.entries.set(key, new Entry(value, expirationTime));
+    this.entries.set(key, new Entry(value, ttl == 0 ? 0 : expirationTime));
   }
 
   async scan(keyPrefix: string): Promise<string[]> {
