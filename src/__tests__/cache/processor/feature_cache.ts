@@ -8,10 +8,11 @@ import { ProcessorEventsEmitter } from '../../../cache/processor/processorEvents
 import {
   GetFeatureFlagsResponse,
   GetSegmentUsersResponse,
-  creatFeature,
+  createFeature,
 } from '@bucketeer/node-evaluation';
 import sino from 'sinon';
 import { GRPCClient } from '../../../grpc/client';
+import { Clock } from '../../../utils/clock';
 
 class MockGRPCClient implements GRPCClient {
   getFeatureFlags(_options: {
@@ -48,7 +49,7 @@ class MockCache implements Cache {
 
 }
 
-test('polling cache', async (_t) => {
+test('polling cache', async (t) => {
   var cache = new MockCache();
   sino.stub(cache);
 
@@ -71,8 +72,8 @@ test('polling cache', async (_t) => {
   const featuresResponse = new GetFeatureFlagsResponse();
   featuresResponse.setFeatureFlagsId('featureFlagsId');
   const featureList = featuresResponse.getFeaturesList();
-  const feature1 = creatFeature({ id: 'feature1' });
-  const feature2 = creatFeature({ id: 'feature2' });
+  const feature1 = createFeature({ id: 'feature1' });
+  const feature2 = createFeature({ id: 'feature2' });
 
   featureList.push(feature1);
   featureList.push(feature2);
@@ -98,12 +99,30 @@ test('polling cache', async (_t) => {
     .resolves(featuresResponse);
   mockGRPCClient.expects('getSegmentUsers').never();
 
+  const clock = new Clock();
+  const mockClock = sino.mock(clock);
+  mockClock.expects('getTime').onFirstCall().returns(100);
+  mockClock.expects('getTime').onSecondCall().returns(1100);
+  mockClock.expects('getTime').onThirdCall().returns(2100);
+  mockClock.expects('getTime').onCall(3).returns(3100);
+
   const processor = NewFeatureFlagProcessor({
     cache: cache,
     featureFlagCache: NewFeatureCache({ cache: cache, ttl: 0 }),
-    pollingInterval: 10,
+    pollingInterval: 1000,
     grpc: gRPCClient,
     eventEmitter: eventEmitter,
     featureTag: featureFlag,
+    clock: clock,
   });
+
+  processor.start();
+
+  await new Promise((resolve) => setTimeout(resolve, 2500));
+
+  processor.stop();
+
+  mockClock.verify();
+  mockProcessorEventsEmitter.verify();
+  mockGRPCClient.verify();
 });

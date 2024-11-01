@@ -3,3 +3,5 @@ class Clock {
     return Date.now();
   }
 }
+
+export { Clock };

@@ -1,12 +1,12 @@
 import test from 'ava';
-import { creatFeature } from '@bucketeer/node-evaluation';
+import { createFeature } from '@bucketeer/node-evaluation';
 import { NewFeatureCache } from '../../cache/features';
 import { InMemoryCache } from '../../cache/inMemoryCache';
 
 test('put - delete - get', async t => {
   const cache = NewFeatureCache({cache: new InMemoryCache(), ttl: 1000});
-  const feature1 = creatFeature({id: 'feature1'});
-  const feature2 = creatFeature({id: 'feature2'});
+  const feature1 = createFeature({id: 'feature1'});
+  const feature2 = createFeature({id: 'feature2'});
   await cache.put(feature1);
   await cache.put(feature2);
 
@@ -33,7 +33,7 @@ test('get should return null if key does not exist', async t => {
 test('put should store the value in the cache', async t => {
   const cache = new InMemoryCache();
   const featureCache = NewFeatureCache({ cache, ttl: 1000 });
-  const feature = creatFeature({id: 'feature1'});
+  const feature = createFeature({id: 'feature1'});
 
   await featureCache.put(feature);
   const result = await featureCache.get('feature1');
@@ -43,7 +43,7 @@ test('put should store the value in the cache', async t => {
 test('delete should remove the value from the cache', async t => {
   const cache = new InMemoryCache();
   const featureCache = NewFeatureCache({ cache, ttl: 1000 });
-  const feature = creatFeature({id: 'feature1'});
+  const feature = createFeature({id: 'feature1'});
 
   await featureCache.put(feature);
   await featureCache.delete('feature1');
@@ -54,8 +54,8 @@ test('delete should remove the value from the cache', async t => {
 test('clear should remove all values from the cache', async t => {
   const cache = new InMemoryCache();
   const featureCache = NewFeatureCache({ cache, ttl: 1000 });
-  const feature1 = creatFeature({id: 'feature1'});
-  const feature2 = creatFeature({id: 'feature2'});
+  const feature1 = createFeature({id: 'feature1'});
+  const feature2 = createFeature({id: 'feature2'});
 
   await featureCache.put(feature1);
   await featureCache.put(feature2);

@@ -42,6 +42,7 @@ import {
 import { DefaultGRPCClient, GRPCClient } from './grpc/client';
 import { ProcessorEventsEmitter } from './cache/processor/processorEvents';
 import { LocalEvaluator, NodeEvaluator } from './evaluator/evaluator';
+import { Clock } from './utils/clock';
 
 export interface BuildInfo {
   readonly GIT_REVISION: string;
@@ -218,6 +219,7 @@ export class BKTClientImpl implements Bucketeer {
       grpc: this.grpcClient,
       eventEmitter: this.eventEmitter,
       featureTag: this.config.tag,
+      clock: new Clock(),
     });
 
     this.segementUsersCacheProcessor = NewSegementUserCacheProcessor({
@@ -227,6 +229,7 @@ export class BKTClientImpl implements Bucketeer {
       grpc: this.grpcClient,
       eventEmitter: this.eventEmitter,
       featureTag: this.config.tag,
+      clock: new Clock(),
     });
 
     this.localEvaluator = new LocalEvaluator(this.config.tag, this.featureFlagCache, this.segementUsersCache);

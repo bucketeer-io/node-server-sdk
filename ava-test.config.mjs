@@ -1,4 +1,6 @@
 export default {
+  failFast: true,
+  failWithoutAssertions: false,
   babel: {
     testOptions: {
       babelrc: false,

@@ -5,6 +5,7 @@ import { ProcessorEventsEmitter } from './processorEvents';
 import { createSchedule, removeSchedule } from '../../schedule';
 import { Feature } from '@bucketeer/node-evaluation';
 import { ApiId } from '../../objects/apiId';
+import { Clock } from '../../utils/clock';
 
 interface FeatureFlagProcessor {
   start(): void;
