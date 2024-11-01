@@ -1,5 +1,5 @@
 import { User } from './objects/user';
-import { EventStore } from './stores/EventStore';
+import { EventStore } from './stores/eventStore';
 import { createSchedule, removeSchedule } from './schedule';
 import { GIT_REVISION } from './shared';
 import { APIClient } from './api/client';
@@ -25,6 +25,24 @@ import {
   StringToTypeConverter,
 } from './converter';
 import { error } from 'console';
+import { Cache } from './cache/cache';
+import { InMemoryCache } from './cache/inMemoryCache';
+import { FeaturesCache, NewFeatureCache } from './cache/features';
+import {
+  FEATURE_FLAG_CACHE_TTL,
+  FeatureFlagProcessor,
+  NewFeatureFlagProcessor,
+} from './cache/processor/featureFlagCacheProcessor';
+import { NewSegmentUsersCache, SegmentUsersCache } from './cache/segementUsers';
+import {
+  NewSegementUserCacheProcessor,
+  SEGEMENT_USERS_CACHE_TTL,
+  SegementUsersCacheProcessor,
+} from './cache/processor/segmentUsersCacheProcessor';
+import { DefaultGRPCClient, GRPCClient } from './grpc/client';
+import { ProcessorEventsEmitter } from './cache/processor/processorEvents';
+import { LocalEvaluator, NodeEvaluator } from './evaluator/evaluator';
+import { Clock } from './utils/clock';
 
 export interface BuildInfo {
   readonly GIT_REVISION: string;
@@ -57,7 +75,6 @@ export interface Bucketeer {
    */
   getNumberVariation(user: User, featureId: string, defaultValue: number): Promise<number>;
 
-
   /**
    * booleanVariation returns variation as boolean.
    * If a variation returned by server is not boolean, defaultValue is retured.
@@ -75,13 +92,13 @@ export interface Bucketeer {
   ): Promise<BKTEvaluationDetails<boolean>>;
 
   /**
- * stringVariation returns variation as string.
- * If a variation returned by server is not string, defaultValue is retured.
- * @param user User information.
- * @param featureId Feature flag ID to use.
- * @param defaultValue The variation value that is retured if SDK fails to fetch the variation or the variation is not string.
- * @returns The variation value returned from server or default value.
- */
+   * stringVariation returns variation as string.
+   * If a variation returned by server is not string, defaultValue is retured.
+   * @param user User information.
+   * @param featureId Feature flag ID to use.
+   * @param defaultValue The variation value that is retured if SDK fails to fetch the variation or the variation is not string.
+   * @returns The variation value returned from server or default value.
+   */
   stringVariation(user: User, featureId: string, defaultValue: string): Promise<string>;
 
   stringVariationDetails(
@@ -160,6 +177,16 @@ export class BKTClientImpl implements Bucketeer {
   config: Config;
   registerEventsScheduleID: NodeJS.Timeout;
 
+  grpcClient: GRPCClient;
+  cache: Cache;
+  featureFlagCache: FeaturesCache;
+  segementUsersCache: SegmentUsersCache;
+  eventEmitter: ProcessorEventsEmitter;
+  featureFlagProcessor: FeatureFlagProcessor;
+  segementUsersCacheProcessor: SegementUsersCacheProcessor;
+
+  localEvaluator: NodeEvaluator;
+
   constructor(config: Config) {
     this.config = {
       ...defaultConfig,
@@ -173,6 +200,42 @@ export class BKTClientImpl implements Bucketeer {
         this.callRegisterEvents(this.eventStore.takeout(this.eventStore.size()));
       }
     }, this.config.pollingIntervalForRegisterEvents!);
+
+    this.grpcClient = new DefaultGRPCClient(this.config.host, this.config.token);
+    this.eventEmitter = new ProcessorEventsEmitter();
+
+    const inMemoryCache = new InMemoryCache();
+    this.cache = inMemoryCache;
+    this.featureFlagCache = NewFeatureCache({ cache: this.cache, ttl: FEATURE_FLAG_CACHE_TTL });
+    this.segementUsersCache = NewSegmentUsersCache({
+      cache: this.cache,
+      ttl: SEGEMENT_USERS_CACHE_TTL,
+    });
+
+    this.featureFlagProcessor = NewFeatureFlagProcessor({
+      cache: this.cache,
+      featureFlagCache: this.featureFlagCache,
+      pollingInterval: this.config.cachePollingInterval!,
+      grpc: this.grpcClient,
+      eventEmitter: this.eventEmitter,
+      featureTag: this.config.tag,
+      clock: new Clock(),
+    });
+
+    this.segementUsersCacheProcessor = NewSegementUserCacheProcessor({
+      cache: this.cache,
+      segmentUsersCache: this.segementUsersCache,
+      pollingInterval: this.config.cachePollingInterval!,
+      grpc: this.grpcClient,
+      eventEmitter: this.eventEmitter,
+      featureTag: this.config.tag,
+      clock: new Clock(),
+    });
+
+    this.localEvaluator = new LocalEvaluator(this.config.tag, this.featureFlagCache, this.segementUsersCache);
+
+    this.featureFlagProcessor.start();
+    this.segementUsersCacheProcessor.start();
   }
 
   async stringVariation(user: User, featureId: string, defaultValue: string): Promise<string> {
@@ -222,7 +285,7 @@ export class BKTClientImpl implements Bucketeer {
   ): Promise<BKTEvaluationDetails<BKTValue>> {
     return this.getVariationDetails(user, featureId, defaultValue, stringToObjectConverter);
   }
-
+  
   registerEvents(): void {
     if (this.eventStore.size() >= COUNT_PER_REGISTER_EVENT) {
       this.callRegisterEvents(this.eventStore.takeout(COUNT_PER_REGISTER_EVENT));
@@ -279,6 +342,13 @@ export class BKTClientImpl implements Bucketeer {
   }
 
   async getEvaluation(user: User, featureId: string): Promise<Evaluation | null> {
+    if (this.config.enableLocalEvaluation === true) {
+      return this.getEvaluationLocally(user, featureId);
+    }
+    return this.getEvaluationRemotely(user, featureId);
+  }
+  
+  async getEvaluationRemotely(user: User, featureId: string): Promise<Evaluation | null> {
     const startTime: number = Date.now();
     let res: GetEvaluationResponse;
     let size: number;
@@ -296,6 +366,20 @@ export class BKTClientImpl implements Bucketeer {
     }
     const second = (Date.now() - startTime) / 1000;
     this.saveEvaluationMetricsEvent(this.config.tag, second, size);
+    return evaluation;
+  }
+
+  async getEvaluationLocally(user: User, featureId: string): Promise<Evaluation | null> {
+    const startTime: number = Date.now();
+    let evaluation: Evaluation | null;
+    try {
+      evaluation = await this.localEvaluator.evaluate(user, featureId);
+    } catch (error) {
+      evaluation = null;
+      this.saveErrorMetricsEvent(this.config.tag, error, ApiId.SDK_GET_VARIATION);
+    }
+    const second = (Date.now() - startTime) / 1000;
+    this.saveLatencyMetricsEvent(this.config.tag, second, ApiId.SDK_GET_VARIATION);
     return evaluation;
   }
 
@@ -370,6 +454,8 @@ export class BKTClientImpl implements Bucketeer {
   async destroy(): Promise<void> {
     this.registerAllEvents();
     removeSchedule(this.registerEventsScheduleID);
+    this.featureFlagProcessor.stop();
+    this.segementUsersCacheProcessor.stop();
     this.config.logger?.info('destroy finished', this.registerEventsScheduleID);
   }
 

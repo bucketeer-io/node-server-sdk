@@ -49,39 +49,39 @@ export type ErrorMetricsEvent =
 export type SuccessMetricsEvent = SizeMetricsEvent | LatencyMetricsEvent;
 
 export type TimeoutErrorMetricsEvent = {
-  apiId: ApiId.GET_EVALUATION | ApiId.REGISTER_EVENTS;
+  apiId: NodeApiIds;
   labels: { [key: string]: string };
   '@type': typeof TIMEOUT_ERROR_METRICS_EVENT_NAME;
 };
 
 export type InternalSdkErrorMetricsEvent = {
-  apiId: ApiId.GET_EVALUATION | ApiId.REGISTER_EVENTS;
+  apiId: NodeApiIds;
   labels: { [key: string]: string };
   '@type': typeof INTERNAL_SDK_ERROR_METRICS_EVENT_NAME;
 };
 
 export type NetworkErrorMetricsEvent = {
-  apiId: ApiId.GET_EVALUATION | ApiId.REGISTER_EVENTS;
+  apiId: NodeApiIds;
   labels: { [key: string]: string };
   '@type': typeof NETWORK_ERROR_METRICS_EVENT_NAME;
 };
 
 export type SizeMetricsEvent = {
-  apiId: ApiId.GET_EVALUATION | ApiId.REGISTER_EVENTS;
+  apiId: NodeApiIds;
   sizeByte: number;
   labels: { [key: string]: string };
   '@type': typeof SIZE_METRICS_EVENT_NAME;
 };
 
 export type LatencyMetricsEvent = {
-  apiId: ApiId.GET_EVALUATION | ApiId.REGISTER_EVENTS;
+  apiId: NodeApiIds;
   latencySecond: number;
   labels: { [key: string]: string };
   '@type': typeof LATENCY_METRICS_EVENT_NAME;
 };
 
 export type UnknownErrorMetricsEvent = {
-  apiId: ApiId.GET_EVALUATION | ApiId.REGISTER_EVENTS;
+  apiId: NodeApiIds;
   labels: { [key: string]: string };
   '@type': typeof UNKNOWN_ERROR_METRICS_EVENT_NAME;
 };
