@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.2](https://github.com/bucketeer-io/node-server-sdk/compare/v0.3.1...v0.3.2) (2024-11-19)
+
+
+### Miscellaneous
+
+* change objectVariation implementation for consistency ([#80](https://github.com/bucketeer-io/node-server-sdk/issues/80)) ([7fadef7](https://github.com/bucketeer-io/node-server-sdk/commit/7fadef7df52a18b3fa3890a80bc2aad00afa27f8))
+
+
+### Build System
+
+* **deps:** bump the dependencies group with 13 updates ([#76](https://github.com/bucketeer-io/node-server-sdk/issues/76)) ([914ace5](https://github.com/bucketeer-io/node-server-sdk/commit/914ace508b5fd832a3e332e32268c50c420d1e8f))
+* **deps:** bump the dependencies group with 17 updates ([#81](https://github.com/bucketeer-io/node-server-sdk/issues/81)) ([006a839](https://github.com/bucketeer-io/node-server-sdk/commit/006a839919386f9e1926bb947c6632bfe3c4d6a1))
+
 ## [0.3.1](https://github.com/bucketeer-io/node-server-sdk/compare/v0.3.0...v0.3.1) (2024-09-05)
 
 
