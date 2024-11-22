@@ -273,7 +273,7 @@ export class BKTClientImpl implements Bucketeer {
   }
 
   saveErrorMetricsEvent(tag: string, e: any, apiId: NodeApiIds) {
-    const event = toErrorMetricsEvent(e, tag, apiId);
+    const event = toErrorMetricsEvent(e, tag, apiId, this.config.logger);
     if (event) {
       this.eventStore.add(event);
       this.registerEvents();

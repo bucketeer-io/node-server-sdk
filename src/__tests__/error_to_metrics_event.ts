@@ -12,7 +12,6 @@ import {
   createNotFoundErrorMetricsEvent,
   createPayloadTooLargeErrorMetricsEvent,
   createServiceUnavailableErrorMetricsEvent,
-  createUnauthorizedErrorMetricsEvent,
 } from '../objects/status';
 import { InvalidStatusError } from '../api/client';
 

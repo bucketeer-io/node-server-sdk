@@ -1,4 +1,5 @@
 import { InvalidStatusError } from '../api/client';
+import { Logger } from '../logger';
 import { createTimestamp } from '../utils/time';
 import { ApiId, NodeApiIds } from './apiId';
 import { createEvent, Event } from './event';
@@ -188,7 +189,12 @@ function convertMS(ms: number): string {
   return (ms / 1000).toString() + 's';
 }
 
-export const toErrorMetricsEvent = (e: any, tag: string, apiId: NodeApiIds): Event | null => {
+export const toErrorMetricsEvent = (
+  e: any,
+  tag: string,
+  apiId: NodeApiIds,
+  logger?: Logger,
+): Event | null => {
   if (e instanceof InvalidStatusError) {
     const statusCode = e.code ?? 0;
     switch (true) {
@@ -197,10 +203,10 @@ export const toErrorMetricsEvent = (e: any, tag: string, apiId: NodeApiIds): Eve
       case statusCode == 400:
         return createBadRequestErrorMetricsEvent(tag, apiId);
       case statusCode == 401:
-        console.error('An unauthorized error occurred. Please check your API Key.');
+        logger?.error('An unauthorized error occurred. Please check your API Key.');
         return null;
       case statusCode == 403:
-        console.error('An forbidden error occurred. Please check your API Key.');
+        logger?.error('An forbidden error occurred. Please check your API Key.');
         return null;
       case statusCode == 404:
         return createNotFoundErrorMetricsEvent(tag, apiId);
