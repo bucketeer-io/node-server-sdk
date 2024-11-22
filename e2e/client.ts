@@ -27,8 +27,8 @@ test('Using a random string in the api key setting should not throw exception', 
 
   const bktClientImpl = bktClient as BKTClientImpl
   const events = bktClientImpl.eventStore.getAll()
+  // The SDK skips generating error events for unauthorized errors, so no error events should be present
   t.false(events.some((e) => {
-
     if (isMetricsEvent(e.event)) {
       const metrics = e.event as MetricsEvent
       return metrics.event?.['@type'] === FORBIDDEN_ERROR_METRICS_EVENT_NAME && metrics.event?.apiId === ApiId.GET_EVALUATION
