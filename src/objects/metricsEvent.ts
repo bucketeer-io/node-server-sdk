@@ -197,10 +197,10 @@ export const toErrorMetricsEvent = (e: any, tag: string, apiId: NodeApiIds): Eve
       case statusCode == 400:
         return createBadRequestErrorMetricsEvent(tag, apiId);
       case statusCode == 401:
-        console.log('An unauthorized error occurred. Please check your API Key.');
+        console.error('An unauthorized error occurred. Please check your API Key.');
         return null;
       case statusCode == 403:
-        console.log('An forbidden error occurred. Please check your API Key.');
+        console.error('An forbidden error occurred. Please check your API Key.');
         return null;
       case statusCode == 404:
         return createNotFoundErrorMetricsEvent(tag, apiId);
