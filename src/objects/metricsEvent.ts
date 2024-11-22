@@ -188,7 +188,7 @@ function convertMS(ms: number): string {
   return (ms / 1000).toString() + 's';
 }
 
-export const toErrorMetricsEvent = (e: any, tag: string, apiId: NodeApiIds): Event => {
+export const toErrorMetricsEvent = (e: any, tag: string, apiId: NodeApiIds): Event | null => {
   if (e instanceof InvalidStatusError) {
     const statusCode = e.code ?? 0;
     switch (true) {
@@ -197,9 +197,11 @@ export const toErrorMetricsEvent = (e: any, tag: string, apiId: NodeApiIds): Eve
       case statusCode == 400:
         return createBadRequestErrorMetricsEvent(tag, apiId);
       case statusCode == 401:
-        return createUnauthorizedErrorMetricsEvent(tag, apiId);
+        console.log('An unauthorized error occurred. Please check your API Key.');
+        return null;
       case statusCode == 403:
-        return createForbiddenErrorMetricsEvent(tag, apiId);
+        console.log('An forbidden error occurred. Please check your API Key.');
+        return null;
       case statusCode == 404:
         return createNotFoundErrorMetricsEvent(tag, apiId);
       case statusCode == 405:

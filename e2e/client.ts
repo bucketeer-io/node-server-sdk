@@ -27,7 +27,7 @@ test('Using a random string in the api key setting should not throw exception', 
 
   const bktClientImpl = bktClient as BKTClientImpl
   const events = bktClientImpl.eventStore.getAll()
-  t.true(events.some((e) => {
+  t.false(events.some((e) => {
 
     if (isMetricsEvent(e.event)) {
       const metrics = e.event as MetricsEvent
