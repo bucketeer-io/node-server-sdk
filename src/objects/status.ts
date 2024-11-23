@@ -1,6 +1,6 @@
 import { ApiId, NodeApiIds } from './apiId';
 import { createEvent } from './event';
-import { createMetricsEvent } from './metricsEvent';
+import { createMetricsEvent, isMetricsEvent, MetricsEvent } from './metricsEvent';
 
 const FORBIDDEN_ERROR_METRICS_EVENT_NAME =
   'type.googleapis.com/bucketeer.event.client.ForbiddenErrorMetricsEvent';
@@ -22,55 +22,55 @@ const PAYLOAD_TOO_LARGE_ERROR_METRICS_EVENT_NAME =
   'type.googleapis.com/bucketeer.event.client.PayloadTooLargeExceptionEvent';
 
 export type BadRequestErrorMetricsEvent = {
-  apiId: ApiId.GET_EVALUATION | ApiId.REGISTER_EVENTS;
+  apiId: NodeApiIds;
   labels: { [key: string]: string };
   '@type': typeof BAD_REQUEST_ERROR_METRICS_EVENT_NAME;
 };
 
 export type UnauthorizedErrorMetricsEvent = {
-  apiId: ApiId.GET_EVALUATION | ApiId.REGISTER_EVENTS;
+  apiId: NodeApiIds;
   labels: { [key: string]: string };
   '@type': typeof UNAUTHORIZED_ERROR_METRICS_EVENT_NAME;
 };
 
 export type ForbiddenErrorMetricsEvent = {
-  apiId: ApiId.GET_EVALUATION | ApiId.REGISTER_EVENTS;
+  apiId: NodeApiIds;
   labels: { [key: string]: string };
   '@type': typeof FORBIDDEN_ERROR_METRICS_EVENT_NAME;
 };
 
 export type NotFoundErrorMetricsEvent = {
-  apiId: ApiId.GET_EVALUATION | ApiId.REGISTER_EVENTS;
+  apiId: NodeApiIds;
   labels: { [key: string]: string };
   '@type': typeof NOT_FOUND_ERROR_METRICS_EVENT_NAME;
 };
 
 export type ClientClosedRequestErrorMetricsEvent = {
-  apiId: ApiId.GET_EVALUATION | ApiId.REGISTER_EVENTS;
+  apiId: NodeApiIds;
   labels: { [key: string]: string };
   '@type': typeof CLIENT_CLOSED_REQUEST_ERROR_METRICS_EVENT_NAME;
 };
 
 export type InternalServerErrorMetricsEvent = {
-  apiId: ApiId.GET_EVALUATION | ApiId.REGISTER_EVENTS;
+  apiId: NodeApiIds;
   labels: { [key: string]: string };
   '@type': typeof INTERNAL_SERVER_ERROR_METRICS_EVENT_NAME;
 };
 
 export type ServiceUnavailableErrorMetricsEvent = {
-  apiId: ApiId.GET_EVALUATION | ApiId.REGISTER_EVENTS;
+  apiId: NodeApiIds;
   labels: { [key: string]: string };
   '@type': typeof SERVICE_UNAVAILABLE_ERROR_METRICS_EVENT_NAME;
 };
 
 export type RedirectRequestErrorMetricsEvent = {
-  apiId: ApiId.GET_EVALUATION | ApiId.REGISTER_EVENTS;
+  apiId: NodeApiIds;
   labels: { [key: string]: string };
   '@type': typeof REDIRECT_REQUEST_ERROR_METRICS_EVENT_NAME;
 };
 
 export type PayLoadTooLargetErrorMetricsEvent = {
-  apiId: ApiId.GET_EVALUATION | ApiId.REGISTER_EVENTS;
+  apiId: NodeApiIds;
   labels: { [key: string]: string };
   '@type': typeof PAYLOAD_TOO_LARGE_ERROR_METRICS_EVENT_NAME;
 };
@@ -197,4 +197,28 @@ export function createPayloadTooLargeErrorMetricsEvent(tag: string, apiId: NodeA
   };
   const metricsEvent = createMetricsEvent(payloadTooLargeMetricsEvent);
   return createEvent(metricsEvent);
+}
+
+export function isStatusErrorMetricsEvent(obj: any, specificErrorType?: string): obj is MetricsEvent {
+  if (!isMetricsEvent(obj) || !obj.event) {
+    return false;
+  }
+  // check event type in ErrorMetricsEvent
+  if (specificErrorType) {
+    return obj.event['@type'] === specificErrorType;
+  }
+
+  const statusErrorEventTypes =  [
+    FORBIDDEN_ERROR_METRICS_EVENT_NAME,
+    BAD_REQUEST_ERROR_METRICS_EVENT_NAME,
+    UNAUTHORIZED_ERROR_METRICS_EVENT_NAME,
+    NOT_FOUND_ERROR_METRICS_EVENT_NAME,
+    CLIENT_CLOSED_REQUEST_ERROR_METRICS_EVENT_NAME,
+    INTERNAL_SERVER_ERROR_METRICS_EVENT_NAME,
+    SERVICE_UNAVAILABLE_ERROR_METRICS_EVENT_NAME,
+    REDIRECT_REQUEST_ERROR_METRICS_EVENT_NAME,
+    PAYLOAD_TOO_LARGE_ERROR_METRICS_EVENT_NAME,
+  ];
+    
+  return statusErrorEventTypes.includes(obj.event['@type']);
 }
