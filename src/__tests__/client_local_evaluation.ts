@@ -32,12 +32,13 @@ import { Clock } from '../utils/clock';
 import { NewSegmentUsersCache, SegmentUsersCache } from '../cache/segementUsers';
 import { NewFeatureCache, FeaturesCache } from '../cache/features';
 import { ApiId } from '@kenji71089/evaluation/lib/proto/event/client/event_pb';
-import { BKTClientImpl, Config, DefaultLogger } from '../index';
+import { Config, DefaultLogger } from '../index';
 import { APIClient } from '../api/client';
 import { EventStore } from '../stores/EventStore';
 import { Evaluation } from '../objects/evaluation';
 import { BKTEvaluationDetails } from '../evaluationDetails';
 import { BKTValue } from '../types';
+import { BKTClientImpl } from '../client';
 
 const test = anyTest as TestFn<{
   sandbox: sino.SinonSandbox;
