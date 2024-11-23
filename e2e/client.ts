@@ -8,8 +8,6 @@ const FORBIDDEN_ERROR_METRICS_EVENT_NAME =
   'type.googleapis.com/bucketeer.event.client.ForbiddenErrorMetricsEvent';
 const NOT_FOUND_ERROR_METRICS_EVENT_NAME =
   'type.googleapis.com/bucketeer.event.client.NotFoundErrorMetricsEvent';
-const UNKNOWN_ERROR_METRICS_EVENT_NAME =
-  'type.googleapis.com/bucketeer.event.client.UnknownErrorMetricsEvent';
 
 //Note: There is a different compared to other SDK clients.
 test('Using a random string in the api key setting should not throw exception', async (t) => {
