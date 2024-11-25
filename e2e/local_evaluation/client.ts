@@ -62,7 +62,7 @@ test('altering featureTag should not affect api request', async (t) => {
 test('Altering the api key should not affect api request', async (t) => {
   const config = {
     host: HOST,
-    token: TOKEN,
+    token: SERVER_ROLE_TOKEN,
     tag: FEATURE_TAG,
     cachePollingInterval: 1000,
     enableLocalEvaluation: true,
