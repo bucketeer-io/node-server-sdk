@@ -8,7 +8,7 @@ import {
 } from '@kenji71089/evaluation';
 
 import { FeaturesCache } from '../cache/features';
-import { SegmentUsersCache } from '../cache/segementUsers';
+import { SegmentUsersCache } from '../cache/segmentUsers';
 import { Evaluation } from '../objects/evaluation';
 import { User } from '../objects/user';
 import { Reason, ReasonType } from '../objects/reason';

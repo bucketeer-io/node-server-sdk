@@ -1,32 +1,21 @@
 import anyTest, { TestFn } from 'ava';
 import { Bucketeer, DefaultLogger, User, initialize } from '../lib';
-import {
-  HOST,
-  SERVER_ROLE_TOKEN,
-  FEATURE_TAG,
-  FEATURE_ID_BOOLEAN,
-  FEATURE_ID_STRING,
-  FEATURE_ID_INT,
-  FEATURE_ID_JSON,
-  FEATURE_ID_FLOAT,
-} from './constants/constants';
+import { HOST, TOKEN, FEATURE_TAG, FEATURE_ID_BOOLEAN, FEATURE_ID_STRING, FEATURE_ID_INT, FEATURE_ID_JSON, FEATURE_ID_FLOAT } from './constants/constants';
 
 const test = anyTest as TestFn<{ bktClient: Bucketeer; defaultUser: User }>;
 
-test.before( async (t) => {
-  t.timeout(10000);
+test.before(async (t) => {
   t.context = {
     bktClient: initialize({
       host: HOST,
-      token: SERVER_ROLE_TOKEN,
+      token: TOKEN,
       tag: FEATURE_TAG,
-      logger: new DefaultLogger('error'),
-      enableLocalEvaluation: true,
+      logger: new DefaultLogger("error"),
+      // enableLocalEvaluation: true,
       cachePollingInterval: 3000,
     }),
-    defaultUser: { id: 'user-id-1', data: {} },
-  };   
-
+    defaultUser: { id: 'user-1', data: {} },
+  };
   await new Promise(resolve => {
     setTimeout(resolve, 5000);
   });
@@ -37,7 +26,7 @@ test.after(async (t) => {
   bktClient.destroy();
 });
 
-test('boolVariation', async (t) => {
+test.serial('boolVariation', async (t) => {
   const { bktClient, defaultUser } = t.context;
   t.is(await bktClient.booleanVariation(defaultUser, FEATURE_ID_BOOLEAN, false), true);
   t.deepEqual(
@@ -54,14 +43,14 @@ test('boolVariation', async (t) => {
   )
 });
 
-test('stringVariation', async (t) => {
+test.serial('stringVariation', async (t) => {
   const { bktClient, defaultUser } = t.context;
   t.is(await bktClient.stringVariation(defaultUser, FEATURE_ID_STRING, ''), 'value-1');
   t.deepEqual(
     await bktClient.stringVariationDetails(defaultUser, FEATURE_ID_STRING, ''),
     {
       featureId: FEATURE_ID_STRING,
-      featureVersion: 4,
+      featureVersion: 22,
       userId: defaultUser.id,
       variationId: '16a9db43-dfba-485c-8300-8747af5caf61',
       variationName: 'variation 1',
@@ -71,7 +60,7 @@ test('stringVariation', async (t) => {
   )
 });
 
-test('numberVariation', async (t) => {
+test.serial('numberVariation', async (t) => {
   const { bktClient, defaultUser } = t.context;
   t.is(await bktClient.numberVariation(defaultUser, FEATURE_ID_INT, 0), 10);
   t.deepEqual(
@@ -103,7 +92,7 @@ test('numberVariation', async (t) => {
 
 });
 
-test('objectVariation', async (t) => {
+test.serial('objectVariation', async (t) => {
   const { bktClient, defaultUser } = t.context;
   t.deepEqual(await bktClient.getJsonVariation(defaultUser, FEATURE_ID_JSON, {}), { "str": "str1", "int": "int1" });
   t.deepEqual(await bktClient.objectVariation(defaultUser, FEATURE_ID_JSON, {}), { "str": "str1", "int": "int1" });

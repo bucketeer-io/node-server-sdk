@@ -1,7 +1,7 @@
 import test from 'ava';
 import { SegmentUsers, } from '@kenji71089/evaluation';
 import { InMemoryCache } from '../../cache/inMemoryCache';
-import { NewSegmentUsersCache } from '../../cache/segementUsers';
+import { NewSegmentUsersCache } from '../../cache/segmentUsers';
 
 function createSegmentUsers(
   id: string,

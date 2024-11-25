@@ -1,4 +1,4 @@
-import { SegmentUsersCache } from '../segementUsers';
+import { SegmentUsersCache } from '../segmentUsers';
 import { GRPCClient } from '../../grpc/client';
 import { ProcessorEventsEmitter } from '../../processorEventsEmitter';
 import { Cache } from '../cache';

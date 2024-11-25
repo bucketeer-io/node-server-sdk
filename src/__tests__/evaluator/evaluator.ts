@@ -21,7 +21,7 @@ import { MockCache } from '../mocks/cache';
 import { MockGRPCClient } from '../mocks/gprc';
 
 import { Clock } from '../../utils/clock';
-import { NewSegmentUsersCache, SegmentUsersCache } from '../../cache/segementUsers';
+import { NewSegmentUsersCache, SegmentUsersCache } from '../../cache/segmentUsers';
 import { NewFeatureCache, FeaturesCache } from '../../cache/features';
 import { ProcessorEventsEmitter } from '../../processorEventsEmitter';
 

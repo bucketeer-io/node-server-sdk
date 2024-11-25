@@ -5,14 +5,14 @@ import { HOST, FEATURE_TAG, TARGETED_USER_ID, FEATURE_ID_BOOLEAN, FEATURE_ID_STR
 const test = anyTest as TestFn<{ bktClient: Bucketeer; targetedUser: User }>;
 
 test.before( async (t) => {
-  t.timeout(10000);
+
   t.context = {
     bktClient: initialize({
       host: HOST,
       token: SERVER_ROLE_TOKEN,
       tag: FEATURE_TAG,
       logger: new DefaultLogger('error'),
-      enableLocalEvaluation: false,
+      enableLocalEvaluation: true,
       cachePollingInterval: 3000,
     }),
     targetedUser: { id: TARGETED_USER_ID, data: {} },
@@ -28,7 +28,8 @@ test.after(async (t) => {
   bktClient.destroy();
 });
 
-test('boolVariation', async (t) => {
+
+test.serial('boolVariation', async (t) => {
   const { bktClient, targetedUser } = t.context;
   t.is(await bktClient.booleanVariation(targetedUser, FEATURE_ID_BOOLEAN, true), false);
   t.deepEqual(
@@ -45,14 +46,14 @@ test('boolVariation', async (t) => {
   )
 });
 
-test('stringVariation', async (t) => {
+test.serial('stringVariation', async (t) => {
   const { bktClient, targetedUser } = t.context;
   t.is(await bktClient.stringVariation(targetedUser, FEATURE_ID_STRING, ''), 'value-2');
   t.deepEqual(
     await bktClient.stringVariationDetails(targetedUser, FEATURE_ID_STRING, 'true'),
     {
       featureId: FEATURE_ID_STRING,
-      featureVersion: 4,
+      featureVersion: 22,
       userId: targetedUser.id,
       variationId: 'a3336346-931e-40f4-923a-603c642285d7',
       variationName: 'variation 2',
@@ -62,7 +63,7 @@ test('stringVariation', async (t) => {
   )
 });
 
-test('numberVariation', async (t) => {
+test.serial('numberVariation', async (t) => {
   const { bktClient, targetedUser } = t.context;
   t.is(await bktClient.numberVariation(targetedUser, FEATURE_ID_INT, 0), 20);
   t.deepEqual(
@@ -94,7 +95,7 @@ test('numberVariation', async (t) => {
 
 });
 
-test('objectVariation', async (t) => {
+test.serial('objectVariation', async (t) => {
   const { bktClient, targetedUser } = t.context;
   t.deepEqual(await bktClient.getJsonVariation(targetedUser, FEATURE_ID_JSON, {}), { "str": "str2", "int": "int2" });
   t.deepEqual(await bktClient.objectVariation(targetedUser, FEATURE_ID_JSON, {}), { "str": "str2", "int": "int2" });

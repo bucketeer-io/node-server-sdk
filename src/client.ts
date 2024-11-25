@@ -174,11 +174,6 @@ export class BKTClientImpl implements Bucketeer {
     this.registerEvents();
   }
 
-  private saveEvaluationMetricsEvent(tag: string, second: number, size: number) {
-    this.saveLatencyMetricsEvent(tag, second, ApiId.GET_EVALUATION);
-    this.saveSizeMetricsEvent(tag, size, ApiId.GET_EVALUATION);
-  }
-
   private saveLatencyMetricsEvent(tag: string, second: number, apiId: NodeApiIds) {
     this.eventStore.add(createLatencyMetricsEvent(tag, second, apiId));
     this.registerEvents();

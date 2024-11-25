@@ -15,7 +15,7 @@ import { Clock } from '../../../../utils/clock';
 import {
   NewSegmentUsersCache,
   SEGMENT_USERS_NAME_SPACE as SEGMENT_USERS_CACHE_NAME_SPACE,
-} from '../../../../cache/segementUsers';
+} from '../../../../cache/segmentUsers';
 import { ApiId } from '../../../../objects/apiId';
 import { ProcessorEventsEmitter } from '../../../../processorEventsEmitter';
 

@@ -11,7 +11,7 @@ import {
   FeatureFlagProcessor,
   NewFeatureFlagProcessor,
 } from './cache/processor/featureFlagCacheProcessor';
-import { NewSegmentUsersCache } from './cache/segementUsers';
+import { NewSegmentUsersCache } from './cache/segmentUsers';
 import {
   NewSegementUserCacheProcessor,
   SEGEMENT_USERS_CACHE_TTL,

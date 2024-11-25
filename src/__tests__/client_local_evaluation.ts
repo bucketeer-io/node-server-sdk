@@ -29,7 +29,7 @@ import { MockCache } from './mocks/cache';
 import { MockGRPCClient } from './mocks/gprc';
 import { ProcessorEventsEmitter } from '../processorEventsEmitter';
 import { Clock } from '../utils/clock';
-import { NewSegmentUsersCache, SegmentUsersCache } from '../cache/segementUsers';
+import { NewSegmentUsersCache, SegmentUsersCache } from '../cache/segmentUsers';
 import { NewFeatureCache, FeaturesCache } from '../cache/features';
 import { ApiId } from '@kenji71089/evaluation/lib/proto/event/client/event_pb';
 import { Config, DefaultLogger } from '../index';

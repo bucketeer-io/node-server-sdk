@@ -1,7 +1,6 @@
 export default {
   failFast: true,
   failWithoutAssertions: false,
-  concurrency: 10,
   babel: {
     testOptions: {
       babelrc: false,

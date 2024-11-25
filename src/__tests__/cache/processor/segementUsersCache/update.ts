@@ -15,7 +15,7 @@ import { MockGRPCClient } from '../../../mocks/gprc';
 import { Clock } from '../../../../utils/clock';
 import {
   NewSegmentUsersCache,
-} from '../../../../cache/segementUsers';
+} from '../../../../cache/segmentUsers';
 import { ApiId } from '../../../../objects/apiId';
 import { ProcessorEventsEmitter } from '../../../../processorEventsEmitter';
 
