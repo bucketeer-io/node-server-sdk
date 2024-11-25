@@ -41,7 +41,7 @@ test('stringVariation', async (t) => {
     await bktClient.stringVariationDetails(targetedUser, FEATURE_ID_STRING, 'true'),
     {
       featureId: FEATURE_ID_STRING,
-      featureVersion: 4,
+      featureVersion: 22,
       userId: targetedUser.id,
       variationId: 'a3336346-931e-40f4-923a-603c642285d7',
       variationName: 'variation 2',

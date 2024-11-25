@@ -1,15 +1,14 @@
 import test from 'ava'
-import { initialize, DefaultLogger, BKTClientImpl } from '../lib';
+import { initialize, DefaultLogger } from '../lib';
 import { HOST, TOKEN, FEATURE_TAG, TARGETED_USER_ID, FEATURE_ID_BOOLEAN } from './constants/constants';
 import { MetricsEvent, isMetricsEvent } from '../lib/objects/metricsEvent';
 import { ApiId } from '../lib/objects/apiId';
+import { BKTClientImpl } from '../lib/client';
 
 const FORBIDDEN_ERROR_METRICS_EVENT_NAME =
   'type.googleapis.com/bucketeer.event.client.ForbiddenErrorMetricsEvent';
 const NOT_FOUND_ERROR_METRICS_EVENT_NAME =
   'type.googleapis.com/bucketeer.event.client.NotFoundErrorMetricsEvent';
-const UNKNOWN_ERROR_METRICS_EVENT_NAME =
-  'type.googleapis.com/bucketeer.event.client.UnknownErrorMetricsEvent';
 
 //Note: There is a different compared to other SDK clients.
 test('Using a random string in the api key setting should not throw exception', async (t) => {

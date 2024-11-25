@@ -10,10 +10,15 @@
   "dependencies": {
     "@types/node": "^22.8.6",
     "@types/uuid": "^10.0.0",
-    "uuid": "^11.0.2"
+    "uuid": "^11.0.2",
+    "@kenji71089/evaluation": "0.0.1",
+    "@improbable-eng/grpc-web": "^0.13.0",
+    "@improbable-eng/grpc-web-node-http-transport": "^0.15.0",
+    "google-protobuf": "^3.21.4"
   },
   "devDependencies": {
     "@ava/babel": "2.0.0",
+    "@ava/typescript": "^5.0.0",
     "@babel/cli": "7.25.9",
     "@babel/core": "7.26.0",
     "@babel/preset-env": "7.26.0",
@@ -32,6 +37,8 @@
     "@typescript-eslint/eslint-plugin": "^8.12.2",
     "@typescript-eslint/parser": "^8.12.2",
     "ava": "6.2.0",
+    "@types/sinon": "^17.0.3",
+    "sinon": "^19.0.2",
     "cpx": "1.5.0",
     "eslint": "^9.13.0",
     "eslint-config-prettier": "9.1.0",
