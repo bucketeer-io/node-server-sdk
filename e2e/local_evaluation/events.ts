@@ -1,5 +1,5 @@
 import anyTest, { TestFn } from 'ava';
-import { Bucketeer, DefaultLogger, User, initialize } from '../lib';
+import { Bucketeer, DefaultLogger, User, initialize } from '../../lib';
 import {
   HOST,
   TOKEN,
@@ -13,11 +13,11 @@ import {
   GOAL_ID,
   GOAL_VALUE,
   SERVER_ROLE_TOKEN,
-} from './constants/constants';
-import { BKTClientImpl } from '../lib/client';
-import { isGoalEvent } from '../lib/objects/goalEvent';
-import { isErrorMetricsEvent, isMetricsEvent } from '../lib/objects/metricsEvent';
-import { isEvaluationEvent } from '../lib/objects/evaluationEvent';
+} from '../constants/constants';
+import { BKTClientImpl } from '../../lib/client';
+import { isGoalEvent } from '../../lib/objects/goalEvent';
+import { isErrorMetricsEvent, isMetricsEvent } from '../../lib/objects/metricsEvent';
+import { isEvaluationEvent } from '../../lib/objects/evaluationEvent';
 
 const test = anyTest as TestFn<{ bktClient: Bucketeer; targetedUser: User }>;
 

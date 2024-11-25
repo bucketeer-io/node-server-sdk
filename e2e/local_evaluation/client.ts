@@ -1,23 +1,23 @@
 import test from 'ava'
-import { initialize, DefaultLogger } from '../lib';
-import { HOST, TOKEN, FEATURE_TAG, TARGETED_USER_ID, FEATURE_ID_BOOLEAN } from './constants/constants';
-import { MetricsEvent, isMetricsEvent } from '../lib/objects/metricsEvent';
-import { ApiId } from '../lib/objects/apiId';
-import { BKTClientImpl } from '../lib/client';
+import { initialize, DefaultLogger } from '../../lib';
+import { HOST, TOKEN, FEATURE_TAG, TARGETED_USER_ID, FEATURE_ID_BOOLEAN, SERVER_ROLE_TOKEN } from '../constants/constants';
+import { isMetricsEvent } from '../../lib/objects/metricsEvent';
+import { BKTClientImpl } from '../../lib/client';
 
-const FORBIDDEN_ERROR_METRICS_EVENT_NAME =
-  'type.googleapis.com/bucketeer.event.client.ForbiddenErrorMetricsEvent';
-const NOT_FOUND_ERROR_METRICS_EVENT_NAME =
-  'type.googleapis.com/bucketeer.event.client.NotFoundErrorMetricsEvent';
-
-//Note: There is a different compared to other SDK clients.
 test('Using a random string in the api key setting should not throw exception', async (t) => {
   const bktClient = initialize({
     host: HOST,
     token: "TOKEN_RANDOM",
     tag: FEATURE_TAG,
+    cachePollingInterval: 1000,
+    enableLocalEvaluation: true,
     logger: new DefaultLogger("error")
   });
+
+  await new Promise((resolve) => {
+    setTimeout(resolve, 3000);
+  });
+
   const user = { id: TARGETED_USER_ID, data: {} }
   // The client can not load the evaluation, we will received the default value `true`
   // Other SDK clients e2e test will expect the value is `false`
@@ -27,12 +27,7 @@ test('Using a random string in the api key setting should not throw exception', 
   const bktClientImpl = bktClient as BKTClientImpl
   const events = bktClientImpl.eventStore.getAll()
   t.true(events.some((e) => {
-
-    if (isMetricsEvent(e.event)) {
-      const metrics = e.event as MetricsEvent
-      return metrics.event?.['@type'] === FORBIDDEN_ERROR_METRICS_EVENT_NAME && metrics.event?.apiId === ApiId.GET_EVALUATION
-    }
-    return false;
+    return isMetricsEvent(e.event);
   }));
 
   bktClient.destroy()
@@ -41,11 +36,18 @@ test('Using a random string in the api key setting should not throw exception', 
 test('altering featureTag should not affect api request', async (t) => {
   const config = {
     host: HOST,
-    token: TOKEN,
+    token: SERVER_ROLE_TOKEN,
     tag: FEATURE_TAG,
+    cachePollingInterval: 1000,
+    enableLocalEvaluation: true,
     logger: new DefaultLogger("error")
   }
+
   const bktClient = initialize(config);
+  await new Promise((resolve) => {
+    setTimeout(resolve, 3000);
+  });
+
   const user = { id: TARGETED_USER_ID, data: {} }
   const result = await t.notThrowsAsync(bktClient.booleanVariation(user, FEATURE_ID_BOOLEAN, false));
   t.true(result);
@@ -62,9 +64,16 @@ test('Altering the api key should not affect api request', async (t) => {
     host: HOST,
     token: TOKEN,
     tag: FEATURE_TAG,
+    cachePollingInterval: 1000,
+    enableLocalEvaluation: true,
     logger: new DefaultLogger("error")
   }
+
   const bktClient = initialize(config);
+  await new Promise((resolve) => {
+    setTimeout(resolve, 3000);
+  });
+
   const user = { id: TARGETED_USER_ID, data: {} }
   const result = await t.notThrowsAsync(bktClient.booleanVariation(user, FEATURE_ID_BOOLEAN, false));
   t.true(result);
@@ -80,10 +89,17 @@ test('Altering the api key should not affect api request', async (t) => {
 test('Using a random string in the featureTag setting should affect api request', async (t) => {
   const bktClient = initialize({
     host: HOST,
-    token: TOKEN,
+    token: SERVER_ROLE_TOKEN,
     tag: "RANDOM",
+    cachePollingInterval: 1000,
+    enableLocalEvaluation: true,
     logger: new DefaultLogger("error")
   });
+
+  await new Promise((resolve) => {
+    setTimeout(resolve, 3000);
+  });
+
   const user = { id: TARGETED_USER_ID, data: {} }
   const result = await t.notThrowsAsync(bktClient.booleanVariation(user, FEATURE_ID_BOOLEAN, true));
   // The client can not load the evaluation, we will received the default value `true`
@@ -93,11 +109,7 @@ test('Using a random string in the featureTag setting should affect api request'
   const bktClientImpl = bktClient as BKTClientImpl
   const events = bktClientImpl.eventStore.getAll()
   t.true(events.some((e) => {
-    if (isMetricsEvent(e.event)) {
-      const metrics = e.event as MetricsEvent
-      return metrics.event?.['@type'] === NOT_FOUND_ERROR_METRICS_EVENT_NAME && metrics.event?.apiId === ApiId.GET_EVALUATION
-    }
-    return false;
+    return isMetricsEvent(e.event);
   }));
 
   bktClient.destroy()

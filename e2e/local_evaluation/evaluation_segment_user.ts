@@ -1,6 +1,6 @@
 import anyTest, { TestFn } from 'ava';
-import { Bucketeer, DefaultLogger, User, initialize } from '../lib';
-import { HOST, FEATURE_TAG, TARGETED_SEGMENT_USER_ID, FEATURE_ID_BOOLEAN, FEATURE_ID_STRING, FEATURE_ID_INT, FEATURE_ID_JSON, FEATURE_ID_FLOAT, SERVER_ROLE_TOKEN } from './constants/constants';
+import { Bucketeer, DefaultLogger, User, initialize } from '../../lib';
+import { HOST, FEATURE_TAG, TARGETED_SEGMENT_USER_ID, FEATURE_ID_BOOLEAN, FEATURE_ID_STRING, FEATURE_ID_INT, FEATURE_ID_JSON, FEATURE_ID_FLOAT, SERVER_ROLE_TOKEN } from '../constants/constants';
 
 const test = anyTest as TestFn<{ bktClient: Bucketeer; targetedSegmentUser: User }>;
 
