@@ -236,6 +236,25 @@ function isNodeError(error: unknown): error is NodeJS.ErrnoException {
   return typeUtils.isNativeError(error);
 }
 
+export function isErrorMetricsEvent(obj: any, specificErrorType?: string): obj is MetricsEvent {
+  if (!isMetricsEvent(obj) || !obj.event) {
+    return false;
+  }
+  // check event type in ErrorMetricsEvent
+  if (specificErrorType) {
+    return obj.event['@type'] === specificErrorType;
+  }
+
+  const errorEventTypes = [
+    TIMEOUT_ERROR_METRICS_EVENT_NAME,
+    INTERNAL_SDK_ERROR_METRICS_EVENT_NAME,
+    NETWORK_ERROR_METRICS_EVENT_NAME,
+    UNKNOWN_ERROR_METRICS_EVENT_NAME,
+  ];
+  
+  return errorEventTypes.includes(obj.event['@type']);
+}
+
 export function isMetricsEvent(obj: any): obj is MetricsEvent {
   const isObject = typeof obj === 'object' && obj !== null;
   const hasTimestamp = typeof obj.timestamp === 'number';

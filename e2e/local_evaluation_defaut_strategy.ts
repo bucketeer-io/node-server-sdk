@@ -25,7 +25,7 @@ test.before( async (t) => {
     }),
     defaultUser: { id: 'user-1', data: {} },
   };   
-
+  // Waiting for the cache available
   await new Promise(resolve => {
     setTimeout(resolve, 5000);
   });

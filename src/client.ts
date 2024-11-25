@@ -90,6 +90,10 @@ export class BKTClientImpl implements Bucketeer {
     this.eventEmitter.on('pushSizeMetricsEvent', ({ size, apiId }) => {
       this.saveSizeMetricsEvent(config.tag, size, apiId);
     });
+
+    this.eventEmitter.on('pushEvaluationEvent', ({ user, evaluation }) => {
+      this.saveEvaluationEvent(user, evaluation);
+    });
   }
 
   async stringVariation(user: User, featureId: string, defaultValue: string): Promise<string> {
@@ -203,17 +207,17 @@ export class BKTClientImpl implements Bucketeer {
     let size: number;
     try {
       [res, size] = await this.apiClient.getEvaluation(this.config.tag, user, featureId);
-      const evaluation = res?.evaluation;
-      if (evaluation == null) {
-        throw Error('Fail to get evaluation. Reason: null response.');
-      }
-
       const second = (Date.now() - startTime) / 1000;
       this.eventEmitter.emit('pushLatencyMetricsEvent', {
         latency: second,
         apiId: ApiId.GET_EVALUATION,
       });
       this.eventEmitter.emit('pushSizeMetricsEvent', { size: size, apiId: ApiId.GET_EVALUATION });
+
+      const evaluation = res?.evaluation;
+      if (evaluation == null) {
+        throw Error('Fail to get evaluation. Reason: null response.');
+      }
       return evaluation;
     } catch (error) {
       this.eventEmitter.emit('error', { error: error, apiId: ApiId.GET_EVALUATION });
@@ -229,8 +233,7 @@ export class BKTClientImpl implements Bucketeer {
         let evaluation = await this.localEvaluator.evaluate(user, featureId);
 
         const second = (Date.now() - startTime) / 1000;
-        this.saveLatencyMetricsEvent(this.config.tag, second, ApiId.SDK_GET_VARIATION);
-        // don't not log size of local evaluation because it will log from the feature flag processor
+        // don't log size of the local evaluation because it will log from the feature flag processor
         this.eventEmitter.emit('pushLatencyMetricsEvent', {
           latency: second,
           apiId: ApiId.SDK_GET_VARIATION,
@@ -274,7 +277,6 @@ export class BKTClientImpl implements Bucketeer {
 
     try {
       if (evaluation !== null && result !== null) {
-        this.saveEvaluationEvent(user, evaluation);
         this.eventEmitter.emit('pushEvaluationEvent', { user: user, evaluation: evaluation });
         return {
           featureId: evaluation.featureId,

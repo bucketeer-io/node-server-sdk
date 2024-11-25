@@ -44,6 +44,7 @@ test('boolVariation', async (t) => {
   )
 });
 
+// This testcase `stringVariation` is setup for testing 
 test('stringVariation', async (t) => {
   const { bktClient, targetedSegmentUser } = t.context;
   t.is(await bktClient.stringVariation(targetedSegmentUser, FEATURE_ID_STRING, ''), 'value-3');
