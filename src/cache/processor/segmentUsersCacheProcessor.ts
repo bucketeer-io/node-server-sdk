@@ -6,6 +6,7 @@ import { ApiId } from '../../objects/apiId';
 import { SegmentUsers } from '@bucketeer/evaluation';
 import { createSchedule, removeSchedule } from '../../schedule';
 import { Clock } from '../../utils/clock';
+import { InvalidStatusError } from '../../objects/errors';
 
 interface SegementUsersCacheProcessor {
   start(): void;

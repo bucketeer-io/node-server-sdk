@@ -4,7 +4,7 @@ import fs from 'fs';
 import { APIClient } from '../api/client';
 import { User } from '../bootstrap';
 import path from 'path';
-import { InvalidStatusError } from '../api/client';
+import { InvalidStatusError } from '../objects/errors';
 
 const apiKey = '';
 
