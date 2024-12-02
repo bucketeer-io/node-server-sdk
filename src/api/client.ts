@@ -5,6 +5,7 @@ import { SourceId } from '../objects/sourceId';
 import { GetEvaluationRequest, RegisterEventsRequest } from '../objects/request';
 import { GetEvaluationResponse, RegisterEventsResponse } from '../objects/response';
 import { version } from '../objects/version';
+import { InvalidStatusError } from '../objects/errors';
 
 const scheme = 'https://';
 const evaluationAPI = '/get_evaluation';
@@ -111,15 +112,5 @@ export class APIClient {
         clientReq.destroy();
       });
     });
-  }
-}
-
-export class InvalidStatusError extends Error {
-  readonly code: number | undefined;
-  constructor(message: string, code: number | undefined) {
-    super(message);
-    this.code = code;
-    // Set the prototype explicitly.
-    Object.setPrototypeOf(this, InvalidStatusError.prototype);
   }
 }

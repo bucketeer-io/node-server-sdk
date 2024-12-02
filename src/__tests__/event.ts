@@ -509,3 +509,17 @@ test('createUnknownErrorMetricsEvent with statusCode and errorMessage', (t) => {
   const metrics = actual.event as MetricsEvent;
   t.deepEqual(metrics.event, expectedEvent);
 });
+
+test('createInternalSdkErrorMetricsEvent with errorMessage', (t) => {
+  const expectedEvent = {
+    apiId,
+    labels: {
+      tag,
+      error_message: 'internal error',
+    },
+    '@type': INTERNAL_SDK_ERROR_METRICS_EVENT_NAME,
+  };
+  const actual = createInternalSdkErrorMetricsEvent(tag, apiId, 'internal error');
+  const metrics = actual.event as MetricsEvent;
+  t.deepEqual(metrics.event, expectedEvent);
+});

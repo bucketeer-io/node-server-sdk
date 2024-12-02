@@ -3,6 +3,7 @@ import {
   Evaluator,
   Feature,
   SegmentUser,
+  SegmentUsers,
   UserEvaluations,
   Reason as ProtoReason,
 } from '@bucketeer/evaluation';
@@ -13,6 +14,7 @@ import { Evaluation } from '../objects/evaluation';
 import { User } from '../objects/user';
 import { Reason, ReasonType } from '../objects/reason';
 import { NodeEvaluator } from './evaluator';
+import { IllegalStateError } from '../objects/errors';
 
 class LocalEvaluator implements NodeEvaluator {
   private tag: string;
@@ -31,34 +33,79 @@ class LocalEvaluator implements NodeEvaluator {
 
   async evaluate(user: User, featureID: string): Promise<Evaluation> {
     // Get the target feature
-    const feature = await this.featureCache.get(featureID);
-    if (feature === null) {
-      throw new Error('Feature not found');
-    }
-    const targetFeatures = await this.getTargetFeatures(feature);
-    const evaluator = new Evaluator();
-    const fIds = evaluator.listSegmentIDs(feature);
-    const segmentUsersMap = new Map<string, SegmentUser[]>();
-    for (const fId of fIds) {
-      const segmentUser = await this.segementUsersCache.get(fId);
-      if (segmentUser !== null) {
-      segmentUsersMap.set(segmentUser.getSegmentId(), segmentUser.getUsersList());
-      }
-    }
-
-    const protoUser = createUser(user.id, user.data);
-    const userEvaluations = await evaluator.evaluateFeatures(
-      targetFeatures,
-      protoUser,
-      segmentUsersMap,
-      this.tag,
-    );
+    const feature = await this.getFeatures(featureID);
+    const userEvaluations = await this.evaluateFeatures(user, feature);
 
     const evaluation = this.findEvaluation(userEvaluations, featureID);
     return evaluation;
   }
 
-  findEvaluation(userEvaluations: UserEvaluations, featureId: String): Evaluation {
+  private async getFeatures(featureID: string): Promise<Feature> {
+    return this.getFeaturesFromCache(featureID).then((feature) => {
+      if (feature === null) {
+        throw new IllegalStateError(`Feature not found: ${featureID}`);
+      }
+      return feature;
+    });
+  }
+
+  private async getFeaturesFromCache(featureID: string): Promise<Feature | null> {
+    return this.featureCache.get(featureID).catch((error) => {
+      throw new IllegalStateError(
+        `Failed to get feature: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    });
+  }
+
+  private async getSegmentUsers(segmentUserId: string): Promise<SegmentUsers> {
+    return this.getSegmentUsersFromCache(segmentUserId).then((segmentUsers) => {
+      if (segmentUsers === null) {
+        throw new IllegalStateError(`Segment users not found: ${segmentUserId}`);
+      }
+      return segmentUsers
+    });
+  }
+
+  private async getSegmentUsersFromCache(segmentUserId: string): Promise<SegmentUsers | null> {
+    return this.segementUsersCache.get(segmentUserId).catch((error) => {
+      throw new IllegalStateError(
+        `Failed to get segment users: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    });
+  }
+
+  private async evaluateFeatures(user: User, feature: Feature): Promise<UserEvaluations> {
+    try {
+      const targetFeatures = await this.getTargetFeatures(feature);
+      const evaluator = new Evaluator();
+      const fIds = evaluator.listSegmentIDs(feature);
+      const segmentUsersMap = new Map<string, SegmentUser[]>();
+      for (const fId of fIds) {
+        const segmentUser = await this.getSegmentUsers(fId);
+        if (segmentUser !== null) {
+          segmentUsersMap.set(segmentUser.getSegmentId(), segmentUser.getUsersList());
+        }
+      }
+
+      const protoUser = createUser(user.id, user.data);
+      const userEvaluations = await evaluator.evaluateFeatures(
+        targetFeatures,
+        protoUser,
+        segmentUsersMap,
+        this.tag,
+      );
+      return userEvaluations;
+    } catch (error) {
+      if (error instanceof IllegalStateError) {
+        throw error;
+      }
+      throw new IllegalStateError(
+        `Failed to evaluate feature: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+
+  private findEvaluation(userEvaluations: UserEvaluations, featureId: String): Evaluation {
     for (const evaluation of userEvaluations.getEvaluationsList()) {
       if (evaluation.getFeatureId() === featureId) {
         return {
@@ -74,7 +121,7 @@ class LocalEvaluator implements NodeEvaluator {
       }
     }
 
-    throw new Error('Evaluation not found');
+    throw new IllegalStateError(`Evaluation not found for feature: ${featureId}`);
   }
 
   async getTargetFeatures(feature: Feature): Promise<Feature[]> {
@@ -95,11 +142,9 @@ class LocalEvaluator implements NodeEvaluator {
       if (!f) continue;
 
       for (const p of f.getPrerequisitesList()) {
-        const preFeature = await this.featureCache.get(p.getFeatureId());
-        if (preFeature !== null) {
-          prerequisites[p.getFeatureId()] = preFeature;
-          queue.push(preFeature);
-        }
+        const preFeature = await this.getFeatures(p.getFeatureId());
+        prerequisites[p.getFeatureId()] = preFeature;
+        queue.push(preFeature);
       }
     }
 

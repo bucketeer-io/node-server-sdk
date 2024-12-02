@@ -39,6 +39,8 @@ import { Evaluation } from '../objects/evaluation';
 import { BKTEvaluationDetails } from '../evaluationDetails';
 import { BKTValue } from '../types';
 import { BKTClientImpl } from '../client';
+import { IllegalStateError } from '../objects/errors';
+import sinon from 'sinon';
 
 const test = anyTest as TestFn<{
   sandbox: sino.SinonSandbox;
@@ -383,6 +385,7 @@ test('boolVariation - err: internal error', async (t) => {
   const { user1, ftBoolean } = data;
 
   const internalErr = new Error('internal error');
+
   const featureFlagCacheMock = t.context.sandbox.mock(featureFlagCache);
   featureFlagCacheMock.expects('get').once().withExactArgs(ftBoolean.getId()).rejects(internalErr);
 
@@ -395,7 +398,15 @@ test('boolVariation - err: internal error', async (t) => {
   eventProcessorMock
     .expects('emit')
     .once()
-    .withArgs('error', { error: internalErr, apiId: ApiId.SDK_GET_VARIATION });
+    .withArgs(
+      'error',
+      sinon.match({
+        error: sinon.match
+          .instanceOf(IllegalStateError)
+          .and(sinon.match.has('message', 'Failed to get feature: internal error')),
+        apiId: ApiId.SDK_GET_VARIATION,
+      }),
+    );
 
   eventProcessorMock
     .expects('emit')
@@ -435,14 +446,17 @@ test('boolVariation - success: boolean variation', async (t) => {
   } satisfies Evaluation;
 
   eventProcessorMock
-  .expects('emit')
-  .once()
-  .withArgs('pushEvaluationEvent', { user: sdkUser, evaluation: evaluation });
+    .expects('emit')
+    .once()
+    .withArgs('pushEvaluationEvent', { user: sdkUser, evaluation: evaluation });
 
   eventProcessorMock
     .expects('emit')
     .once()
-    .withArgs('pushLatencyMetricsEvent', { latency: sino.match.any , apiId: ApiId.SDK_GET_VARIATION });
+    .withArgs('pushLatencyMetricsEvent', {
+      latency: sino.match.any,
+      apiId: ApiId.SDK_GET_VARIATION,
+    });
 
   const result = await sdkInstance.booleanVariation(sdkUser, ftBoolean.getId(), false);
   t.is(result, true);
@@ -468,22 +482,30 @@ test('booleanVariationDetails - err: internal error', async (t) => {
   eventProcessorMock
     .expects('emit')
     .once()
-    .withArgs('error', { error: internalErr, apiId: ApiId.SDK_GET_VARIATION });
+    .withArgs(
+      'error',
+      sinon.match({
+        error: sinon.match
+          .instanceOf(IllegalStateError)
+          .and(sinon.match.has('message', 'Failed to get feature: internal error')),
+        apiId: ApiId.SDK_GET_VARIATION,
+      }),
+    );
 
   eventProcessorMock
     .expects('emit')
     .once()
     .withArgs('pushDefaultEvaluationEvent', { user: sdkUser, featureId: ftBoolean.getId() });
 
-    const evaluationDetails = {
-      featureId: ftBoolean.getId(),
-      featureVersion: ftBoolean.getVersion(),
-      userId: 'user-id-1',
-      variationId: '',
-      variationName: '',
-      variationValue: false,
-      reason: 'CLIENT',
-    } satisfies BKTEvaluationDetails<boolean>;
+  const evaluationDetails = {
+    featureId: ftBoolean.getId(),
+    featureVersion: ftBoolean.getVersion(),
+    userId: 'user-id-1',
+    variationId: '',
+    variationName: '',
+    variationValue: false,
+    reason: 'CLIENT',
+  } satisfies BKTEvaluationDetails<boolean>;
 
   const result = await sdkInstance.booleanVariationDetails(sdkUser, ftBoolean.getId(), false);
   t.deepEqual(result, evaluationDetails);
@@ -518,14 +540,17 @@ test('booleanVariationDetails - success: boolean variation', async (t) => {
   } satisfies Evaluation;
 
   eventProcessorMock
-  .expects('emit')
-  .once()
-  .withArgs('pushEvaluationEvent', { user: sdkUser, evaluation: evaluation });
+    .expects('emit')
+    .once()
+    .withArgs('pushEvaluationEvent', { user: sdkUser, evaluation: evaluation });
 
   eventProcessorMock
     .expects('emit')
     .once()
-    .withArgs('pushLatencyMetricsEvent', { latency: sino.match.any , apiId: ApiId.SDK_GET_VARIATION });
+    .withArgs('pushLatencyMetricsEvent', {
+      latency: sino.match.any,
+      apiId: ApiId.SDK_GET_VARIATION,
+    });
 
   const evaluationDetails = {
     featureId: ftBoolean.getId(),
@@ -561,7 +586,15 @@ test('numberVariation - err: internal error', async (t) => {
   eventProcessorMock
     .expects('emit')
     .once()
-    .withArgs('error', { error: internalErr, apiId: ApiId.SDK_GET_VARIATION });
+    .withArgs(
+      'error',
+      sinon.match({
+        error: sinon.match
+          .instanceOf(IllegalStateError)
+          .and(sinon.match.has('message', 'Failed to get feature: internal error')),
+        apiId: ApiId.SDK_GET_VARIATION,
+      }),
+    );
 
   eventProcessorMock
     .expects('emit')
@@ -601,14 +634,17 @@ test('numberVariation - success: number variation', async (t) => {
   } satisfies Evaluation;
 
   eventProcessorMock
-  .expects('emit')
-  .once()
-  .withArgs('pushEvaluationEvent', { user: sdkUser, evaluation: evaluation });
+    .expects('emit')
+    .once()
+    .withArgs('pushEvaluationEvent', { user: sdkUser, evaluation: evaluation });
 
   eventProcessorMock
     .expects('emit')
     .once()
-    .withArgs('pushLatencyMetricsEvent', { latency: sino.match.any , apiId: ApiId.SDK_GET_VARIATION });
+    .withArgs('pushLatencyMetricsEvent', {
+      latency: sino.match.any,
+      apiId: ApiId.SDK_GET_VARIATION,
+    });
 
   const result = await sdkInstance.numberVariation(sdkUser, ftInt.getId(), 1);
   t.is(result, 10);
@@ -642,14 +678,17 @@ test('numberVariation - success: number variation (float)', async (t) => {
   } satisfies Evaluation;
 
   eventProcessorMock
-  .expects('emit')
-  .once()
-  .withArgs('pushEvaluationEvent', { user: sdkUser, evaluation: evaluation });
+    .expects('emit')
+    .once()
+    .withArgs('pushEvaluationEvent', { user: sdkUser, evaluation: evaluation });
 
   eventProcessorMock
     .expects('emit')
     .once()
-    .withArgs('pushLatencyMetricsEvent', { latency: sino.match.any , apiId: ApiId.SDK_GET_VARIATION });
+    .withArgs('pushLatencyMetricsEvent', {
+      latency: sino.match.any,
+      apiId: ApiId.SDK_GET_VARIATION,
+    });
 
   const result = await sdkInstance.numberVariation(sdkUser, ftFloat.getId(), 1);
   t.is(result, 10.11);
@@ -675,22 +714,30 @@ test('numberVariationDetails - err: internal error', async (t) => {
   eventProcessorMock
     .expects('emit')
     .once()
-    .withArgs('error', { error: internalErr, apiId: ApiId.SDK_GET_VARIATION });
+    .withArgs(
+      'error',
+      sinon.match({
+        error: sinon.match
+          .instanceOf(IllegalStateError)
+          .and(sinon.match.has('message', 'Failed to get feature: internal error')),
+        apiId: ApiId.SDK_GET_VARIATION,
+      }),
+    );
 
   eventProcessorMock
     .expects('emit')
     .once()
     .withArgs('pushDefaultEvaluationEvent', { user: sdkUser, featureId: ftInt.getId() });
 
-    const evaluationDetails = {
-      featureId: ftInt.getId(),
-      featureVersion: ftInt.getVersion(),
-      userId: 'user-id-1',
-      variationId: '',
-      variationName: '',
-      variationValue: 1,
-      reason: 'CLIENT',
-    } satisfies BKTEvaluationDetails<number>;
+  const evaluationDetails = {
+    featureId: ftInt.getId(),
+    featureVersion: ftInt.getVersion(),
+    userId: 'user-id-1',
+    variationId: '',
+    variationName: '',
+    variationValue: 1,
+    reason: 'CLIENT',
+  } satisfies BKTEvaluationDetails<number>;
 
   const result = await sdkInstance.numberVariationDetails(sdkUser, ftInt.getId(), 1);
   t.deepEqual(result, evaluationDetails);
@@ -725,14 +772,17 @@ test('numberVariationDetails - success: number variation', async (t) => {
   } satisfies Evaluation;
 
   eventProcessorMock
-  .expects('emit')
-  .once()
-  .withArgs('pushEvaluationEvent', { user: sdkUser, evaluation: evaluation });
+    .expects('emit')
+    .once()
+    .withArgs('pushEvaluationEvent', { user: sdkUser, evaluation: evaluation });
 
   eventProcessorMock
     .expects('emit')
     .once()
-    .withArgs('pushLatencyMetricsEvent', { latency: sino.match.any , apiId: ApiId.SDK_GET_VARIATION });
+    .withArgs('pushLatencyMetricsEvent', {
+      latency: sino.match.any,
+      apiId: ApiId.SDK_GET_VARIATION,
+    });
 
   const evaluationDetails = {
     featureId: ftInt.getId(),
@@ -776,14 +826,17 @@ test('numberVariationDetails - success: number variation (float)', async (t) => 
   } satisfies Evaluation;
 
   eventProcessorMock
-  .expects('emit')
-  .once()
-  .withArgs('pushEvaluationEvent', { user: sdkUser, evaluation: evaluation });
+    .expects('emit')
+    .once()
+    .withArgs('pushEvaluationEvent', { user: sdkUser, evaluation: evaluation });
 
   eventProcessorMock
     .expects('emit')
     .once()
-    .withArgs('pushLatencyMetricsEvent', { latency: sino.match.any , apiId: ApiId.SDK_GET_VARIATION });
+    .withArgs('pushLatencyMetricsEvent', {
+      latency: sino.match.any,
+      apiId: ApiId.SDK_GET_VARIATION,
+    });
 
   const evaluationDetails = {
     featureId: ftFloat.getId(),
@@ -819,7 +872,15 @@ test('stringVariation - err: internal error', async (t) => {
   eventProcessorMock
     .expects('emit')
     .once()
-    .withArgs('error', { error: internalErr, apiId: ApiId.SDK_GET_VARIATION });
+    .withArgs(
+      'error',
+      sinon.match({
+        error: sinon.match
+          .instanceOf(IllegalStateError)
+          .and(sinon.match.has('message', 'Failed to get feature: internal error')),
+        apiId: ApiId.SDK_GET_VARIATION,
+      }),
+    );
 
   eventProcessorMock
     .expects('emit')
@@ -859,14 +920,17 @@ test('stringVariation - success: string variation', async (t) => {
   } satisfies Evaluation;
 
   eventProcessorMock
-  .expects('emit')
-  .once()
-  .withArgs('pushEvaluationEvent', { user: sdkUser, evaluation: evaluation });
+    .expects('emit')
+    .once()
+    .withArgs('pushEvaluationEvent', { user: sdkUser, evaluation: evaluation });
 
   eventProcessorMock
     .expects('emit')
     .once()
-    .withArgs('pushLatencyMetricsEvent', { latency: sino.match.any , apiId: ApiId.SDK_GET_VARIATION });
+    .withArgs('pushLatencyMetricsEvent', {
+      latency: sino.match.any,
+      apiId: ApiId.SDK_GET_VARIATION,
+    });
 
   const result = await sdkInstance.stringVariation(sdkUser, ftString.getId(), 'default');
   t.is(result, 'value 10');
@@ -892,22 +956,30 @@ test('stringVariationDetails - err: internal error', async (t) => {
   eventProcessorMock
     .expects('emit')
     .once()
-    .withArgs('error', { error: internalErr, apiId: ApiId.SDK_GET_VARIATION });
+    .withArgs(
+      'error',
+      sinon.match({
+        error: sinon.match
+          .instanceOf(IllegalStateError)
+          .and(sinon.match.has('message', 'Failed to get feature: internal error')),
+        apiId: ApiId.SDK_GET_VARIATION,
+      }),
+    );
 
   eventProcessorMock
     .expects('emit')
     .once()
     .withArgs('pushDefaultEvaluationEvent', { user: sdkUser, featureId: ftString.getId() });
 
-    const evaluationDetails = {
-      featureId: ftString.getId(),
-      featureVersion: ftString.getVersion(),
-      userId: 'user-id-1',
-      variationId: '',
-      variationName: '',
-      variationValue: 'default',
-      reason: 'CLIENT',
-    } satisfies BKTEvaluationDetails<string>;
+  const evaluationDetails = {
+    featureId: ftString.getId(),
+    featureVersion: ftString.getVersion(),
+    userId: 'user-id-1',
+    variationId: '',
+    variationName: '',
+    variationValue: 'default',
+    reason: 'CLIENT',
+  } satisfies BKTEvaluationDetails<string>;
 
   const result = await sdkInstance.stringVariationDetails(sdkUser, ftString.getId(), 'default');
   t.deepEqual(result, evaluationDetails);
@@ -942,14 +1014,17 @@ test('stringVariationDetails - success: string variation', async (t) => {
   } satisfies Evaluation;
 
   eventProcessorMock
-  .expects('emit')
-  .once()
-  .withArgs('pushEvaluationEvent', { user: sdkUser, evaluation: evaluation });
+    .expects('emit')
+    .once()
+    .withArgs('pushEvaluationEvent', { user: sdkUser, evaluation: evaluation });
 
   eventProcessorMock
     .expects('emit')
     .once()
-    .withArgs('pushLatencyMetricsEvent', { latency: sino.match.any , apiId: ApiId.SDK_GET_VARIATION });
+    .withArgs('pushLatencyMetricsEvent', {
+      latency: sino.match.any,
+      apiId: ApiId.SDK_GET_VARIATION,
+    });
 
   const evaluationDetails = {
     featureId: ftString.getId(),
@@ -985,7 +1060,15 @@ test('jsonVariation - err: internal error', async (t) => {
   eventProcessorMock
     .expects('emit')
     .once()
-    .withArgs('error', { error: internalErr, apiId: ApiId.SDK_GET_VARIATION });
+    .withArgs(
+      'error',
+      sinon.match({
+        error: sinon.match
+          .instanceOf(IllegalStateError)
+          .and(sinon.match.has('message', 'Failed to get feature: internal error')),
+        apiId: ApiId.SDK_GET_VARIATION,
+      }),
+    );
 
   eventProcessorMock
     .expects('emit')
@@ -1025,14 +1108,17 @@ test('jsonVariation - success: json variation', async (t) => {
   } satisfies Evaluation;
 
   eventProcessorMock
-  .expects('emit')
-  .once()
-  .withArgs('pushEvaluationEvent', { user: sdkUser, evaluation: evaluation });
+    .expects('emit')
+    .once()
+    .withArgs('pushEvaluationEvent', { user: sdkUser, evaluation: evaluation });
 
   eventProcessorMock
     .expects('emit')
     .once()
-    .withArgs('pushLatencyMetricsEvent', { latency: sino.match.any , apiId: ApiId.SDK_GET_VARIATION });
+    .withArgs('pushLatencyMetricsEvent', {
+      latency: sino.match.any,
+      apiId: ApiId.SDK_GET_VARIATION,
+    });
 
   const result = await sdkInstance.getJsonVariation(sdkUser, ftJSON.getId(), {});
   t.deepEqual(result, { Str: 'str1', Int: 1 });
@@ -1058,15 +1144,23 @@ test('objectVariation - err: internal error', async (t) => {
   eventProcessorMock
     .expects('emit')
     .once()
-    .withArgs('error', { error: internalErr, apiId: ApiId.SDK_GET_VARIATION });
+    .withArgs(
+      'error',
+      sinon.match({
+        error: sinon.match
+          .instanceOf(IllegalStateError)
+          .and(sinon.match.has('message', 'Failed to get feature: internal error')),
+        apiId: ApiId.SDK_GET_VARIATION,
+      }),
+    );
 
   eventProcessorMock
     .expects('emit')
     .once()
     .withArgs('pushDefaultEvaluationEvent', { user: sdkUser, featureId: ftJSON.getId() });
 
-  const result = await sdkInstance.objectVariation(sdkUser, ftJSON.getId(), {test: 'test1'});
-  t.deepEqual(result, {test: 'test1'});
+  const result = await sdkInstance.objectVariation(sdkUser, ftJSON.getId(), { test: 'test1' });
+  t.deepEqual(result, { test: 'test1' });
 
   featureFlagCacheMock.verify();
   eventProcessorMock.verify();
@@ -1098,16 +1192,19 @@ test('objectVariation - success: json variation', async (t) => {
   } satisfies Evaluation;
 
   eventProcessorMock
-  .expects('emit')
-  .once()
-  .withArgs('pushEvaluationEvent', { user: sdkUser, evaluation: evaluation });
+    .expects('emit')
+    .once()
+    .withArgs('pushEvaluationEvent', { user: sdkUser, evaluation: evaluation });
 
   eventProcessorMock
     .expects('emit')
     .once()
-    .withArgs('pushLatencyMetricsEvent', { latency: sino.match.any , apiId: ApiId.SDK_GET_VARIATION });
+    .withArgs('pushLatencyMetricsEvent', {
+      latency: sino.match.any,
+      apiId: ApiId.SDK_GET_VARIATION,
+    });
 
-  const result = await sdkInstance.objectVariation(sdkUser, ftJSON.getId(), {test: 'test1'});
+  const result = await sdkInstance.objectVariation(sdkUser, ftJSON.getId(), { test: 'test1' });
   t.deepEqual(result, { Str: 'str1', Int: 1 });
 
   featureFlagCacheMock.verify();
@@ -1131,24 +1228,34 @@ test('objectVariationDetail - err: internal error', async (t) => {
   eventProcessorMock
     .expects('emit')
     .once()
-    .withArgs('error', { error: internalErr, apiId: ApiId.SDK_GET_VARIATION });
+    .withArgs(
+      'error',
+      sinon.match({
+        error: sinon.match
+          .instanceOf(IllegalStateError)
+          .and(sinon.match.has('message', 'Failed to get feature: internal error')),
+        apiId: ApiId.SDK_GET_VARIATION,
+      }),
+    );
 
   eventProcessorMock
     .expects('emit')
     .once()
     .withArgs('pushDefaultEvaluationEvent', { user: sdkUser, featureId: ftJSON.getId() });
 
-    const evaluationDetails = {
-      featureId: ftJSON.getId(),
-      featureVersion: ftJSON.getVersion(),
-      userId: 'user-id-1',
-      variationId: '',
-      variationName: '',
-      variationValue: {test: 'test1'},
-      reason: 'CLIENT',
-    } satisfies BKTEvaluationDetails<BKTValue>;
+  const evaluationDetails = {
+    featureId: ftJSON.getId(),
+    featureVersion: ftJSON.getVersion(),
+    userId: 'user-id-1',
+    variationId: '',
+    variationName: '',
+    variationValue: { test: 'test1' },
+    reason: 'CLIENT',
+  } satisfies BKTEvaluationDetails<BKTValue>;
 
-  const result = await sdkInstance.objectVariationDetails(sdkUser, ftJSON.getId(), {test: 'test1'});
+  const result = await sdkInstance.objectVariationDetails(sdkUser, ftJSON.getId(), {
+    test: 'test1',
+  });
   t.deepEqual(result, evaluationDetails);
 
   featureFlagCacheMock.verify();
@@ -1181,14 +1288,17 @@ test('objectVariationDetail - success: object variation', async (t) => {
   } satisfies Evaluation;
 
   eventProcessorMock
-  .expects('emit')
-  .once()
-  .withArgs('pushEvaluationEvent', { user: sdkUser, evaluation: evaluation });
+    .expects('emit')
+    .once()
+    .withArgs('pushEvaluationEvent', { user: sdkUser, evaluation: evaluation });
 
   eventProcessorMock
     .expects('emit')
     .once()
-    .withArgs('pushLatencyMetricsEvent', { latency: sino.match.any , apiId: ApiId.SDK_GET_VARIATION });
+    .withArgs('pushLatencyMetricsEvent', {
+      latency: sino.match.any,
+      apiId: ApiId.SDK_GET_VARIATION,
+    });
 
   const evaluationDetails = {
     featureId: ftJSON.getId(),
@@ -1200,7 +1310,9 @@ test('objectVariationDetail - success: object variation', async (t) => {
     reason: 'DEFAULT',
   } satisfies BKTEvaluationDetails<BKTValue>;
 
-  const result = await sdkInstance.objectVariationDetails(sdkUser, ftJSON.getId(), {test: 'test1'});
+  const result = await sdkInstance.objectVariationDetails(sdkUser, ftJSON.getId(), {
+    test: 'test1',
+  });
   t.deepEqual(result, evaluationDetails);
 
   featureFlagCacheMock.verify();
@@ -1224,7 +1336,15 @@ test('getEvaluation - err: internal error', async (t) => {
   eventProcessorMock
     .expects('emit')
     .once()
-    .withArgs('error', { error: internalErr, apiId: ApiId.SDK_GET_VARIATION });
+    .withArgs(
+      'error',
+      sinon.match({
+        error: sinon.match
+          .instanceOf(IllegalStateError)
+          .and(sinon.match.has('message', 'Failed to get feature: internal error')),
+        apiId: ApiId.SDK_GET_VARIATION,
+      }),
+    );
 
   const result = await sdkInstance.getEvaluation(sdkUser, ftBoolean.getId());
   t.is(result, null);
@@ -1241,9 +1361,13 @@ test('getEvaluation - success', async (t) => {
   const featureFlagCacheMock = t.context.sandbox.mock(featureFlagCache);
   featureFlagCacheMock.expects('get').once().withExactArgs(feature3.getId()).resolves(feature3);
   featureFlagCacheMock.expects('get').once().withExactArgs(feature4.getId()).resolves(feature4);
-  
+
   const segementUsersCacheMock = t.context.sandbox.mock(segmentUsersCache);
-  segementUsersCacheMock.expects('get').once().withExactArgs(segmentUser2.getSegmentId()).resolves(segmentUser2);
+  segementUsersCacheMock
+    .expects('get')
+    .once()
+    .withExactArgs(segmentUser2.getSegmentId())
+    .resolves(segmentUser2);
 
   const sdkUser = {
     id: user1.getId(),
@@ -1265,7 +1389,10 @@ test('getEvaluation - success', async (t) => {
   eventProcessorMock
     .expects('emit')
     .once()
-    .withArgs('pushLatencyMetricsEvent', { latency: sino.match.any , apiId: ApiId.SDK_GET_VARIATION });
+    .withArgs('pushLatencyMetricsEvent', {
+      latency: sino.match.any,
+      apiId: ApiId.SDK_GET_VARIATION,
+    });
 
   const result = await sdkInstance.getEvaluation(sdkUser, feature3.getId());
   t.deepEqual(result, evaluation);
@@ -1274,8 +1401,9 @@ test('getEvaluation - success', async (t) => {
   t.pass();
 });
 
-test ('sdk destroy - success', async (t) => {
-  const { sdkInstance, eventEmitter, featureFlagProcessor, segementUsersCacheProcessor } = t.context;
+test('sdk destroy - success', async (t) => {
+  const { sdkInstance, eventEmitter, featureFlagProcessor, segementUsersCacheProcessor } =
+    t.context;
   const eventProcessorMock = t.context.sandbox.mock(eventEmitter);
   eventProcessorMock.expects('close').once().resolves();
 

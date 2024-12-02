@@ -1,8 +1,9 @@
 import test from 'ava';
-import { InvalidStatusError } from '../../api/client';
+
 import { convertSerivceError, DefaultGRPCClient, grpcToRestStatus } from '../../grpc/client';
 import { ServiceError } from '@bucketeer/evaluation';
 import { grpc } from '@improbable-eng/grpc-web';
+import { InvalidStatusError } from '../../objects/errors';
 
 test('grpcToRestStatus should return correct HTTP status for known gRPC codes', t => {
   t.is(grpcToRestStatus(0), 200); // OK

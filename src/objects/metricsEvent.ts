@@ -1,7 +1,7 @@
-import { InvalidStatusError } from '../api/client';
 import { Logger } from '../logger';
+import { IllegalArgumentError, IllegalStateError, InvalidStatusError } from '../objects/errors';
 import { createTimestamp } from '../utils/time';
-import { ApiId, NodeApiIds } from './apiId';
+import { NodeApiIds } from './apiId';
 import { createEvent, Event } from './event';
 import { SourceId } from './sourceId';
 import {
@@ -100,7 +100,11 @@ export function createSizeMetricsEvent(tag: string, size: number, apiId: NodeApi
   return createEvent(metricsEvent);
 }
 
-export function createInternalSdkErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
+export function createInternalSdkErrorMetricsEvent(
+  tag: string,
+  apiId: NodeApiIds,
+  errorMessage?: string,
+) {
   const internalErrorMetricsEvent: InternalSdkErrorMetricsEvent = {
     apiId,
     labels: {
@@ -108,6 +112,9 @@ export function createInternalSdkErrorMetricsEvent(tag: string, apiId: NodeApiId
     },
     '@type': INTERNAL_SDK_ERROR_METRICS_EVENT_NAME,
   };
+  if (errorMessage && errorMessage.length > 0) {
+    internalErrorMetricsEvent.labels.error_message = errorMessage;
+  }
   const metricsEvent = createMetricsEvent(internalErrorMetricsEvent);
   return createEvent(metricsEvent);
 }
@@ -195,6 +202,9 @@ export const toErrorMetricsEvent = (
   apiId: NodeApiIds,
   logger?: Logger,
 ): Event | null => {
+  if (e instanceof IllegalArgumentError || e instanceof IllegalStateError) {
+    return createInternalSdkErrorMetricsEvent(tag, apiId, e.message);
+  }
   if (e instanceof InvalidStatusError) {
     const statusCode = e.code ?? 0;
     switch (true) {
@@ -211,7 +221,7 @@ export const toErrorMetricsEvent = (
       case statusCode == 404:
         return createNotFoundErrorMetricsEvent(tag, apiId);
       case statusCode == 405:
-        return createInternalSdkErrorMetricsEvent(tag, apiId);
+        return createInternalSdkErrorMetricsEvent(tag, apiId, e.message);
       case statusCode == 408:
         return createTimeoutErrorMetricsEvent(tag, apiId);
       case statusCode == 413:
@@ -237,7 +247,7 @@ export const toErrorMetricsEvent = (
         return createUnknownErrorMetricsEvent(tag, apiId, undefined, e.message);
     }
   }
-  return createUnknownErrorMetricsEvent(tag, apiId, undefined, undefined);
+  return createUnknownErrorMetricsEvent(tag, apiId, undefined, String(e));
 };
 
 function isNodeError(error: unknown): error is NodeJS.ErrnoException {
@@ -259,7 +269,7 @@ export function isErrorMetricsEvent(obj: any, specificErrorType?: string): obj i
     NETWORK_ERROR_METRICS_EVENT_NAME,
     UNKNOWN_ERROR_METRICS_EVENT_NAME,
   ];
-  
+
   return errorEventTypes.includes(obj.event['@type']);
 }
 

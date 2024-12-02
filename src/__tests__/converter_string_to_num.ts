@@ -1,5 +1,6 @@
 import test from 'ava';
 import { stringToBoolConverter, stringToNumberConverter } from '../converter';
+import { IllegalArgumentError } from '../objects/errors';
 
 type StringToNumConvertTestCase = {
   input: string;
@@ -31,6 +32,7 @@ stringConvertTestCases.forEach(({ input, expected }, index) => {
       t.is(output, expected);
     } catch (err) {
       t.is(expected, null);
+      t.true(err instanceof IllegalArgumentError);
     }
   });
 });

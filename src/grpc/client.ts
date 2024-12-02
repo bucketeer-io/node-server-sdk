@@ -10,7 +10,7 @@ import { grpc } from '@improbable-eng/grpc-web';
 import { NodeHttpTransport } from '@improbable-eng/grpc-web-node-http-transport';
 import { SourceId } from '../objects/sourceId';
 import { version } from '../objects/version';
-import { InvalidStatusError } from '../api/client';
+import { InvalidStatusError } from '../objects/errors';
 
 interface GRPCClient {
   getSegmentUsers(
