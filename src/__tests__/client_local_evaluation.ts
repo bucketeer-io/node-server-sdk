@@ -39,6 +39,7 @@ import { Evaluation } from '../objects/evaluation';
 import { BKTEvaluationDetails } from '../evaluationDetails';
 import { BKTValue } from '../types';
 import { BKTClientImpl } from '../client';
+import { IllegalStateError } from '../objects/errors';
 
 const test = anyTest as TestFn<{
   sandbox: sino.SinonSandbox;
@@ -396,6 +397,11 @@ test('boolVariation - err: internal error', async (t) => {
     .expects('emit')
     .once()
     .withArgs('error', { error: internalErr, apiId: ApiId.SDK_GET_VARIATION });
+
+  eventProcessorMock
+    .expects('emit')
+    .once()
+    .withArgs('error', { error: new IllegalStateError('Failed to evaluate feature: internal error'), apiId: ApiId.SDK_GET_VARIATION });
 
   eventProcessorMock
     .expects('emit')

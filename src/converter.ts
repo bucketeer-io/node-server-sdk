@@ -1,3 +1,4 @@
+import { IllegalArgumentError } from './objects/errors';
 import { BKTValue } from './types';
 
 export type StringToTypeConverter<T> = (input: string) => T | null;
@@ -30,7 +31,7 @@ export const stringToObjectConverter: StringToTypeConverter<BKTValue> = (input: 
 
 function assetNonBlankString(input: string) {
   if (input.trim().length == 0) {
-    throw new Error('Input string must be non-blank');
+    throw new IllegalArgumentError('Input string must be non-blank');
   }
 }
 
@@ -39,7 +40,7 @@ function parseJsonObjectOrArray(input: string) {
   const parsed = JSON.parse(input);
 
   if (primitiveTypes.includes(typeof parsed) || parsed === null) {
-    throw new Error('Only JSON objects or array are allowed');
+    throw new IllegalArgumentError('Only JSON objects or array are allowed');
   }
 
   return parsed;

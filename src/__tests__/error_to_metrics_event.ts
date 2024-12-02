@@ -14,7 +14,7 @@ import {
   createServiceUnavailableErrorMetricsEvent,
   createUnauthorizedErrorMetricsEvent,
 } from '../objects/status';
-import { InvalidStatusError } from '../api/client';
+import { InvalidStatusError } from '../objects/errors';
 
 test('toErrorMetricsEvent returns correct event for InvalidStatusError with 400 status code', (t) => {
   const error = new InvalidStatusError('Bad Request', 400);
@@ -151,7 +151,7 @@ test('toErrorMetricsEvent returns correct event for unknown object', (t) => {
   const tag = 'test-tag';
   const apiId = ApiId.GET_EVALUATION;
 
-  const expectedEvent = createUnknownErrorMetricsEvent(tag, apiId, undefined, undefined).event;
+  const expectedEvent = createUnknownErrorMetricsEvent(tag, apiId, undefined, String(error)).event;
   const actualEvent = toErrorMetricsEvent(error, tag, apiId).event;
 
   t.deepEqual(actualEvent, expectedEvent);

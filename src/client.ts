@@ -30,6 +30,7 @@ import { SegementUsersCacheProcessor } from './cache/processor/segmentUsersCache
 import { ProcessorEventsEmitter } from './processorEventsEmitter';
 import { NodeEvaluator } from './evaluator/evaluator';
 import { Bucketeer, BuildInfo } from '.';
+import { IllegalStateError } from './objects/errors';
 
 const COUNT_PER_REGISTER_EVENT = 100;
 
@@ -241,7 +242,7 @@ export class BKTClientImpl implements Bucketeer {
 
         return evaluation;
       } else {
-        throw new Error('LocalEvaluator is not initialized');
+        throw new IllegalStateError('LocalEvaluator is not initialized');
       }
     } catch (error) {
       this.eventEmitter.emit('error', { error: error, apiId: ApiId.SDK_GET_VARIATION });

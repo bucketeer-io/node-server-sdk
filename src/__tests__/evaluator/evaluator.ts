@@ -24,6 +24,7 @@ import { Clock } from '../../utils/clock';
 import { NewSegmentUsersCache, SegmentUsersCache } from '../../cache/segmentUsers';
 import { NewFeatureCache, FeaturesCache } from '../../cache/features';
 import { ProcessorEventsEmitter } from '../../processorEventsEmitter';
+import { IllegalStateError } from '../../objects/errors';
 
 const test = anyTest as TestFn<{
   sandbox: sino.SinonSandbox;
@@ -285,7 +286,7 @@ test('evaluate | err: failed to get feature flag from cache', async (t) => {
       feature1.getId(),
     )
     .catch((e) => {
-      t.is(e, err);
+      t.deepEqual(e, new IllegalStateError(`Failed to evaluate feature: ${err.message}`));
     });
   mock.verify();
   t.pass();
@@ -308,7 +309,7 @@ test('evaluate | err: failed to get prerequisite feature flag from cache', async
       feature1.getId(),
     )
     .catch((e) => {
-      t.is(e, err);
+      t.deepEqual(e, new IllegalStateError(`Failed to evaluate feature: ${err.message}`));
     });
 
   mock.verify();
@@ -334,7 +335,7 @@ test ('evaluate | err: failed to get segment from cache', async (t) => {
       feature5.getId(),
     )
     .catch((e) => {
-      t.is(e, err);
+      t.deepEqual(e, new IllegalStateError(`Failed to evaluate feature: ${err.message}`));
     });
 
   featuresCacheMock.verify();
