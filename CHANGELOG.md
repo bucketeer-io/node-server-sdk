@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.3](https://github.com/bucketeer-io/node-server-sdk/compare/v0.3.2...v0.3.3) (2024-12-03)
+
+
+### Bug Fixes
+
+* skip generating error events for unauthorized or forbidden errors ([#82](https://github.com/bucketeer-io/node-server-sdk/issues/82)) ([9b38eca](https://github.com/bucketeer-io/node-server-sdk/commit/9b38eca0327588a31ba4b327ad2b215c0b63c04a))
+
+
+### Build System
+
+* **deps:** bump the dependencies group with 12 updates ([#84](https://github.com/bucketeer-io/node-server-sdk/issues/84)) ([366be07](https://github.com/bucketeer-io/node-server-sdk/commit/366be07297ab9ab6028feda7c7b339369e9d949c))
+
 ## [0.3.2](https://github.com/bucketeer-io/node-server-sdk/compare/v0.3.1...v0.3.2) (2024-11-19)
 
 
