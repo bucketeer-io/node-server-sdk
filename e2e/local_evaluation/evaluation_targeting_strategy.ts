@@ -1,6 +1,7 @@
 import anyTest, { TestFn } from 'ava';
 import { Bucketeer, DefaultLogger, User, initialize } from '../../lib';
 import { HOST, FEATURE_TAG, TARGETED_USER_ID, FEATURE_ID_BOOLEAN, FEATURE_ID_STRING, FEATURE_ID_INT, FEATURE_ID_JSON, FEATURE_ID_FLOAT, SERVER_ROLE_TOKEN } from '../constants/constants';
+import { assetEvaluationDetails } from '../utils/assert';
 
 const test = anyTest as TestFn<{ bktClient: Bucketeer; targetedUser: User }>;
 
@@ -31,7 +32,8 @@ test.after(async (t) => {
 test('boolVariation', async (t) => {
   const { bktClient, targetedUser } = t.context;
   t.is(await bktClient.booleanVariation(targetedUser, FEATURE_ID_BOOLEAN, true), false);
-  t.deepEqual(
+  assetEvaluationDetails(
+    t,
     await bktClient.booleanVariationDetails(targetedUser, FEATURE_ID_BOOLEAN, true),
     {
       featureId: FEATURE_ID_BOOLEAN,
@@ -48,7 +50,8 @@ test('boolVariation', async (t) => {
 test('stringVariation', async (t) => {
   const { bktClient, targetedUser } = t.context;
   t.is(await bktClient.stringVariation(targetedUser, FEATURE_ID_STRING, ''), 'value-2');
-  t.deepEqual(
+  assetEvaluationDetails(
+    t,
     await bktClient.stringVariationDetails(targetedUser, FEATURE_ID_STRING, 'true'),
     {
       featureId: FEATURE_ID_STRING,
@@ -65,7 +68,8 @@ test('stringVariation', async (t) => {
 test('numberVariation', async (t) => {
   const { bktClient, targetedUser } = t.context;
   t.is(await bktClient.numberVariation(targetedUser, FEATURE_ID_INT, 0), 20);
-  t.deepEqual(
+  assetEvaluationDetails(
+    t,
     await bktClient.numberVariationDetails(targetedUser, FEATURE_ID_INT, 99),
     {
       featureId: FEATURE_ID_INT,
@@ -79,7 +83,8 @@ test('numberVariation', async (t) => {
   )
 
   t.is(await bktClient.numberVariation(targetedUser, FEATURE_ID_FLOAT, 0.0), 3.1);
-  t.deepEqual(
+  assetEvaluationDetails(
+    t,
     await bktClient.numberVariationDetails(targetedUser, FEATURE_ID_FLOAT, 99),
     {
       featureId: FEATURE_ID_FLOAT,
@@ -91,14 +96,14 @@ test('numberVariation', async (t) => {
       reason: 'TARGET',
     }
   )
-
 });
 
 test('objectVariation', async (t) => {
   const { bktClient, targetedUser } = t.context;
   t.deepEqual(await bktClient.getJsonVariation(targetedUser, FEATURE_ID_JSON, {}), { "str": "str2", "int": "int2" });
   t.deepEqual(await bktClient.objectVariation(targetedUser, FEATURE_ID_JSON, {}), { "str": "str2", "int": "int2" });
-  t.deepEqual(
+  assetEvaluationDetails(
+    t,
     await bktClient.objectVariationDetails(targetedUser, FEATURE_ID_JSON, 99),
     {
       featureId: FEATURE_ID_JSON,
