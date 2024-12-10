@@ -12,7 +12,7 @@ import {
   Clause,
   createUser,
   createSegmentUser,
-} from '@kenji71089/evaluation';
+} from '@bucketeer/evaluation';
 
 import { LocalEvaluator } from '../../evaluator/local';
 import { SEGEMENT_USERS_CACHE_TTL } from '../../cache/processor/segmentUsersCacheProcessor';

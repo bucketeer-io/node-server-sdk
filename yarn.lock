@@ -56,7 +56,7 @@
     execa "^8.0.1"
 
 "@babel/cli@7.25.9":
-  version "7.25.9"
+  version "7.25.6"
   resolved "https://registry.yarnpkg.com/@babel/cli/-/cli-7.25.6.tgz#bc35561adc78ade43ac9c09a690768493ab9ed95"
   integrity sha512-Z+Doemr4VtvSD2SNHTrkiFZ1LX+JI6tyRXAAOb4N9khIuPyoEPmTPJarPm8ljJV1D6bnMQjyHMWTT9NeKbQuXA==
   dependencies:
@@ -1018,6 +1018,18 @@
   dependencies:
     google-protobuf "^3.6.1"
 
+"@bucketeer/evaluation@0.0.1":
+  version "0.0.1"
+  resolved "https://registry.yarnpkg.com/@bucketeer/evaluation/-/evaluation-0.0.1.tgz#a1320e569be3a2548d103e62013a8b0be9ded75c"
+  integrity sha512-i2IAt2N5Zl2KVg3YrCLkjOZaDZCB0cqmk5G7tXBU+21V743e8dRP9J10y4Q3lTukOCIMtOh873IJMamd+1i6Ew==
+  dependencies:
+    "@improbable-eng/grpc-web" "^0.15.0"
+    "@types/fnv-plus" "^1.3.2"
+    "@types/google-protobuf" "^3.15.12"
+    "@types/semver" "^7.5.8"
+    fnv-plus "^1.3.1"
+    google-protobuf "3.14.0"
+
 "@bundled-es-modules/cookie@^2.0.1":
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/@bundled-es-modules/cookie/-/cookie-2.0.1.tgz#b41376af6a06b3e32a15241d927b840a9b4de507"
@@ -1230,18 +1242,6 @@
   dependencies:
     "@jridgewell/resolve-uri" "^3.1.0"
     "@jridgewell/sourcemap-codec" "^1.4.14"
-
-"@kenji71089/evaluation@0.0.1":
-  version "0.0.1"
-  resolved "https://registry.yarnpkg.com/@kenji71089/evaluation/-/evaluation-0.0.1.tgz#8606fed88cdcacfebd68afb407629ac40cb99002"
-  integrity sha512-DXWMk90Hs29wyyFGS6Gpj3VFw31Q6qBhFuMZvHrUxBRvJc2g8J0vFrd0Y9ckfyaTCyowIilG7TWQYUCencDj2g==
-  dependencies:
-    "@improbable-eng/grpc-web" "^0.15.0"
-    "@types/fnv-plus" "^1.3.2"
-    "@types/google-protobuf" "^3.15.12"
-    "@types/semver" "^7.5.8"
-    fnv-plus "^1.3.1"
-    google-protobuf "3.14.0"
 
 "@mapbox/node-pre-gyp@^1.0.5":
   version "1.0.11"

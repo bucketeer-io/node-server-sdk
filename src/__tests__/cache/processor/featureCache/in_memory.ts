@@ -8,7 +8,7 @@ import {
 } from '../../../../cache/processor/featureFlagCacheProcessor';
 
 import { Clock } from '../../../../utils/clock';
-import { GetFeatureFlagsResponse, GetSegmentUsersResponse, createFeature } from '@kenji71089/evaluation';
+import { GetFeatureFlagsResponse, GetSegmentUsersResponse, createFeature } from '@bucketeer/evaluation';
 import { GRPCClient } from '../../../../grpc/client';
 import { ProcessorEventsEmitter } from '../../../../processorEventsEmitter';
 

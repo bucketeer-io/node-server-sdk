@@ -12,7 +12,7 @@ import {
   Clause,
   createUser,
   createSegmentUser,
-} from '@kenji71089/evaluation';
+} from '@bucketeer/evaluation';
 
 import { LocalEvaluator } from '../evaluator/local';
 import {
@@ -31,7 +31,7 @@ import { ProcessorEventsEmitter } from '../processorEventsEmitter';
 import { Clock } from '../utils/clock';
 import { NewSegmentUsersCache, SegmentUsersCache } from '../cache/segmentUsers';
 import { NewFeatureCache, FeaturesCache } from '../cache/features';
-import { ApiId } from '@kenji71089/evaluation/lib/proto/event/client/event_pb';
+import { ApiId } from '@bucketeer/evaluation/lib/proto/event/client/event_pb';
 import { Config, DefaultLogger } from '../index';
 import { APIClient } from '../api/client';
 import { EventStore } from '../stores/EventStore';

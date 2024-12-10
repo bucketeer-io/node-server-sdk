@@ -1,5 +1,5 @@
 import test from 'ava';
-import { SegmentUsers, } from '@kenji71089/evaluation';
+import { SegmentUsers, } from '@bucketeer/evaluation';
 import { InMemoryCache } from '../../cache/inMemoryCache';
 import { NewSegmentUsersCache } from '../../cache/segmentUsers';
 

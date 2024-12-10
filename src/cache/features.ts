@@ -1,4 +1,4 @@
-import { Feature } from '@kenji71089/evaluation';
+import { Feature } from '@bucketeer/evaluation';
 import { Cache } from './cache';
 import { NamespaceCache } from './namespace';
 

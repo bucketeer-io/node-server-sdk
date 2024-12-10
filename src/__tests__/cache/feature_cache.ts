@@ -1,5 +1,5 @@
 import test from 'ava';
-import { createFeature } from '@kenji71089/evaluation';
+import { createFeature } from '@bucketeer/evaluation';
 import { NewFeatureCache } from '../../cache/features';
 import { InMemoryCache } from '../../cache/inMemoryCache';
 

@@ -5,7 +5,7 @@ import {
   GetSegmentUsersRequest,
   GetSegmentUsersResponse,
   ServiceError,
-} from '@kenji71089/evaluation';
+} from '@bucketeer/evaluation';
 import { grpc } from '@improbable-eng/grpc-web';
 import { NodeHttpTransport } from '@improbable-eng/grpc-web-node-http-transport';
 import { SourceId } from '../objects/sourceId';
