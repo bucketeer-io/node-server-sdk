@@ -14,7 +14,7 @@ import { Evaluation } from '../objects/evaluation';
 import { User } from '../objects/user';
 import { Reason, ReasonType } from '../objects/reason';
 import { NodeEvaluator } from './evaluator';
-import { IllegalStateError } from '../objects/errors';
+import { IllegalStateError, InvalidStatusError } from '../objects/errors';
 
 class LocalEvaluator implements NodeEvaluator {
   private tag: string;
@@ -43,7 +43,7 @@ class LocalEvaluator implements NodeEvaluator {
   private async getFeatures(featureID: string): Promise<Feature> {
     return this.getFeaturesFromCache(featureID).then((feature) => {
       if (feature === null) {
-        throw new IllegalStateError(`Feature not found: ${featureID}`);
+        throw new InvalidStatusError(`Feature not found: ${featureID}`, 404);
       }
       return feature;
     });
@@ -60,9 +60,9 @@ class LocalEvaluator implements NodeEvaluator {
   private async getSegmentUsers(segmentUserId: string): Promise<SegmentUsers> {
     return this.getSegmentUsersFromCache(segmentUserId).then((segmentUsers) => {
       if (segmentUsers === null) {
-        throw new IllegalStateError(`Segment users not found: ${segmentUserId}`);
+        throw new InvalidStatusError(`Segment users not found: ${segmentUserId}`, 404);
       }
-      return segmentUsers
+      return segmentUsers;
     });
   }
 
@@ -96,7 +96,7 @@ class LocalEvaluator implements NodeEvaluator {
       );
       return userEvaluations;
     } catch (error) {
-      if (error instanceof IllegalStateError) {
+      if (error instanceof InvalidStatusError || error instanceof IllegalStateError) {
         throw error;
       }
       throw new IllegalStateError(
@@ -121,7 +121,7 @@ class LocalEvaluator implements NodeEvaluator {
       }
     }
 
-    throw new IllegalStateError(`Evaluation not found for feature: ${featureId}`);
+    throw new InvalidStatusError(`Evaluation not found for feature: ${featureId}`, 404);
   }
 
   async getTargetFeatures(feature: Feature): Promise<Feature[]> {

@@ -95,8 +95,7 @@ test('default evaluation event', async (t) => {
   t.is(events.length, 16);
   t.true(events.some((e) => (isEvaluationEvent(e.event))));
   t.true(events.some((e) => (isMetricsEvent(e.event))));
-  // TODO: fix me, it should not unknown error - should be not-found error
-  t.true(events.some((e) => (isErrorMetricsEvent(e.event, UNKNOWN_ERROR_METRICS_EVENT_NAME))));
+  t.true(events.some((e) => (isErrorMetricsEvent(e.event, NOT_FOUND_ERROR_METRICS_EVENT_NAME))));
 });
 
 test.afterEach(async (t) => {
@@ -104,4 +103,5 @@ test.afterEach(async (t) => {
   bktClient.destroy();
 });
 
-const UNKNOWN_ERROR_METRICS_EVENT_NAME = "type.googleapis.com/bucketeer.event.client.UnknownErrorMetricsEvent";
+const NOT_FOUND_ERROR_METRICS_EVENT_NAME =
+  'type.googleapis.com/bucketeer.event.client.NotFoundErrorMetricsEvent';

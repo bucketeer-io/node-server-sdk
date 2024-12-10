@@ -25,6 +25,7 @@ import { NewSegmentUsersCache, SegmentUsersCache } from '../../cache/segmentUser
 import { NewFeatureCache, FeaturesCache } from '../../cache/features';
 import { ProcessorEventsEmitter } from '../../processorEventsEmitter';
 import { IllegalStateError } from '../../objects/errors';
+import { InvalidStatusError } from '../../../__e2e/lib/objects/errors';
 
 const test = anyTest as TestFn<{
   sandbox: sino.SinonSandbox;
@@ -306,7 +307,7 @@ test('evaluate | err: get feature flag from cache | cache missing', async (t) =>
       feature1.getId(),
     )
     .catch((e) => {
-      t.deepEqual(e, new IllegalStateError(`Feature not found: ${feature1.getId()}`));
+      t.deepEqual(e, new InvalidStatusError(`Feature not found: ${feature1.getId()}`, 404));
     });
   mock.verify();
   t.pass();
@@ -383,7 +384,7 @@ test ('evaluate | err: get segment from cache | cache missing', async (t) => {
       feature5.getId(),
     )
     .catch((e) => {
-      t.deepEqual(e, new IllegalStateError(`Segment users not found: ${segmentUser2.getSegmentId()}`));
+      t.deepEqual(e, new InvalidStatusError(`Segment users not found: ${segmentUser2.getSegmentId()}`, 404));
     });
 
   featuresCacheMock.verify();
