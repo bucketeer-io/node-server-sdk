@@ -10,7 +10,7 @@ import { ProcessorEventsEmitter } from '../../../../processorEventsEmitter';
 import {
   GetFeatureFlagsResponse,
   createFeature,
-} from '@kenji71089/evaluation';
+} from '@bucketeer/evaluation';
 
 import { FEATURE_FLAG_REQUESTED_AT } from '../../../../../__test/cache/processor/featureFlagCacheProcessor';
 import { Clock } from '../../../../utils/clock';

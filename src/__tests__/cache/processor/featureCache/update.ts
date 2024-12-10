@@ -11,7 +11,7 @@ import {
   Feature,
   GetFeatureFlagsResponse,
   createFeature,
-} from '@kenji71089/evaluation';
+} from '@bucketeer/evaluation';
 import sino from 'sinon';
 import { FEATURE_FLAG_REQUESTED_AT } from '../../../../../__test/cache/processor/featureFlagCacheProcessor';
 import { Clock } from '../../../../utils/clock';

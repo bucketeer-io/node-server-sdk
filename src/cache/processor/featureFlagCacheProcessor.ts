@@ -3,7 +3,7 @@ import { Cache } from '../cache';
 import { GRPCClient } from '../../grpc/client';
 import { ProcessorEventsEmitter } from '../../processorEventsEmitter';
 import { createSchedule, removeSchedule } from '../../schedule';
-import { Feature } from '@kenji71089/evaluation';
+import { Feature } from '@bucketeer/evaluation';
 import { ApiId } from '../../objects/apiId';
 import { Clock } from '../../utils/clock';
 

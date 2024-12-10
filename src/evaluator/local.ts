@@ -5,7 +5,7 @@ import {
   SegmentUser,
   UserEvaluations,
   Reason as ProtoReason,
-} from '@kenji71089/evaluation';
+} from '@bucketeer/evaluation';
 
 import { FeaturesCache } from '../cache/features';
 import { SegmentUsersCache } from '../cache/segmentUsers';

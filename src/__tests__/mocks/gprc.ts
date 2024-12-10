@@ -1,7 +1,7 @@
 import {
   GetSegmentUsersResponse,
   GetFeatureFlagsResponse,
-} from '@kenji71089/evaluation';
+} from '@bucketeer/evaluation';
 import { GRPCClient } from '../../grpc/client';
 
 class MockGRPCClient implements GRPCClient {

@@ -1,4 +1,4 @@
-import { Reason as ProtoReason } from '@kenji71089/evaluation';
+import { Reason as ProtoReason } from '@bucketeer/evaluation';
 
 type Reason = {
   type: ReasonType;

@@ -1,7 +1,7 @@
 import test from 'ava';
 import sino from 'sinon';
 
-import { GetSegmentUsersResponse, SegmentUsers } from '@kenji71089/evaluation';
+import { GetSegmentUsersResponse, SegmentUsers } from '@bucketeer/evaluation';
 
 import {
   NewSegementUserCacheProcessor,

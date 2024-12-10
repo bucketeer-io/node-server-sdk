@@ -1,4 +1,4 @@
-import { SegmentUsers } from '@kenji71089/evaluation';
+import { SegmentUsers } from '@bucketeer/evaluation';
 import { Cache } from './cache';
 import { NamespaceCache } from './namespace';
 
