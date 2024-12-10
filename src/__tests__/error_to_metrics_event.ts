@@ -4,6 +4,7 @@ import {
   createUnknownErrorMetricsEvent,
   createNetworkErrorMetricsEvent,
   toErrorMetricsEvent,
+  createInternalSdkErrorMetricsEvent,
 } from '../objects/metricsEvent';
 import { ApiId } from '../objects/apiId';
 import {
@@ -14,7 +15,29 @@ import {
   createServiceUnavailableErrorMetricsEvent,
   createUnauthorizedErrorMetricsEvent,
 } from '../objects/status';
-import { InvalidStatusError } from '../objects/errors';
+import { InvalidStatusError, IllegalStateError, IllegalArgumentError } from '../objects/errors';
+
+test('toErrorMetricsEvent returns correct event for IllegalStateError', (t) => {
+  const error = new IllegalStateError('Feature not found');
+  const tag = 'test-tag';
+  const apiId = ApiId.GET_EVALUATION;
+
+  const expectedEvent = createInternalSdkErrorMetricsEvent(tag, apiId, 'Feature not found').event;
+  const actualEvent = toErrorMetricsEvent(error, tag, apiId).event;
+  
+  t.deepEqual(actualEvent, expectedEvent);
+});
+
+test('toErrorMetricsEvent returns correct event for IllegalArgumentError', (t) => {
+  const error = new IllegalArgumentError('Input string must be non-blank');
+  const tag = 'test-tag';
+  const apiId = ApiId.GET_EVALUATION;
+
+  const expectedEvent = createInternalSdkErrorMetricsEvent(tag, apiId, 'Input string must be non-blank').event;
+  const actualEvent = toErrorMetricsEvent(error, tag, apiId).event;
+
+  t.deepEqual(actualEvent, expectedEvent);
+});
 
 test('toErrorMetricsEvent returns correct event for InvalidStatusError with 400 status code', (t) => {
   const error = new InvalidStatusError('Bad Request', 400);
@@ -142,7 +165,6 @@ test('toErrorMetricsEvent returns correct event for unknown error', (t) => {
     'Unknown error occurred',
   ).event;
   const actualEvent = toErrorMetricsEvent(error, tag, apiId).event;
-
   t.deepEqual(actualEvent, expectedEvent);
 });
 

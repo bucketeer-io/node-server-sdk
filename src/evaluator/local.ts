@@ -14,7 +14,7 @@ import { Evaluation } from '../objects/evaluation';
 import { User } from '../objects/user';
 import { Reason, ReasonType } from '../objects/reason';
 import { NodeEvaluator } from './evaluator';
-import { IllegalStateError, InvalidStatusError } from '../objects/errors';
+import { IllegalStateError } from '../objects/errors';
 
 class LocalEvaluator implements NodeEvaluator {
   private tag: string;
@@ -34,9 +34,6 @@ class LocalEvaluator implements NodeEvaluator {
   async evaluate(user: User, featureID: string): Promise<Evaluation> {
     // Get the target feature
     const feature = await this.getFeatures(featureID);
-    if (feature === null) {
-      throw new InvalidStatusError('Feature not found', 404);
-    }
     const userEvaluations = await this.evaluateFeatures(user, feature);
 
     const evaluation = this.findEvaluation(userEvaluations, featureID);
@@ -44,25 +41,35 @@ class LocalEvaluator implements NodeEvaluator {
   }
 
   private async getFeatures(featureID: string): Promise<Feature> {
-    return this.featureCache.get(featureID).then((feature) => {
+    return this.getFeaturesFromCache(featureID).then((feature) => {
       if (feature === null) {
-        throw new InvalidStatusError('Feature not found', 404);
+        throw new IllegalStateError(`Feature not found: ${featureID}`);
       }
       return feature;
-    })
-    .catch((error) => {
-      throw new InvalidStatusError(
+    });
+  }
+
+  private async getFeaturesFromCache(featureID: string): Promise<Feature | null> {
+    return this.featureCache.get(featureID).catch((error) => {
+      throw new IllegalStateError(
         `Failed to get feature: ${error instanceof Error ? error.message : String(error)}`,
-        500
       );
     });
   }
 
-  private async getSegmentUsers(segmentUserId: string): Promise<SegmentUsers | null> {
+  private async getSegmentUsers(segmentUserId: string): Promise<SegmentUsers> {
+    return this.getSegmentUsersFromCache(segmentUserId).then((segmentUsers) => {
+      if (segmentUsers === null) {
+        throw new IllegalStateError(`Segment users not found: ${segmentUserId}`);
+      }
+      return segmentUsers
+    });
+  }
+
+  private async getSegmentUsersFromCache(segmentUserId: string): Promise<SegmentUsers | null> {
     return this.segementUsersCache.get(segmentUserId).catch((error) => {
-      throw new InvalidStatusError(
+      throw new IllegalStateError(
         `Failed to get segment users: ${error instanceof Error ? error.message : String(error)}`,
-        500
       );
     });
   }
@@ -89,11 +96,11 @@ class LocalEvaluator implements NodeEvaluator {
       );
       return userEvaluations;
     } catch (error) {
-      if (error instanceof InvalidStatusError) {
+      if (error instanceof IllegalStateError) {
         throw error;
       }
       throw new IllegalStateError(
-        `Failed to evaluate feature: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to evaluate feature: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
   }
@@ -114,7 +121,7 @@ class LocalEvaluator implements NodeEvaluator {
       }
     }
 
-    throw new InvalidStatusError('Feature not found', 404);
+    throw new IllegalStateError(`Evaluation not found for feature: ${featureId}`);
   }
 
   async getTargetFeatures(feature: Feature): Promise<Feature[]> {

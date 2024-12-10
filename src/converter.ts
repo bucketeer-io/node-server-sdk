@@ -26,7 +26,15 @@ export const stringToNumberConverter: StringToTypeConverter<number> = (input: st
 
 export const stringToObjectConverter: StringToTypeConverter<BKTValue> = (input: string) => {
   assetNonBlankString(input);
-  return parseJsonObjectOrArray(input);
+  try {
+    return parseJsonObjectOrArray(input);
+  } catch (err) {
+    if (err instanceof Error) {
+      throw new IllegalArgumentError(err.message);
+    } else {
+      throw new IllegalArgumentError(String(err));
+    }
+  } 
 };
 
 function assetNonBlankString(input: string) {
@@ -40,7 +48,7 @@ function parseJsonObjectOrArray(input: string) {
   const parsed = JSON.parse(input);
 
   if (primitiveTypes.includes(typeof parsed) || parsed === null) {
-    throw new IllegalArgumentError('Only JSON objects or array are allowed');
+    throw new Error('Only JSON objects or array are allowed');
   }
 
   return parsed;

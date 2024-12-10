@@ -286,7 +286,27 @@ test('evaluate | err: failed to get feature flag from cache', async (t) => {
       feature1.getId(),
     )
     .catch((e) => {
-      t.deepEqual(e, new IllegalStateError(`Failed to evaluate feature: ${err.message}`));
+      t.deepEqual(e, new IllegalStateError(`Failed to get feature: ${err.message}`));
+    });
+  mock.verify();
+  t.pass();
+});
+
+test('evaluate | err: get feature flag from cache | cache missing', async (t) => {
+  const { evaluator, featureFlagCache } = t.context;
+  const { feature1 } = t.context.data;
+  const mock = t.context.sandbox.mock(featureFlagCache).expects('get');
+  mock.resolves(null);
+  await evaluator
+    .evaluate(
+      {
+        id: 'id',
+        data: {},
+      },
+      feature1.getId(),
+    )
+    .catch((e) => {
+      t.deepEqual(e, new IllegalStateError(`Feature not found: ${feature1.getId()}`));
     });
   mock.verify();
   t.pass();
@@ -309,7 +329,7 @@ test('evaluate | err: failed to get prerequisite feature flag from cache', async
       feature1.getId(),
     )
     .catch((e) => {
-      t.deepEqual(e, new IllegalStateError(`Failed to evaluate feature: ${err.message}`));
+      t.deepEqual(e, new IllegalStateError(`Failed to get feature: ${err.message}`));
     });
 
   mock.verify();
@@ -335,7 +355,35 @@ test ('evaluate | err: failed to get segment from cache', async (t) => {
       feature5.getId(),
     )
     .catch((e) => {
-      t.deepEqual(e, new IllegalStateError(`Failed to evaluate feature: ${err.message}`));
+      t.deepEqual(e, new IllegalStateError(`Failed to get segment users: ${err.message}`));
+    });
+
+  featuresCacheMock.verify();
+  segmentUsersCacheMock.verify();
+  
+  t.pass();
+});
+
+test ('evaluate | err: get segment from cache | cache missing', async (t) => {
+  const { evaluator, featureFlagCache, segmentUsersCache, sandbox } = t.context;
+  const { feature5, segmentUser2 } = t.context.data;
+  const err = new Error('internal error');
+  const featuresCacheMock = sandbox.mock(featureFlagCache);
+  featuresCacheMock.expects('get').withArgs(feature5.getId()).resolves(feature5);
+  
+  const segmentUsersCacheMock = sandbox.mock(segmentUsersCache);
+  segmentUsersCacheMock.expects('get').withArgs(segmentUser2.getSegmentId()).resolves(null);
+  
+  await evaluator
+    .evaluate(
+      {
+        id: 'id',
+        data: {},
+      },
+      feature5.getId(),
+    )
+    .catch((e) => {
+      t.deepEqual(e, new IllegalStateError(`Segment users not found: ${segmentUser2.getSegmentId()}`));
     });
 
   featuresCacheMock.verify();
