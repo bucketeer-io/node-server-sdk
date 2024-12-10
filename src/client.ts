@@ -191,8 +191,10 @@ export class BKTClientImpl implements Bucketeer {
 
   private saveErrorMetricsEvent(tag: string, e: any, apiId: NodeApiIds) {
     const event = toErrorMetricsEvent(e, tag, apiId);
-    this.eventStore.add(event);
-    this.registerEvents();
+    if (event) {
+      this.eventStore.add(event);
+      this.registerEvents();
+    }
   }
 
   async getEvaluation(user: User, featureId: string): Promise<Evaluation | null> {
