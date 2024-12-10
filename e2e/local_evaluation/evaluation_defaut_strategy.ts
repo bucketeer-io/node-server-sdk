@@ -10,6 +10,8 @@ import {
   FEATURE_ID_JSON,
   FEATURE_ID_FLOAT,
 } from '../constants/constants';
+import { assetEvaluationDetails } from '../utils/assert';
+import exp from 'constants';
 
 const test = anyTest as TestFn<{ bktClient: Bucketeer; defaultUser: User }>;
 
@@ -39,7 +41,8 @@ test.after(async (t) => {
 test('boolVariation', async (t) => {
   const { bktClient, defaultUser } = t.context;
   t.is(await bktClient.booleanVariation(defaultUser, FEATURE_ID_BOOLEAN, false), true);
-  t.deepEqual(
+  assetEvaluationDetails(
+    t,
     await bktClient.booleanVariationDetails(defaultUser, FEATURE_ID_BOOLEAN, false),
     {
       featureId: FEATURE_ID_BOOLEAN,
@@ -56,7 +59,8 @@ test('boolVariation', async (t) => {
 test('stringVariation', async (t) => {
   const { bktClient, defaultUser } = t.context;
   t.is(await bktClient.stringVariation(defaultUser, FEATURE_ID_STRING, ''), 'value-1');
-  t.deepEqual(
+  assetEvaluationDetails(
+    t,
     await bktClient.stringVariationDetails(defaultUser, FEATURE_ID_STRING, ''),
     {
       featureId: FEATURE_ID_STRING,
@@ -73,7 +77,8 @@ test('stringVariation', async (t) => {
 test('numberVariation', async (t) => {
   const { bktClient, defaultUser } = t.context;
   t.is(await bktClient.numberVariation(defaultUser, FEATURE_ID_INT, 0), 10);
-  t.deepEqual(
+  assetEvaluationDetails(
+    t,
     await bktClient.numberVariationDetails(defaultUser, FEATURE_ID_INT, 1),
     {
       featureId: FEATURE_ID_INT,
@@ -87,7 +92,8 @@ test('numberVariation', async (t) => {
   )
 
   t.is(await bktClient.numberVariation(defaultUser, FEATURE_ID_FLOAT, 0.0), 2.1);
-  t.deepEqual(
+  assetEvaluationDetails(
+    t,
     await bktClient.numberVariationDetails(defaultUser, FEATURE_ID_FLOAT, 1.1),
     {
       featureId: FEATURE_ID_FLOAT,
@@ -106,7 +112,8 @@ test('objectVariation', async (t) => {
   const { bktClient, defaultUser } = t.context;
   t.deepEqual(await bktClient.getJsonVariation(defaultUser, FEATURE_ID_JSON, {}), { "str": "str1", "int": "int1" });
   t.deepEqual(await bktClient.objectVariation(defaultUser, FEATURE_ID_JSON, {}), { "str": "str1", "int": "int1" });
-  t.deepEqual(
+  assetEvaluationDetails(
+    t,
     await bktClient.objectVariationDetails(defaultUser, FEATURE_ID_JSON, {}),
     {
       featureId: FEATURE_ID_JSON,

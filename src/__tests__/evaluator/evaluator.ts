@@ -24,8 +24,7 @@ import { Clock } from '../../utils/clock';
 import { NewSegmentUsersCache, SegmentUsersCache } from '../../cache/segmentUsers';
 import { NewFeatureCache, FeaturesCache } from '../../cache/features';
 import { ProcessorEventsEmitter } from '../../processorEventsEmitter';
-import { IllegalStateError } from '../../objects/errors';
-import { InvalidStatusError } from '../../../__e2e/lib/objects/errors';
+import { IllegalStateError, InvalidStatusError } from '../../objects/errors';
 
 const test = anyTest as TestFn<{
   sandbox: sino.SinonSandbox;
