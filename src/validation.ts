@@ -9,7 +9,7 @@ import { User } from './objects/user'
  */
 function assertGetEvaluationRequest(user: User, featureID: string) {
   if (!isValidUser(user)) {
-    throw new Error(`invalid user: ${user}`)
+    throw new Error('userID is empty')
   }
   if (!featureID) {
     throw new Error('featureID is required')

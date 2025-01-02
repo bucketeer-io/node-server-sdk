@@ -26,7 +26,7 @@ test('assertGetEvaluationRequest throws error for invalid user', t => {
   const error = t.throws(() => {
     assertGetEvaluationRequest(user, 'feature1');
   }, { instanceOf: Error });
-  t.is(error.message, 'invalid user: [object Object]');
+  t.is(error.message, 'userID is empty');
 });
 
 test('assertGetEvaluationRequest throws error for missing featureID', t => {
