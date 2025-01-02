@@ -33,3 +33,19 @@ newDefaultBKTEvaluationDetailsTests.forEach((defaultValue, index) => {
     });
   });
 });
+
+// Should test we put the reason as 'DEFAULT' when the reason is 'DEFAULT'
+test('newDefaultBKTEvaluationDetails should return correct reason', (t) => {
+  const featureId = 'test_flag';
+  const userId = 'user1';
+  let output = newDefaultBKTEvaluationDetails(userId, featureId, 'default true', 'DEFAULT');
+  t.deepEqual(output, {
+    featureId: featureId,
+    featureVersion: 0,
+    userId: userId,
+    variationId: '',
+    variationName: '',
+    variationValue: 'default true',
+    reason: 'DEFAULT',
+  });
+});

@@ -74,6 +74,31 @@ test.serial('getEvaluation: default evaluation details', async (t) => {
   );
 });
 
+test.serial('getEvaluation: return default value when featureID is empty', async (t) => {
+  const client = t.context.bktClient;
+  const user = t.context.targetedUser;
+
+  t.is(await client.stringVariation(user, '', 'default-test'), 'default-test');
+
+  t.deepEqual(
+    await client.stringVariationDetails(user, '', 'default-test'),
+    newDefaultBKTEvaluationDetails(user.id, '', 'default-test', 'DEFAULT'),
+  );
+});
+
+test.serial('getEvaluation: return default value when user ID is empty', async (t) => {
+  const featureId = 'stringEvaluationDetails';
+  const client = t.context.bktClient;
+  const user = { id: '', data: {} };
+
+  t.is(await client.stringVariation(user, featureId, 'default-test'), 'default-test');
+
+  t.deepEqual(
+    await client.stringVariationDetails(user, featureId, 'default-test'),
+    newDefaultBKTEvaluationDetails(user.id, featureId, 'default-test', 'DEFAULT'),
+  );
+});
+
 test.serial('getEvaluation: stringEvaluationDetails', async (t) => {
   const featureId = 'stringEvaluationDetails';
   const dummyEvalResponse: GetEvaluationResponse = {

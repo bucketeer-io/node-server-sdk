@@ -25,6 +25,7 @@ import {
   StringToTypeConverter,
 } from './converter';
 import { error } from 'console';
+import { assertGetEvaluationRequest } from './validation';
 
 export interface BuildInfo {
   readonly GIT_REVISION: string;
@@ -57,7 +58,6 @@ export interface Bucketeer {
    */
   getNumberVariation(user: User, featureId: string, defaultValue: number): Promise<number>;
 
-
   /**
    * booleanVariation returns variation as boolean.
    * If a variation returned by server is not boolean, defaultValue is retured.
@@ -75,13 +75,13 @@ export interface Bucketeer {
   ): Promise<BKTEvaluationDetails<boolean>>;
 
   /**
- * stringVariation returns variation as string.
- * If a variation returned by server is not string, defaultValue is retured.
- * @param user User information.
- * @param featureId Feature flag ID to use.
- * @param defaultValue The variation value that is retured if SDK fails to fetch the variation or the variation is not string.
- * @returns The variation value returned from server or default value.
- */
+   * stringVariation returns variation as string.
+   * If a variation returned by server is not string, defaultValue is retured.
+   * @param user User information.
+   * @param featureId Feature flag ID to use.
+   * @param defaultValue The variation value that is retured if SDK fails to fetch the variation or the variation is not string.
+   * @returns The variation value returned from server or default value.
+   */
   stringVariation(user: User, featureId: string, defaultValue: string): Promise<string>;
 
   stringVariationDetails(
@@ -307,6 +307,14 @@ export class BKTClientImpl implements Bucketeer {
     defaultValue: T,
     typeConverter: StringToTypeConverter<T>,
   ): Promise<BKTEvaluationDetails<T>> {
+    try {
+      assertGetEvaluationRequest(user, featureId);
+    } catch (error) {
+      this.saveErrorMetricsEvent(this.config.tag, error, ApiId.GET_EVALUATION);
+      this.config.logger?.debug('getVariationDetails failed', error);
+      return newDefaultBKTEvaluationDetails(user.id, featureId, defaultValue, 'DEFAULT');
+    }
+
     const evaluation = await this.getEvaluation(user, featureId);
     const variationValue = evaluation?.variationValue;
 
