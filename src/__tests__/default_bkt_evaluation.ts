@@ -34,8 +34,7 @@ newDefaultBKTEvaluationDetailsTests.forEach((defaultValue, index) => {
   });
 });
 
-// Should test we put the reason as 'DEFAULT' when the reason is 'DEFAULT'
-test('newDefaultBKTEvaluationDetails should return correct reason', (t) => {
+test('newDefaultBKTEvaluationDetails should return correct reason `DEFAULT`', (t) => {
   const featureId = 'test_flag';
   const userId = 'user1';
   let output = newDefaultBKTEvaluationDetails(userId, featureId, 'default true', 'DEFAULT');
