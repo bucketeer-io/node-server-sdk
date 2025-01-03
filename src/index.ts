@@ -310,7 +310,6 @@ export class BKTClientImpl implements Bucketeer {
     try {
       assertGetEvaluationRequest(user, featureId);
     } catch (error) {
-      this.saveErrorMetricsEvent(this.config.tag, error, ApiId.GET_EVALUATION);
       this.config.logger?.debug('getVariationDetails failed', error);
       return newDefaultBKTEvaluationDetails(user.id, featureId, defaultValue, 'DEFAULT');
     }
