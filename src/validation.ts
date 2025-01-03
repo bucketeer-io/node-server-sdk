@@ -17,10 +17,10 @@ function assertGetEvaluationRequest(user: User, featureID: string) {
 }
 
 function isValidUser(user: User): boolean {
-  if (!user.id) {
-    return false
+  if (user && user.id) {
+    return true
   }
-  return true
+  return false
 }
 
 export { isValidUser, assertGetEvaluationRequest }

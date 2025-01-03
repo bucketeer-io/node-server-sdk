@@ -311,7 +311,11 @@ export class BKTClientImpl implements Bucketeer {
       assertGetEvaluationRequest(user, featureId);
     } catch (error) {
       this.config.logger?.error('getVariationDetails failed', error);
-      return newDefaultBKTEvaluationDetails(user.id, featureId, defaultValue, 'DEFAULT');
+      return newDefaultBKTEvaluationDetails(
+        user && user.id ? user.id : '',
+        featureId ?? '',
+        defaultValue,
+        'DEFAULT');
     }
 
     const evaluation = await this.getEvaluation(user, featureId);

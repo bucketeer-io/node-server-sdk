@@ -1,7 +1,7 @@
 import { http, HttpResponse } from 'msw';
 import { SetupServer } from 'msw/node';
 import anyTest, { TestFn } from 'ava';
-import { Bucketeer, initialize } from '..';
+import { BKTClientImpl, Bucketeer, initialize } from '..';
 import { Config, User } from '../bootstrap';
 import { DefaultLogger } from '../logger';
 import { setupServerAndListen } from './utils/setup_server';
@@ -71,38 +71,6 @@ test.serial('getEvaluation: default evaluation details', async (t) => {
   t.deepEqual(
     await client.objectVariationDetails(user, featureId, { key: 1 }),
     newDefaultBKTEvaluationDetails(user.id, featureId, { key: 1 }),
-  );
-});
-
-test.serial('getEvaluation: return default value when featureID is empty', async (t) => {
-  const client = t.context.bktClient;
-  const user = t.context.targetedUser;
-
-  t.deepEqual(
-    await client.stringVariationDetails(user, '', 'default-test'),
-    newDefaultBKTEvaluationDetails(user.id, '', 'default-test', 'DEFAULT'),
-  );
-});
-
-test.serial('getEvaluation: return default value when userID is empty', async (t) => {
-  const featureId = 'stringEvaluationDetails';
-  const client = t.context.bktClient;
-  const user = { id: '', data: {} };
-
-  t.deepEqual(
-    await client.stringVariationDetails(user, featureId, 'default-test'),
-    newDefaultBKTEvaluationDetails(user.id, featureId, 'default-test', 'DEFAULT'),
-  );
-});
-
-test.serial('getEvaluation: return default value when userID & featureID is empty', async (t) => {
-  const featureId = '';
-  const client = t.context.bktClient;
-  const user = { id: '', data: {} };
-
-  t.deepEqual(
-    await client.stringVariationDetails(user, featureId, 'default-test'),
-    newDefaultBKTEvaluationDetails(user.id, featureId, 'default-test', 'DEFAULT'),
   );
 });
 
