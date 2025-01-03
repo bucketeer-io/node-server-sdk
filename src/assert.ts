@@ -8,19 +8,17 @@ import { User } from './objects/user'
  * @throws Will throw an error if the user is invalid or if the featureID is not provided.
  */
 function assertGetEvaluationRequest(user: User, featureID: string) {
-  if (!isValidUser(user)) {
+  if (!user) {
+    throw new Error('user is null or undefined')
+  }
+
+  if (!user.id) {
     throw new Error('userID is empty')
   }
+
   if (!featureID) {
     throw new Error('featureID is required')
   }
 }
 
-function isValidUser(user: User): boolean {
-  if (user && user.id) {
-    return true
-  }
-  return false
-}
-
-export { isValidUser, assertGetEvaluationRequest }
+export { assertGetEvaluationRequest }

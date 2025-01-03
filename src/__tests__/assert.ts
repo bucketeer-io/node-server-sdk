@@ -1,53 +1,6 @@
 import test from 'ava';
 import { User } from '../objects/user';
-import { isValidUser, assertGetEvaluationRequest } from '../assert';
-
-const isValidUserTestCases = [
-  {
-    name: 'isValidUser returns true for valid user',
-    user: { id: '123', data: {} },
-    isValid: true
-  },
-  {
-    name: 'isValidUser returns false for user without id',
-    user: { id: '', data: {} },
-    isValid: false
-  },
-  {
-    name: 'isValidUser returns false for null user',
-    user: null as any,
-    isValid: false
-  },
-  {
-    name: 'isValidUser returns false for undefined user',
-    user: undefined as any,
-    isValid: false
-  },
-  {
-    name: 'isValidUser returns false for user with null id',
-    user: { id: null as any, data: {} },
-    isValid: false
-  },
-  {
-    name: 'isValidUser returns false for user with undefined id',
-    user: { id: undefined as any, data: {} },
-    isValid: false
-  }
-];
-
-isValidUserTestCases.forEach(testCase => {
-  test(testCase.name, t => {
-    t.is(isValidUser(testCase.user), testCase.isValid);
-  });
-});
-
-test('isValidUser returns true for valid user with data', t => {
-  const user: User = {
-    id: '123',
-    data: { key: 'value' }
-  };
-  t.true(isValidUser(user));
-});
+import { assertGetEvaluationRequest } from '../assert';
 
 const assertGetEvaluationRequestTestCases = [
   {
@@ -66,13 +19,13 @@ const assertGetEvaluationRequestTestCases = [
     name: 'assertGetEvaluationRequest throws error for null user',
     user: null as any,
     featureID: 'feature1',
-    errorMessage: 'userID is empty'
+    errorMessage: 'user is null or undefined'
   },
   {
     name: 'assertGetEvaluationRequest throws error for undefined user',
     user: undefined as any,
     featureID: 'feature1',
-    errorMessage: 'userID is empty'
+    errorMessage: 'user is null or undefined'
   },
   {
     name: 'assertGetEvaluationRequest throws error for user with null id',
