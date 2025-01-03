@@ -25,7 +25,7 @@ import {
   StringToTypeConverter,
 } from './converter';
 import { error } from 'console';
-import { assertGetEvaluationRequest } from './validation';
+import { assertGetEvaluationRequest } from './assert';
 
 export interface BuildInfo {
   readonly GIT_REVISION: string;

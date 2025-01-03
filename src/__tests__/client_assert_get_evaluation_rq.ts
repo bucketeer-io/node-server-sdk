@@ -43,7 +43,7 @@ const testCases = [
     user: { id: '', data: {} },
     expected: newDefaultBKTEvaluationDetails('', '', 'default-test', 'DEFAULT'),
   },
-  // Simulate the case where the user object is null when passed from JavaScript code.
+  // Simulate the case where the object is null when passed from JavaScript code.
   {
     description: 'return default value when userID is null',
     featureId: 'featureId',
@@ -62,7 +62,21 @@ const testCases = [
     user: null,
     expected: newDefaultBKTEvaluationDetails('', '', 'default-test', 'DEFAULT'),
   },
-  // Simulate the case where the user object is undefined when passed from JavaScript code.
+  // Simulate the case where the user.id is null when passed from JavaScript code.
+  {
+    description: 'return default value when user.id is null',
+    featureId: 'featureId',
+    user: { id: null, data: {} },
+    expected: newDefaultBKTEvaluationDetails('', 'featureId', 'default-test', 'DEFAULT'),
+  },
+  // Simulate the case where the user.id is undefined when passed from JavaScript code.
+  {
+    description: 'return default value when user.id is undefined',
+    featureId: 'featureId',
+    user: { id: undefined, data: {} },
+    expected: newDefaultBKTEvaluationDetails('', 'featureId', 'default-test', 'DEFAULT'),
+  },
+  // Simulate the case where the object is undefined when passed from JavaScript code.
   {
     description: 'return default value when userID is undefined',
     featureId: 'featureId',
