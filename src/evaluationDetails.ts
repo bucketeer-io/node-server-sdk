@@ -14,6 +14,7 @@ export const newDefaultBKTEvaluationDetails = <T extends BKTValue>(
   userId: string,
   featureId: string,
   defaultValue: T,
+  reason: 'DEFAULT' | 'CLIENT' = 'CLIENT'
 ): BKTEvaluationDetails<T> => {
   return {
     featureId: featureId,
@@ -22,6 +23,6 @@ export const newDefaultBKTEvaluationDetails = <T extends BKTValue>(
     variationId: '',
     variationName: '',
     variationValue: defaultValue,
-    reason: 'CLIENT',
+    reason: reason,
   } satisfies BKTEvaluationDetails<T>;
 };
