@@ -24,13 +24,13 @@ import {
   stringToObjectConverter,
   StringToTypeConverter,
 } from './converter';
-import { error } from 'console';
 import { FeatureFlagProcessor } from './cache/processor/featureFlagCacheProcessor';
 import { SegementUsersCacheProcessor } from './cache/processor/segmentUsersCacheProcessor';
 import { ProcessorEventsEmitter } from './processorEventsEmitter';
 import { NodeEvaluator } from './evaluator/evaluator';
 import { Bucketeer, BuildInfo } from '.';
 import { IllegalStateError } from './objects/errors';
+import { assertGetEvaluationRequest } from './assert';
 
 const COUNT_PER_REGISTER_EVENT = 100;
 
@@ -259,6 +259,17 @@ export class BKTClientImpl implements Bucketeer {
     defaultValue: T,
     typeConverter: StringToTypeConverter<T>,
   ): Promise<BKTEvaluationDetails<T>> {
+    try {
+      assertGetEvaluationRequest(user, featureId);
+    } catch (error) {
+      this.config.logger?.error('getVariationDetails failed', error);
+      return newDefaultBKTEvaluationDetails(
+        user && user.id ? user.id : '',
+        featureId ?? '',
+        defaultValue,
+        'DEFAULT');
+    }
+
     const evaluation = await this.getEvaluation(user, featureId);
     const variationValue = evaluation?.variationValue;
 
@@ -273,7 +284,7 @@ export class BKTClientImpl implements Bucketeer {
         this.eventEmitter.emit('error', { error: err, apiId: ApiId.SDK_GET_VARIATION });
 
         this.config.logger?.error(
-          `getVariationDetails failed to parse: ${variationValue} using: ${typeof typeConverter} with error: ${error.toString()}`,
+          `getVariationDetails failed to parse: ${variationValue} using: ${typeof typeConverter} with error: ${err}`,
         );
       }
     }
