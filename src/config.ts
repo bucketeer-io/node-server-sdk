@@ -18,6 +18,17 @@ export interface Config {
    */
   pollingIntervalForRegisterEvents?: number;
   logger?: Logger;
+
+  /**
+  * Evaluate the end user locally in the SDK instead of on the server.
+  * Note: To evaluate the user locally, you must create an API key and select the server-side role.
+  */
+  enableLocalEvaluation?: boolean;
+
+  /**
+   * Sets the polling interval for cache updating. Default: 1 min - specify in milliseconds.
+   */
+  cachePollingInterval?: number;
 }
 
 export const defaultConfig = {
@@ -27,4 +38,14 @@ export const defaultConfig = {
   tag: '',
   pollingIntervalForRegisterEvents: 1 * 60 * 1000,
   logger: new DefaultLogger(),
+
+  enableLocalEvaluation: false,
+  cachePollingInterval: 1 * 60 * 1000,
 };
+
+export const defineBKTConfig = (config: Config): Config => {
+  return {
+    ...defaultConfig,
+    ...config,
+  };
+}

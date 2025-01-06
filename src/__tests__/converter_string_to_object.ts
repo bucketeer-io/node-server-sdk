@@ -1,6 +1,7 @@
 import test from 'ava';
 import { stringToObjectConverter } from '../converter';
 import { BKTValue } from '../types';
+import { IllegalArgumentError } from '../objects/errors';
 
 type StringToJSonValueConvertTestCase = {
   input: string;
@@ -45,6 +46,7 @@ stringConvertTestCases.forEach(({ input, expected }, index) => {
       t.deepEqual(output, expected);
     } catch (err) {
       t.deepEqual(expected, null);
+      t.true(err instanceof IllegalArgumentError);
     }
   });
 });

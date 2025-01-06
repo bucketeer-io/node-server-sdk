@@ -1,7 +1,9 @@
 export const HOST = process.env.HOST!;
 export const TOKEN = process.env.TOKEN!;
+export const SERVER_ROLE_TOKEN = process.env.SERVER_ROLE_TOKEN!;
 export const FEATURE_TAG = 'nodejs'
 export const TARGETED_USER_ID = 'bucketeer-nodejs-server-user-id-1'
+export const TARGETED_SEGMENT_USER_ID = 'bucketeer-nodejs-server-user-id-2'
 
 export const FEATURE_ID_BOOLEAN = 'feature-nodejs-server-e2e-boolean'
 export const FEATURE_ID_STRING = 'feature-nodejs-server-e2e-string'
