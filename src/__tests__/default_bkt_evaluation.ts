@@ -33,3 +33,18 @@ newDefaultBKTEvaluationDetailsTests.forEach((defaultValue, index) => {
     });
   });
 });
+
+test('newDefaultBKTEvaluationDetails should return correct reason `DEFAULT`', (t) => {
+  const featureId = 'test_flag';
+  const userId = 'user1';
+  let output = newDefaultBKTEvaluationDetails(userId, featureId, 'default true', 'DEFAULT');
+  t.deepEqual(output, {
+    featureId: featureId,
+    featureVersion: 0,
+    userId: userId,
+    variationId: '',
+    variationName: '',
+    variationValue: 'default true',
+    reason: 'DEFAULT',
+  });
+});
