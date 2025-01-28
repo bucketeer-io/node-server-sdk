@@ -8,6 +8,8 @@ on:
         required: true
       E2E_TOKEN:
         required: true
+      E2E_SERVER_ROLE_TOKEN:
+        required: true
       NPM_TOKEN:
         required: true
 
@@ -43,5 +45,5 @@ jobs:
         run: make build
       - name: e2e test
         run: |
-          sed -i -e "s|<HOST>|${{ secrets.E2E_HOST }}|" -e "s|<TOKEN>|${{ secrets.E2E_TOKEN }}|" ava-e2e.config.mjs
+          sed -i -e "s|<HOST>|${{ secrets.E2E_HOST }}|" -e "s|<TOKEN>|${{ secrets.E2E_TOKEN }}|" -e "s|<SERVER_ROLE_TOKEN>|${{ secrets.E2E_SERVER_ROLE_TOKEN }}|" ava-e2e.config.mjs
           make e2e

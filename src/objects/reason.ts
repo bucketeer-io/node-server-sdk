@@ -1,4 +1,6 @@
-export type Reason = {
+import { Reason as ProtoReason } from '@bucketeer/evaluation';
+
+type Reason = {
   type: ReasonType;
   ruleId?: string;
 };
@@ -11,3 +13,4 @@ type ReasonType =
   | 'OFF_VARIATION'
   | 'PREREQUISITE'
 
+export { Reason, ReasonType };
