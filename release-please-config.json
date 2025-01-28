@@ -13,7 +13,6 @@
     { "type": "revert", "section": "Reverts", "hidden": false },
     { "type": "build", "section": "Build System", "hidden": false }
   ],
-  "release-as": "0.4.0",
   "release-type": "node",
   "pull-request-title-pattern": "chore: release v${version}",
   "packages": {
