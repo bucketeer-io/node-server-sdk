@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.4.0](https://github.com/bucketeer-io/node-server-sdk/compare/v0.3.3...v0.4.0) (2025-01-28)
+
+
+### Features
+
+* enable local evaluation ([#79](https://github.com/bucketeer-io/node-server-sdk/issues/79)) ([d2e5a2f](https://github.com/bucketeer-io/node-server-sdk/commit/d2e5a2f1faf3e50d1b38172a66ecc4c1972ad075))
+
+
+### Bug Fixes
+
+* evaluation event being reported with no user ID ([#89](https://github.com/bucketeer-io/node-server-sdk/issues/89)) ([a59a36b](https://github.com/bucketeer-io/node-server-sdk/commit/a59a36bbbee440a2bd43b2c5a51cb38385ee944f))
+
+
+### Build System
+
+* **deps:** bump the dependencies group with 14 updates ([#88](https://github.com/bucketeer-io/node-server-sdk/issues/88)) ([0ba9617](https://github.com/bucketeer-io/node-server-sdk/commit/0ba961796373d934484c64708bb16ff2d3318e27))
+
 ## [0.3.3](https://github.com/bucketeer-io/node-server-sdk/compare/v0.3.2...v0.3.3) (2024-12-03)
 
 
