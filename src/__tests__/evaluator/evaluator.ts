@@ -69,6 +69,9 @@ test.beforeEach((t) => {
   segmentUsers2.setSegmentId('segment-id-2');
   segmentUsers2.setUsersList([sgUser2, sgUser3]);
 
+  const feature5Id = 'feature-id-5';
+  const feature5VariationFirstId = 'variation-true-id';
+
   const feature1 = createFeature({
     id: 'feature-id-1',
     version: 0,
@@ -146,6 +149,13 @@ test.beforeEach((t) => {
         operator: Clause.Operator.SEGMENT,
         values: [segmentUsers2.getSegmentId()],
       },
+      {
+        id: '',
+        attribute: feature5Id,
+        fixedVariation: '',
+        operator: Clause.Operator.FEATURE_FLAG,
+        values: [feature5VariationFirstId],
+      },
     ],
     variations: [
       {
@@ -203,7 +213,7 @@ test.beforeEach((t) => {
     tagList: ['server'],
     variations: [
       {
-        id: 'variation-true-id',
+        id: feature5VariationFirstId,
         name: 'true-name',
         value: 'true',
         description: 'variation-true-id',
@@ -432,11 +442,12 @@ test ('evaluate | success: with no prerequisites', async (t) => {
 
 test ('evaluate | success: with prerequisite feature disabled (It must return the off variation)', async (t) => {
   const { evaluator, featureFlagCache, segmentUsersCache, sandbox } = t.context;
-  const { feature3, feature4, segmentUser1, segmentUser2 } = t.context.data;
+  const { feature3, feature4, feature5, segmentUser1, segmentUser2 } = t.context.data;
   
   const featuresCacheMock = sandbox.mock(featureFlagCache);
   featuresCacheMock.expects('get').withArgs(feature3.getId()).resolves(feature3);
   featuresCacheMock.expects('get').withArgs(feature4.getId()).resolves(feature4);
+  featuresCacheMock.expects('get').withArgs(feature5.getId()).resolves(feature5);
 
   const segmentUsersCacheMock = sandbox.mock(segmentUsersCache);
   segmentUsersCacheMock.expects('get').withArgs(segmentUser1.getSegmentId()).resolves(segmentUser1);

@@ -6,6 +6,7 @@ import {
   SegmentUsers,
   UserEvaluations,
   Reason as ProtoReason,
+  Clause,
 } from '@bucketeer/evaluation';
 
 import { FeaturesCache } from '../cache/features';
@@ -126,30 +127,46 @@ class LocalEvaluator implements NodeEvaluator {
 
   async getTargetFeatures(feature: Feature): Promise<Feature[]> {
     const targetFeatures: Feature[] = [feature];
-    if (feature.getPrerequisitesList().length === 0) {
-      return targetFeatures;
+    // Check if the flag depends on other flags.
+	  // If not, we return only the target flag
+    const preFlagIDs = getFeatureIDsDependsOn(feature);
+    if (preFlagIDs.length === 0) {
+      return [feature];
     }
-    const prerequisiteFeatures = await this.getPrerequisiteFeatures(feature);
+  
+    const prerequisiteFeatures = await this.getPrerequisiteFeaturesFromCache(preFlagIDs);
     return targetFeatures.concat(prerequisiteFeatures);
   }
 
-  async getPrerequisiteFeatures(feature: Feature): Promise<Feature[]> {
+  private async getPrerequisiteFeaturesFromCache(preFlagIDs: string[]): Promise<Feature[]> {
     const prerequisites: Record<string, Feature> = {};
-    const queue: Feature[] = [feature];
-
-    while (queue.length > 0) {
-      const f = queue.shift();
-      if (!f) continue;
-
-      for (const p of f.getPrerequisitesList()) {
-        const preFeature = await this.getFeatures(p.getFeatureId());
-        prerequisites[p.getFeatureId()] = preFeature;
-        queue.push(preFeature);
-      }
+    for (const preFlagID of preFlagIDs) {
+      const preFeature = await this.getFeatures(preFlagID);
+      prerequisites[preFlagID] = preFeature
     }
-
     return Object.values(prerequisites);
   }
+} 
+
+// FeatureIDsDependsOn returns the ids of the features that this feature depends on.
+function getFeatureIDsDependsOn(feature: Feature): Array<string> {
+  const ids: Array<string> = [];
+
+  // Iterate over prerequisites and add their FeatureId
+  feature.getPrerequisitesList().forEach((p) => {
+    ids.push(p.getFeatureId());
+  });
+
+  // Iterate over rules and collect ids from clauses where the operator is FEATURE_FLAG
+  feature.getRulesList().forEach((rule) => {
+    rule.getClausesList().forEach((clause) => {
+      if (clause.getOperator() === Clause.Operator.FEATURE_FLAG) {
+        ids.push(clause.getAttribute());
+      }
+    });
+  });
+
+  return ids;
 }
 
 function protoReasonToReason(protoReason: ProtoReason | undefined): Reason {
