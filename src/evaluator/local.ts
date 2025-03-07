@@ -6,7 +6,7 @@ import {
   SegmentUsers,
   UserEvaluations,
   Reason as ProtoReason,
-  Clause,
+  getFeatureIDsDependsOn,
 } from '@bucketeer/evaluation';
 
 import { FeaturesCache } from '../cache/features';
@@ -106,7 +106,7 @@ class LocalEvaluator implements NodeEvaluator {
     }
   }
 
-  private findEvaluation(userEvaluations: UserEvaluations, featureId: String): Evaluation {
+  findEvaluation(userEvaluations: UserEvaluations, featureId: String): Evaluation {
     for (const evaluation of userEvaluations.getEvaluationsList()) {
       if (evaluation.getFeatureId() === featureId) {
         return {
@@ -148,27 +148,6 @@ class LocalEvaluator implements NodeEvaluator {
   }
 } 
 
-// FeatureIDsDependsOn returns the ids of the features that this feature depends on.
-function getFeatureIDsDependsOn(feature: Feature): Array<string> {
-  const ids: Array<string> = [];
-
-  // Iterate over prerequisites and add their FeatureId
-  feature.getPrerequisitesList().forEach((p) => {
-    ids.push(p.getFeatureId());
-  });
-
-  // Iterate over rules and collect ids from clauses where the operator is FEATURE_FLAG
-  feature.getRulesList().forEach((rule) => {
-    rule.getClausesList().forEach((clause) => {
-      if (clause.getOperator() === Clause.Operator.FEATURE_FLAG) {
-        ids.push(clause.getAttribute());
-      }
-    });
-  });
-
-  return ids;
-}
-
 function protoReasonToReason(protoReason: ProtoReason | undefined): Reason {
   if (protoReason === undefined) {
     return {
@@ -200,4 +179,4 @@ function protoReasonTypeToReasonType(protoReasonType: number): ReasonType {
   }
 }
 
-export { LocalEvaluator };
+export { LocalEvaluator, protoReasonToReason };
