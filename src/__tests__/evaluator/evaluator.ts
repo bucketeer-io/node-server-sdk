@@ -12,9 +12,13 @@ import {
   Clause,
   createUser,
   createSegmentUser,
+  createEvaluation,
+  Reason,
+  createReason,
+  NewUserEvaluations,
 } from '@bucketeer/evaluation';
 
-import { LocalEvaluator } from '../../evaluator/local';
+import { LocalEvaluator, protoReasonToReason } from '../../evaluator/local';
 import { SEGEMENT_USERS_CACHE_TTL } from '../../cache/processor/segmentUsersCacheProcessor';
 import { FEATURE_FLAG_CACHE_TTL } from '../../cache/processor/featureFlagCacheProcessor';
 import { MockCache } from '../mocks/cache';
@@ -287,7 +291,8 @@ test('evaluate | err: failed to get feature flag from cache', async (t) => {
   const err = new Error('internal error');
   const mock = t.context.sandbox.mock(featureFlagCache).expects('get');
   mock.rejects(err);
-  await evaluator
+  try {
+    await evaluator
     .evaluate(
       {
         id: 'id',
@@ -295,9 +300,10 @@ test('evaluate | err: failed to get feature flag from cache', async (t) => {
       },
       feature1.getId(),
     )
-    .catch((e) => {
-      t.deepEqual(e, new IllegalStateError(`Failed to get feature: ${err.message}`));
-    });
+    t.fail('Expected error was not thrown');
+  } catch (e) {
+    t.deepEqual(e, new IllegalStateError(`Failed to get feature: ${err.message}`));
+  }
   mock.verify();
   t.pass();
 });
@@ -307,7 +313,9 @@ test('evaluate | err: get feature flag from cache | cache missing', async (t) =>
   const { feature1 } = t.context.data;
   const mock = t.context.sandbox.mock(featureFlagCache).expects('get');
   mock.resolves(null);
-  await evaluator
+
+  try {
+    await evaluator
     .evaluate(
       {
         id: 'id',
@@ -315,9 +323,11 @@ test('evaluate | err: get feature flag from cache | cache missing', async (t) =>
       },
       feature1.getId(),
     )
-    .catch((e) => {
-      t.deepEqual(e, new InvalidStatusError(`Feature not found: ${feature1.getId()}`, 404));
-    });
+    t.fail('Unexpected error was thrown');
+  } catch (e) {
+    t.deepEqual(e, new InvalidStatusError(`Feature not found: ${feature1.getId()}`, 404));
+  }
+
   mock.verify();
   t.pass();
 });
@@ -330,7 +340,8 @@ test('evaluate | err: failed to get prerequisite feature flag from cache', async
   mock.expects('get').withArgs(feature2.getId()).exactly(1).rejects(err);
   mock.expects('get').withArgs(feature1.getId()).exactly(1).resolves(feature1);
   
-  await evaluator
+  try {
+    await evaluator
     .evaluate(
       {
         id: 'id',
@@ -338,9 +349,10 @@ test('evaluate | err: failed to get prerequisite feature flag from cache', async
       },
       feature1.getId(),
     )
-    .catch((e) => {
-      t.deepEqual(e, new IllegalStateError(`Failed to get feature: ${err.message}`));
-    });
+    t.fail('Expected error was not thrown');
+  } catch (e) {
+    t.deepEqual(e, new IllegalStateError(`Failed to get feature: ${err.message}`));
+  }
 
   mock.verify();
   t.pass();
@@ -356,7 +368,8 @@ test ('evaluate | err: failed to get segment from cache', async (t) => {
   const segmentUsersCacheMock = sandbox.mock(segmentUsersCache);
   segmentUsersCacheMock.expects('get').withArgs(segmentUser2.getSegmentId()).rejects(err);
   
-  await evaluator
+  try {
+    await evaluator
     .evaluate(
       {
         id: 'id',
@@ -364,9 +377,10 @@ test ('evaluate | err: failed to get segment from cache', async (t) => {
       },
       feature5.getId(),
     )
-    .catch((e) => {
-      t.deepEqual(e, new IllegalStateError(`Failed to get segment users: ${err.message}`));
-    });
+    t.fail('Expected error was not thrown');
+  } catch (e) {
+    t.deepEqual(e, new IllegalStateError(`Failed to get segment users: ${err.message}`));
+  }
 
   featuresCacheMock.verify();
   segmentUsersCacheMock.verify();
@@ -384,7 +398,8 @@ test ('evaluate | err: get segment from cache | cache missing', async (t) => {
   const segmentUsersCacheMock = sandbox.mock(segmentUsersCache);
   segmentUsersCacheMock.expects('get').withArgs(segmentUser2.getSegmentId()).resolves(null);
   
-  await evaluator
+  try {
+    await evaluator
     .evaluate(
       {
         id: 'id',
@@ -392,9 +407,10 @@ test ('evaluate | err: get segment from cache | cache missing', async (t) => {
       },
       feature5.getId(),
     )
-    .catch((e) => {
-      t.deepEqual(e, new InvalidStatusError(`Segment users not found: ${segmentUser2.getSegmentId()}`, 404));
-    });
+    t.fail('Expected error was not thrown');
+  } catch (e) {
+    t.deepEqual(e, new InvalidStatusError(`Segment users not found: ${segmentUser2.getSegmentId()}`, 404));
+  }
 
   featuresCacheMock.verify();
   segmentUsersCacheMock.verify();
@@ -555,6 +571,101 @@ test ('evaluate | success: with segment user', async (t) => {
 
   featuresCacheMock.verify();
   segmentUsersCacheMock.verify();
+
+  t.pass();
+});
+
+test ('getTargetFeatures | err: failed to get feature flag from cache', async (t) => {
+  const { evaluator, featureFlagCache, sandbox } = t.context;
+  const { feature3, feature4 } = t.context.data;
+  const err = new Error('internal error');
+  const featuresCacheMock = sandbox.mock(featureFlagCache);
+  featuresCacheMock.expects('get').withArgs(feature4.getId()).rejects(err);
+  
+  try {
+    await evaluator.getTargetFeatures(feature3);
+    t.fail('Expected error was not thrown');
+  } catch (e) {
+    t.deepEqual(e, new IllegalStateError('Failed to get feature: internal error'));
+  }
+  featuresCacheMock.verify();
+  
+  t.pass();
+});
+
+test ('getTargetFeatures | success', async (t) => {
+  const { evaluator, featureFlagCache, sandbox } = t.context;
+  const { feature3, feature4, feature5 } = t.context.data;
+
+  const featuresCacheMock = sandbox.mock(featureFlagCache);
+  featuresCacheMock.expects('get').withArgs(feature4.getId()).resolves(feature4);
+  featuresCacheMock.expects('get').withArgs(feature5.getId()).resolves(feature5);
+  
+  const targetFeatures = await evaluator
+    .getTargetFeatures(
+      feature3,
+    );
+
+  t.deepEqual(targetFeatures, [feature3, feature4, feature5]);
+
+  featuresCacheMock.verify();
+  t.pass();
+});
+
+test ('findEvaluation | found', async (t) => {
+  const { evaluator } = t.context;
+
+  const evaluation = createEvaluation(
+    'feature1:1:user1',
+    'feature-id-1',
+    1,
+    'user1',
+    'variation-B',
+    'B',
+    'Variation B',
+    createReason('1', Reason.Type.DEFAULT),
+  );
+
+  const userEvaluations = NewUserEvaluations('user1', [evaluation], [], false);
+
+  const result = evaluator.findEvaluation(userEvaluations, 'feature-id-1');
+  const evaluationObject = {
+    id: evaluation.getId(),
+    featureId: evaluation.getFeatureId(),
+    featureVersion: evaluation.getFeatureVersion(),
+    userId: evaluation.getUserId(),
+    variationId: evaluation.getVariationId(),
+    variationName: evaluation.getVariationName(),
+    variationValue: evaluation.getVariationValue(),
+    reason: protoReasonToReason(evaluation.getReason()),
+  }
+  t.deepEqual(result, evaluationObject);
+
+  t.pass();
+});
+
+test ('findEvaluation | evaluation not found', async (t) => {
+  const { evaluator } = t.context;
+
+  const evaluation = createEvaluation(
+    'feature1:1:user1',
+    'feature-id-1',
+    1,
+    'user1',
+    'variation-B',
+    'B',
+    'Variation B',
+    createReason('1', Reason.Type.DEFAULT),
+  );
+
+  const userEvaluations = NewUserEvaluations('user1', [evaluation], [], false);
+
+  try {
+    evaluator.findEvaluation(userEvaluations, 'feature-id-2');
+    t.fail('Expected error was not thrown');
+  } catch(e) {
+    t.deepEqual(e, new InvalidStatusError('Evaluation not found for feature: feature-id-2', 404));
+  }
 
   t.pass();
 });
