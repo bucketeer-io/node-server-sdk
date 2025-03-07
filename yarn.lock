@@ -1000,17 +1000,19 @@
   dependencies:
     google-protobuf "^3.6.1"
 
-"@bucketeer/evaluation@0.0.1":
-  version "0.0.1"
-  resolved "https://registry.yarnpkg.com/@bucketeer/evaluation/-/evaluation-0.0.1.tgz#a1320e569be3a2548d103e62013a8b0be9ded75c"
-  integrity sha512-i2IAt2N5Zl2KVg3YrCLkjOZaDZCB0cqmk5G7tXBU+21V743e8dRP9J10y4Q3lTukOCIMtOh873IJMamd+1i6Ew==
+"@bucketeer/evaluation@0.0.3":
+  version "0.0.3"
+  resolved "https://registry.yarnpkg.com/@bucketeer/evaluation/-/evaluation-0.0.3.tgz#ce0c2c8d2102ee569c85d8f230d3ccc0b4898ced"
+  integrity sha512-WXFv0kis0M28bRwPJW0t3CgKPU7G8FJUW3A0m6Fwfej/CxfSqRSKZp2fWcK3zYBhU9fvSw64zYjriH0j8suKUQ==
   dependencies:
     "@improbable-eng/grpc-web" "^0.15.0"
     "@types/fnv-plus" "^1.3.2"
     "@types/google-protobuf" "^3.15.12"
+    "@types/murmurhash3js" "^3.0.7"
     "@types/semver" "^7.5.8"
     fnv-plus "^1.3.1"
     google-protobuf "3.14.0"
+    murmurhash3js "^3.0.1"
 
 "@bundled-es-modules/cookie@^2.0.1":
   version "2.0.1"
@@ -1507,6 +1509,11 @@
   version "7.0.15"
   resolved "https://registry.npmjs.org/@types/json-schema/-/json-schema-7.0.15.tgz"
   integrity sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==
+
+"@types/murmurhash3js@^3.0.7":
+  version "3.0.7"
+  resolved "https://registry.yarnpkg.com/@types/murmurhash3js/-/murmurhash3js-3.0.7.tgz#5c3589180f13aac082857932ffb353251e7f296b"
+  integrity sha512-jN3Z37nILIW1DZyP6N/NK+aw/zjFHPVb7hjrmdw7jx7FayrhKgkNpo6ZDwAsH8HSANjebBOxoXXtA39gKwyeGw==
 
 "@types/node-fetch@2.6.12":
   version "2.6.12"
@@ -4374,6 +4381,11 @@ msw@^2.7.3:
     strict-event-emitter "^0.5.1"
     type-fest "^4.26.1"
     yargs "^17.7.2"
+
+murmurhash3js@^3.0.1:
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/murmurhash3js/-/murmurhash3js-3.0.1.tgz#3e983e5b47c2a06f43a713174e7e435ca044b998"
+  integrity sha512-KL8QYUaxq7kUbcl0Yto51rMcYt7E/4N4BG3/c96Iqw1PQrTRspu8Cpx4TZ4Nunib1d4bEkIH3gjCYlP2RLBdow==
 
 mute-stream@0.0.8:
   version "0.0.8"
