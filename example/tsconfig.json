@@ -12,8 +12,5 @@
     "preserveConstEnums": true,
     "esModuleInterop": true,
     "outDir": "__build",
-    "types": [
-      "node"
-    ]
   },
 }
