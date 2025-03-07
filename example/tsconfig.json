@@ -11,6 +11,9 @@
     "allowSyntheticDefaultImports": true,
     "preserveConstEnums": true,
     "esModuleInterop": true,
-    "outDir": "__build"
+    "outDir": "__build",
+    "types": [
+      "node"
+    ]
   },
 }
