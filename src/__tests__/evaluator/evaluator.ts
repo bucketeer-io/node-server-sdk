@@ -323,7 +323,7 @@ test('evaluate | err: get feature flag from cache | cache missing', async (t) =>
       },
       feature1.getId(),
     )
-    t.fail('Unexpected error was thrown');
+    t.fail('Expected error was not thrown');
   } catch (e) {
     t.deepEqual(e, new InvalidStatusError(`Feature not found: ${feature1.getId()}`, 404));
   }
