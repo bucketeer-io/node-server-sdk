@@ -126,16 +126,18 @@ class LocalEvaluator implements NodeEvaluator {
   }
 
   async getTargetFeatures(feature: Feature): Promise<Feature[]> {
-    const targetFeatures: Feature[] = [feature];
     // Check if the flag depends on other flags.
-	  // If not, we return only the target flag
+    // If not, we return only the target flag
     const preFlagIDs = getFeatureIDsDependsOn(feature);
     if (preFlagIDs.length === 0) {
       return [feature];
     }
   
     const prerequisiteFeatures = await this.getPrerequisiteFeaturesFromCache(preFlagIDs);
-    return targetFeatures.concat(prerequisiteFeatures);
+    return [
+      feature,
+      ...prerequisiteFeatures,
+    ];
   }
 
   private async getPrerequisiteFeaturesFromCache(preFlagIDs: string[]): Promise<Feature[]> {
