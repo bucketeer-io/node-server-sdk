@@ -1,8 +1,9 @@
 import anyTest, { TestFn } from 'ava';
-import { BKTClientImpl, Bucketeer, initialize } from '..';
+import { Bucketeer, initialize } from '..';
 import { Config, User } from '../bootstrap';
 import { DefaultLogger } from '../logger';
 import { newDefaultBKTEvaluationDetails } from '../evaluationDetails';
+import { BKTClientImpl } from '../client';
 
 const test = anyTest as TestFn<{
   bktClient: Bucketeer;

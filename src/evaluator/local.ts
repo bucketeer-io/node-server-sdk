@@ -6,6 +6,7 @@ import {
   SegmentUsers,
   UserEvaluations,
   Reason as ProtoReason,
+  getFeatureIDsDependsOn,
 } from '@bucketeer/evaluation';
 
 import { FeaturesCache } from '../cache/features';
@@ -105,7 +106,7 @@ class LocalEvaluator implements NodeEvaluator {
     }
   }
 
-  private findEvaluation(userEvaluations: UserEvaluations, featureId: String): Evaluation {
+  findEvaluation(userEvaluations: UserEvaluations, featureId: String): Evaluation {
     for (const evaluation of userEvaluations.getEvaluationsList()) {
       if (evaluation.getFeatureId() === featureId) {
         return {
@@ -125,32 +126,29 @@ class LocalEvaluator implements NodeEvaluator {
   }
 
   async getTargetFeatures(feature: Feature): Promise<Feature[]> {
-    const targetFeatures: Feature[] = [feature];
-    if (feature.getPrerequisitesList().length === 0) {
-      return targetFeatures;
+    // Check if the flag depends on other flags.
+    // If not, we return only the target flag
+    const preFlagIDs = getFeatureIDsDependsOn(feature);
+    if (preFlagIDs.length === 0) {
+      return [feature];
     }
-    const prerequisiteFeatures = await this.getPrerequisiteFeatures(feature);
-    return targetFeatures.concat(prerequisiteFeatures);
+  
+    const prerequisiteFeatures = await this.getPrerequisiteFeaturesFromCache(preFlagIDs);
+    return [
+      feature,
+      ...prerequisiteFeatures,
+    ];
   }
 
-  async getPrerequisiteFeatures(feature: Feature): Promise<Feature[]> {
+  private async getPrerequisiteFeaturesFromCache(preFlagIDs: string[]): Promise<Feature[]> {
     const prerequisites: Record<string, Feature> = {};
-    const queue: Feature[] = [feature];
-
-    while (queue.length > 0) {
-      const f = queue.shift();
-      if (!f) continue;
-
-      for (const p of f.getPrerequisitesList()) {
-        const preFeature = await this.getFeatures(p.getFeatureId());
-        prerequisites[p.getFeatureId()] = preFeature;
-        queue.push(preFeature);
-      }
+    for (const preFlagID of preFlagIDs) {
+      const preFeature = await this.getFeatures(preFlagID);
+      prerequisites[preFlagID] = preFeature
     }
-
     return Object.values(prerequisites);
   }
-}
+} 
 
 function protoReasonToReason(protoReason: ProtoReason | undefined): Reason {
   if (protoReason === undefined) {
@@ -183,4 +181,4 @@ function protoReasonTypeToReasonType(protoReasonType: number): ReasonType {
   }
 }
 
-export { LocalEvaluator };
+export { LocalEvaluator, protoReasonToReason };
