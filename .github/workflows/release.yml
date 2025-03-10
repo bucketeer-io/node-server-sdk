@@ -17,7 +17,7 @@ jobs:
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
     steps:
-      - uses: googleapis/release-please-action@d1a8f221d7723166f48a584aebba00ef3f6febec # v4.1.4
+      - uses: googleapis/release-please-action@fb7f385da2046f35c544011bc27c9f809122ad2c # v4.2.0
         id: release
 
   publish:
