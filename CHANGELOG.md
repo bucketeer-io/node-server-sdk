@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.4.1](https://github.com/bucketeer-io/node-server-sdk/compare/v0.4.0...v0.4.1) (2025-03-10)
+
+
+### Bug Fixes
+
+* flag not found when using dependency flag in targeting rule ([#95](https://github.com/bucketeer-io/node-server-sdk/issues/95)) ([a92e0b8](https://github.com/bucketeer-io/node-server-sdk/commit/a92e0b821a45a253f3221013cdf243abce26e35d))
+
+
+### Build System
+
+* **deps:** bump googleapis/release-please-action to 4.2.0 ([#93](https://github.com/bucketeer-io/node-server-sdk/issues/93)) ([feba6fd](https://github.com/bucketeer-io/node-server-sdk/commit/feba6fd292e2cdbc987d179b4df3640020db5147))
+* **deps:** bump the dependencies group with 16 updates ([#91](https://github.com/bucketeer-io/node-server-sdk/issues/91)) ([edfda1b](https://github.com/bucketeer-io/node-server-sdk/commit/edfda1b52e67c2eb9e8be39cacffec4c1bfe7212))
+* **deps:** update the dependencies ([#94](https://github.com/bucketeer-io/node-server-sdk/issues/94)) ([dfc5328](https://github.com/bucketeer-io/node-server-sdk/commit/dfc5328221f44acb0c9c22c2671acb2709c2a6f9))
+
 ## [0.4.0](https://github.com/bucketeer-io/node-server-sdk/compare/v0.3.3...v0.4.0) (2025-01-28)
 
 
