@@ -12,6 +12,9 @@ env:
 
 jobs:
   release_please:
+    permissions:
+      contents: write
+      pull-requests: write
     name: Release Please
     runs-on: ubuntu-latest
     outputs:
@@ -19,6 +22,8 @@ jobs:
     steps:
       - uses: googleapis/release-please-action@fb7f385da2046f35c544011bc27c9f809122ad2c # v4.2.0
         id: release
+        with:
+          token: ${{ secrets.WORKFLOW_TOKEN }} # We need to set the PAT so the update changelog docs page workflow can be triggered
 
   publish:
     name: Publish
