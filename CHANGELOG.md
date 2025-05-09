@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.2](https://github.com/bucketeer-io/node-server-sdk/compare/v0.4.1...v0.4.2) (2025-05-09)
+
+
+### Build System
+
+* **deps:** bump the dependencies group across 1 directory with 19 updates ([#100](https://github.com/bucketeer-io/node-server-sdk/issues/100)) ([11eccf7](https://github.com/bucketeer-io/node-server-sdk/commit/11eccf7022383c3a51f1681e5de8cad8b3245850))
+
 ## [0.4.1](https://github.com/bucketeer-io/node-server-sdk/compare/v0.4.0...v0.4.1) (2025-03-10)
 
 
