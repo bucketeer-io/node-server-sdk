@@ -1,7 +1,7 @@
 import { User } from './objects/user';
 import { EventStore } from './stores/EventStore';
 import { APIClient } from './api/client';
-import { Config, defaultConfig } from './config';
+import { Config, defaultConfig, defineBKTConfig } from './config';
 import { BKTEvaluationDetails } from './evaluationDetails';
 import { BKTValue } from './types';
 import { InMemoryCache } from './cache/inMemoryCache';
@@ -145,10 +145,10 @@ export interface Bucketeer {
  * @returns Bucketeer SDK instance.
  */
 export function initialize(config: Config): Bucketeer {
-  const resolvedConfig = {
-    ...defaultConfig,
-    ...config,
-  };
+  // Merge user-provided config with default config
+  // We have intent to deprecate initialize in the future and reafactor the initialization process
+  // like other SDKs, so its fine to not add any assertions here.
+  const resolvedConfig = defineBKTConfig(config);
   return defaultInitialize(resolvedConfig);
 }
 
