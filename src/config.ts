@@ -20,9 +20,9 @@ export interface Config {
   logger?: Logger;
 
   /**
-  * Evaluate the end user locally in the SDK instead of on the server.
-  * Note: To evaluate the user locally, you must create an API key and select the server-side role.
-  */
+   * Evaluate the end user locally in the SDK instead of on the server.
+   * Note: To evaluate the user locally, you must create an API key and select the server-side role.
+   */
   enableLocalEvaluation?: boolean;
 
   /**
@@ -45,7 +45,13 @@ export const defaultConfig = {
 
 export const defineBKTConfig = (config: Config): Config => {
   return {
-    ...defaultConfig,
-    ...config,
+    host: config.host ?? defaultConfig.host,
+    token: config.token ?? defaultConfig.token,
+    tag: config.tag ?? defaultConfig.tag,
+    pollingIntervalForRegisterEvents:
+      config.pollingIntervalForRegisterEvents ?? defaultConfig.pollingIntervalForRegisterEvents,
+    logger: config.logger ?? defaultConfig.logger,
+    enableLocalEvaluation: config.enableLocalEvaluation ?? defaultConfig.enableLocalEvaluation,
+    cachePollingInterval: config.cachePollingInterval ?? defaultConfig.cachePollingInterval,
   };
-}
+};

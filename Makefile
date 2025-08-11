@@ -51,6 +51,10 @@ test:
 	$(NPM_BIN_DIR)/babel src --extensions '.ts' --config-file "$(CURDIR)/babel-test.config.js" --out-dir "__test"
 	$(NPM_BIN_DIR)/ava --config ava-test.config.mjs
 
+.PHONY: test-eslint
+test-eslint:
+	node eslint-rules/no-spread-after-defaults.test.mjs
+
 .PHONY: e2e
 e2e: copy-genfiles
 	rm -rf $(CURDIR)/__e2e
