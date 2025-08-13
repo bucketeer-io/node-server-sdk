@@ -18,6 +18,16 @@ const createBasicConfig = (overrides: Partial<BKTConfig> = {}): Partial<BKTConfi
   ...overrides
 });
 
+// requiredInternalConfig should throw error when config is not a InternalConfig
+test('requiredInternalConfig should throw error when config is not a InternalConfig', (t) => {
+  const config: any = createBasicConfig();
+  // Cast to any to bypass type checking
+  const error = t.throws(() => requiredInternalConfig(config as BKTConfig), {
+    instanceOf: IllegalArgumentError
+  });
+  t.is(error?.message, 'Config is missing sourceId. Must be processed by defineBKTConfig first.');
+});
+
 // Test cases for requiredInternalConfig
 test('requiredInternalConfig should throw error when sourceId is undefined', (t) => {
   const config: any = {
