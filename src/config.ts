@@ -1,6 +1,8 @@
 import { InternalConfig, resolveSDKVersion, resolveSourceId } from './internalConfig';
 import { DefaultLogger, Logger } from './logger';
 import { IllegalArgumentError } from './objects/errors';
+import { SourceId } from './objects/sourceId';
+import { version } from './objects/version';
 
 /**
  * @deprecated use BKTConfig instead
@@ -182,4 +184,30 @@ export const defineBKTConfig = (config: Partial<BKTConfig>): BKTConfig => {
     sdkVersion: sdkVersion,
   } satisfies InternalConfig
   return internalConfig
+};
+
+/**
+ * Converts deprecated Config interface to BKTConfig interface
+ * @param config Deprecated Config object
+ * @returns BKTConfig object that is valid for the SDK
+ */
+export const convertConfigToBKTConfig = (config: Config): InternalConfig => {
+  return {
+    apiKey: config.token, // token -> apiKey
+    apiEndpoint: config.host, // host -> apiEndpoint  
+    featureTag: config.tag, // tag -> featureTag
+    eventsFlushInterval: config.pollingIntervalForRegisterEvents ?? DEFAULT_FLUSH_INTERVAL_MILLIS,
+    eventsMaxQueueSize: DEFAULT_MAX_QUEUE_SIZE,
+    pollingInterval: DEFAULT_POLLING_INTERVAL_MILLIS,
+    appVersion: '1.0.0', // Default since Config doesn't have appVersion
+    logger: config.logger ?? new DefaultLogger(),
+    enableLocalEvaluation: config.enableLocalEvaluation ?? false,
+    cachePollingInterval: config.cachePollingInterval ?? DEFAULT_POLLING_INTERVAL_MILLIS,
+    // Advanced properties
+    wrapperSdkVersion: undefined, // Not applicable in Config
+    wrapperSdkSourceId: undefined, // Not applicable in Config
+    // Resolve sourceId and sdkVersion
+    sourceId: SourceId.NODE_SERVER, // Default sourceId
+    sdkVersion: version, // Default SDK version
+  };
 };

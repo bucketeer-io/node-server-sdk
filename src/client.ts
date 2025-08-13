@@ -31,13 +31,14 @@ import { NodeEvaluator } from './evaluator/evaluator';
 import { Bucketeer, BuildInfo } from '.';
 import { IllegalStateError } from './objects/errors';
 import { assertGetEvaluationRequest } from './assert';
+import { InternalConfig } from './internalConfig';
 
 const COUNT_PER_REGISTER_EVENT = 100;
 
 export class BKTClientImpl implements Bucketeer {
   apiClient: APIClient;
   eventStore: EventStore;
-  config: Config;
+  config: InternalConfig;
   registerEventsScheduleID: NodeJS.Timeout;
 
   eventEmitter: ProcessorEventsEmitter;
@@ -46,7 +47,7 @@ export class BKTClientImpl implements Bucketeer {
   localEvaluator: NodeEvaluator | null = null;
 
   constructor(
-    config: Config,
+    config: InternalConfig,
     options: {
       apiClient: APIClient;
       eventStore: EventStore;
@@ -63,7 +64,7 @@ export class BKTClientImpl implements Bucketeer {
       if (this.eventStore.size() > 0) {
         this.callRegisterEvents(this.eventStore.takeout(this.eventStore.size()));
       }
-    }, this.config.pollingIntervalForRegisterEvents!);
+    }, this.config.eventsFlushInterval!);
 
     this.eventEmitter = options.eventEmitter;
 
@@ -77,7 +78,7 @@ export class BKTClientImpl implements Bucketeer {
     }
 
     this.eventEmitter.on('error', ({ error, apiId }) => {
-      this.saveErrorMetricsEvent(this.config.tag, error, apiId);
+      this.saveErrorMetricsEvent(this.config.featureTag, error, apiId);
     });
 
     this.eventEmitter.on('pushDefaultEvaluationEvent', ({ user, featureId }) => {
@@ -85,11 +86,11 @@ export class BKTClientImpl implements Bucketeer {
     });
 
     this.eventEmitter.on('pushLatencyMetricsEvent', ({ latency, apiId }) => {
-      this.saveLatencyMetricsEvent(config.tag, latency, apiId);
+      this.saveLatencyMetricsEvent(config.featureTag, latency, apiId);
     });
 
     this.eventEmitter.on('pushSizeMetricsEvent', ({ size, apiId }) => {
-      this.saveSizeMetricsEvent(config.tag, size, apiId);
+      this.saveSizeMetricsEvent(config.featureTag, size, apiId);
     });
 
     this.eventEmitter.on('pushEvaluationEvent', ({ user, evaluation }) => {
@@ -159,23 +160,23 @@ export class BKTClientImpl implements Bucketeer {
 
   private callRegisterEvents(events: Array<Event>): void {
     this.apiClient.registerEvents(events).catch((e) => {
-      this.saveErrorMetricsEvent(this.config.tag, e, ApiId.REGISTER_EVENTS);
+      this.saveErrorMetricsEvent(this.config.featureTag, e, ApiId.REGISTER_EVENTS);
       this.config.logger?.warn('register events failed', e);
     });
   }
 
   private saveDefaultEvaluationEvent(user: User, featureId: string) {
-    this.eventStore.add(createDefaultEvaluationEvent(this.config.tag, user, featureId));
+    this.eventStore.add(createDefaultEvaluationEvent(this.config.featureTag, user, featureId));
     this.registerEvents();
   }
 
   private saveEvaluationEvent(user: User, evaluation: Evaluation) {
-    this.eventStore.add(createEvaluationEvent(this.config.tag, user, evaluation));
+    this.eventStore.add(createEvaluationEvent(this.config.featureTag, user, evaluation));
     this.registerEvents();
   }
 
   private saveGoalEvent(user: User, goalId: string, value?: number) {
-    this.eventStore.add(createGoalEvent(this.config.tag, goalId, user, value ? value : 0));
+    this.eventStore.add(createGoalEvent(this.config.featureTag, goalId, user, value ? value : 0));
     this.registerEvents();
   }
 
@@ -209,7 +210,7 @@ export class BKTClientImpl implements Bucketeer {
     let res: GetEvaluationResponse;
     let size: number;
     try {
-      [res, size] = await this.apiClient.getEvaluation(this.config.tag, user, featureId);
+      [res, size] = await this.apiClient.getEvaluation(this.config.featureTag, user, featureId);
       const second = (Date.now() - startTime) / 1000;
       this.eventEmitter.emit('pushLatencyMetricsEvent', {
         latency: second,
