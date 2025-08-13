@@ -1,4 +1,4 @@
-import { InternalConfig, resolveSDKVersion, resolveSourceId } from './internal_config';
+import { InternalConfig, resolveSDKVersion, resolveSourceId } from './internalConfig';
 import { DefaultLogger, Logger } from './logger';
 import { IllegalArgumentError } from './objects/errors';
 

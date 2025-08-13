@@ -18,12 +18,16 @@ const supportedWrapperSdkSourceIds: SourceId[] = [
 const requiredInternalConfig = (config: BKTConfig): InternalConfig => {
   const internalConfig = config as InternalConfig
 
+  // sourceId is a number enum - only check for undefined, not falsy values
+  // (SourceId.UNKNOWN = 0 is a valid value)
   if (internalConfig.sourceId === undefined) {
     throw new IllegalArgumentError(
       'Config is missing sourceId. Must be processed by defineBKTConfig first.',
     )
   }
 
+  // sdkVersion is a string - check for falsy values including empty string
+  // (empty string "" should be considered invalid for version)
   if (!internalConfig.sdkVersion) {
     throw new IllegalArgumentError(
       'Config is missing sdkVersion. Must be processed by defineBKTConfig first.',
