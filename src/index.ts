@@ -145,11 +145,7 @@ export interface Bucketeer {
  * @returns Bucketeer SDK instance.
  */
 export function initialize(config: Config): Bucketeer {
-  // Merge user-provided config with default config
-  // We have intent to deprecate initialize in the future and refactor the initialization process
-  // like other SDKs, so its fine to not add any assertions here.
-  const resolvedConfig = defineBKTConfig(config);
-  return defaultInitialize(resolvedConfig);
+  return defaultInitialize(config);
 }
 
 function defaultInitialize(resolvedConfig: Config): Bucketeer {
