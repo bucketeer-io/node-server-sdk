@@ -1,5 +1,10 @@
+import { InternalConfig, resolveSDKVersion, resolveSourceId } from './internal_config';
 import { DefaultLogger, Logger } from './logger';
+import { IllegalArgumentError } from './objects/errors';
 
+/**
+ * @deprecated use BKTConfig instead
+ */
 export interface Config {
   /**
    * API request destination. If you don't know what it should be, ask Bucketeer team.
@@ -43,15 +48,135 @@ export const defaultConfig = {
   cachePollingInterval: 1 * 60 * 1000,
 };
 
-export const defineBKTConfig = (config: Config): Config => {
-  return {
-    host: config.host ?? defaultConfig.host,
-    token: config.token ?? defaultConfig.token,
-    tag: config.tag ?? defaultConfig.tag,
-    pollingIntervalForRegisterEvents:
-      config.pollingIntervalForRegisterEvents ?? defaultConfig.pollingIntervalForRegisterEvents,
-    logger: config.logger ?? defaultConfig.logger,
-    enableLocalEvaluation: config.enableLocalEvaluation ?? defaultConfig.enableLocalEvaluation,
-    cachePollingInterval: config.cachePollingInterval ?? defaultConfig.cachePollingInterval,
+export interface BKTConfig {
+  /**
+   * API key to use for the SDK.
+   * This is used to authenticate requests to the Bucketeer server.
+   */
+  apiKey: string
+  /**
+   * API endpoint to use for the SDK.
+   * This is the base URL for all API requests.
+   */
+  apiEndpoint: string
+  /**
+   * Feature tag to use for feature flag evaluation.
+   * This is used to group feature flags and should match the tag used in the Bucketeer console.
+   */
+  featureTag: string
+  /**
+   * Interval for flushing events to the server. Specify in milliseconds.
+   * Default: 60 seconds
+   */
+  eventsFlushInterval: number
+  /**
+   * Maximum number of events to be queued before flushing.
+   * Default: 50
+   */
+  eventsMaxQueueSize: number
+  /**
+   * Sets the polling interval for cache updating. Default: 1 min - specify in milliseconds.
+   */
+  pollingInterval: number
+  /**
+   * Optional property. Application version.
+   * If not provided, '1.0.0' will be used as default.
+   */
+  appVersion: string
+  /**
+   * Optional property. Logger for the SDK.
+   * If not provided, DefaultLogger will be used.
+   */
+  logger: Logger;
+
+  /**
+   * Evaluate the end user locally in the SDK instead of on the server.
+   * Note: To evaluate the user locally, you must create an API key and select the server-side role.
+   */
+  enableLocalEvaluation: boolean;
+
+  /**
+   * Sets the polling interval for cache updating. Default: 1 min - specify in milliseconds.
+   */
+  cachePollingInterval: number;
+
+  // Use wrapperSdkVersion to set the SDK version explicitly.
+  // IMPORTANT: This option is intended for internal use only.
+  // It should NOT be set by developers directly integrating this SDK.
+  // Use this option ONLY when another SDK acts as a proxy and wraps this native SDK.
+  // In such cases, set this value to the version of the proxy SDK.
+  wrapperSdkVersion?: string
+  // Use wrapperSdkSourceId to set the source ID explicitly.
+  // IMPORTANT: This option is intended for internal use only.
+  // It should NOT be set by developers directly integrating this SDK.
+  // Use this option ONLY when another SDK acts as a proxy and wraps this native SDK.
+  // In such cases, set this value to the sourceID of the proxy SDK.
+  // The sourceID is used to identify the origin of the request.
+  wrapperSdkSourceId?: number
+}
+
+const MINIMUM_FLUSH_INTERVAL_MILLIS = 60_000 // 30 seconds
+const DEFAULT_FLUSH_INTERVAL_MILLIS = 60_000 // 30 seconds
+const DEFAULT_MAX_QUEUE_SIZE = 50
+const MINIMUM_POLLING_INTERVAL_MILLIS = 60_000 // 60 seconds
+const DEFAULT_POLLING_INTERVAL_MILLIS = 60_000 // 60 seconds
+
+export const defineBKTConfig = (config: Partial<BKTConfig>): BKTConfig => {
+  let baseConfig: BKTConfig = {
+    apiKey: config.apiKey ?? '',
+    apiEndpoint: config.apiEndpoint ?? '',
+    featureTag: config.featureTag ?? '',
+    eventsFlushInterval: config.eventsFlushInterval ?? DEFAULT_FLUSH_INTERVAL_MILLIS,
+    eventsMaxQueueSize: config.eventsMaxQueueSize ?? DEFAULT_MAX_QUEUE_SIZE,
+    pollingInterval: config.pollingInterval ?? DEFAULT_POLLING_INTERVAL_MILLIS,
+    appVersion: config.appVersion ?? '1.0.0',
+    logger: config.logger ?? new DefaultLogger(),
+    enableLocalEvaluation: config.enableLocalEvaluation ?? false,
+    cachePollingInterval: config.cachePollingInterval ?? DEFAULT_POLLING_INTERVAL_MILLIS,
   };
+
+  // Advanced properties: only included when explicitly set (not undefined)
+  // to prevent overriding internal defaults or leaking undefined values
+  if (config.wrapperSdkVersion !== undefined) {
+    baseConfig.wrapperSdkVersion = config.wrapperSdkVersion
+  }
+  if (config.wrapperSdkSourceId !== undefined) {
+    baseConfig.wrapperSdkSourceId = config.wrapperSdkSourceId
+  }
+  
+  // Validate required fields
+  if (!baseConfig.apiKey) {
+    throw new IllegalArgumentError('apiKey is required');
+  }
+  if (!baseConfig.apiEndpoint) {
+    throw new IllegalArgumentError('apiEndpoint is required');
+  }
+  if (!baseConfig.appVersion) {
+    throw new IllegalArgumentError('appVersion is required');
+  }
+
+  // Validate eventsFlushInterval
+  if (baseConfig.eventsFlushInterval < MINIMUM_FLUSH_INTERVAL_MILLIS) {
+    baseConfig.eventsFlushInterval = DEFAULT_FLUSH_INTERVAL_MILLIS;
+  }
+
+  // Validate eventsMaxQueueSize
+  if (baseConfig.eventsMaxQueueSize <= 0) {
+    baseConfig.eventsMaxQueueSize = DEFAULT_MAX_QUEUE_SIZE;
+  }
+
+  // Validate pollingInterval
+  if (baseConfig.pollingInterval < MINIMUM_POLLING_INTERVAL_MILLIS) {
+    baseConfig.pollingInterval = DEFAULT_POLLING_INTERVAL_MILLIS;
+  }
+
+  // Resolve SDK version and source Id without exposing SourceId to outside
+  const sourceId = resolveSourceId(baseConfig)
+  const sdkVersion = resolveSDKVersion(baseConfig, sourceId)
+  const internalConfig = {
+    ...baseConfig,
+    sourceId: sourceId,
+    sdkVersion: sdkVersion,
+  } satisfies InternalConfig
+  return internalConfig
 };
