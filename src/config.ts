@@ -36,6 +36,9 @@ export interface Config {
   cachePollingInterval?: number;
 }
 
+/**
+ * @deprecated use BKTConfig instead
+ */
 export const defaultConfig = {
   host: '',
   port: '443',
