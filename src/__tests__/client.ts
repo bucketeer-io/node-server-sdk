@@ -1,7 +1,7 @@
 import { http, HttpResponse } from 'msw';
 import { SetupServer } from 'msw/node';
 import anyTest, { TestFn } from 'ava';
-import { BKTClientImpl, Bucketeer, initialize } from '..';
+import { Bucketeer, initialize } from '..';
 import { Config, User } from '../bootstrap';
 import { DefaultLogger } from '../logger';
 import { setupServerAndListen } from './utils/setup_server';
