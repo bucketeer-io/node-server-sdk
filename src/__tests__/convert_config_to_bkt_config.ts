@@ -26,12 +26,13 @@ test('should convert Config to BKTConfig with defaults', t => {
 });
 
 test('should override defaults with provided values', t => {
+  const logger = new DefaultLogger();
   const config = {
     host: 'https://api.example.com',
     token: 'test-token',
     tag: 'test-tag',
     pollingIntervalForRegisterEvents: 30000,
-    logger: new DefaultLogger(),
+    logger: logger,
     enableLocalEvaluation: true,
     cachePollingInterval: 120000,
   };
@@ -45,7 +46,7 @@ test('should override defaults with provided values', t => {
   t.is(bktConfig.eventsMaxQueueSize, 50); // Default value
   t.is(bktConfig.pollingInterval, 60000); // Default value
   t.is(bktConfig.appVersion, '1.0.0'); // Default value
-  t.true(bktConfig.logger instanceof DefaultLogger); // Provided logger
+  t.true(bktConfig.logger === logger); // Overridden logger
   t.true(bktConfig.enableLocalEvaluation); // Overridden value
   t.is(bktConfig.cachePollingInterval, 120000); // Overridden value
 });
