@@ -6,6 +6,65 @@ import { SourceId } from '../objects/sourceId';
 import { version } from '../objects/version';
 import { DefaultLogger } from '../logger';
 
+// 1. Validation error tests
+test('should throw if apiKey is missing', t => {
+  const error = t.throws(() => defineBKTConfig({
+    apiEndpoint: 'endpoint',
+    appVersion: '1.2.3',
+  }), { instanceOf: IllegalArgumentError });
+  t.is(error.message, 'apiKey is required');
+});
+test('should throw if apiKey is empty string', t => {
+  t.throws(() => defineBKTConfig({
+    apiKey: '',
+    apiEndpoint: 'endpoint',
+    appVersion: '1.2.3',
+  }), { instanceOf: IllegalArgumentError });
+});
+test('should throw if apiEndpoint is missing', t => {
+  const error = t.throws(() => defineBKTConfig({
+    apiKey: 'key',
+    appVersion: '1.2.3',
+  }), { instanceOf: IllegalArgumentError });
+  t.is(error.message, 'apiEndpoint is required');
+});
+test('should throw if apiEndpoint is empty string', t => {
+  t.throws(() => defineBKTConfig({
+    apiKey: 'key',
+    appVersion: '1.2.3',
+    apiEndpoint: '',
+  }), { instanceOf: IllegalArgumentError });
+});
+test('should throw with correct message if appVersion is empty', t => {
+  const error = t.throws(() => defineBKTConfig({
+    apiKey: 'key',
+    apiEndpoint: 'endpoint',
+    appVersion: '',
+  }), { instanceOf: IllegalArgumentError });
+  t.is(error.message, 'appVersion is required');
+});
+test('should throw on invalid wrapperSdkSourceId', t => {
+  const error = t.throws(() => defineBKTConfig({
+    apiKey: 'key',
+    apiEndpoint: 'endpoint',
+    appVersion: '1.2.3',
+    wrapperSdkSourceId: 999, // Invalid sourceId
+    wrapperSdkVersion: '2.0.0',
+  }), { instanceOf: IllegalArgumentError });
+  t.is(error.message, 'Unsupported wrapperSdkSourceId: 999');
+});
+test('should throw if wrapperSdkVersion is missing when wrapperSdkSourceId is provided', t => {
+  const error = t.throws(() => defineBKTConfig({
+    apiKey: 'key',
+    apiEndpoint: 'endpoint',
+    appVersion: '1.2.3',
+    wrapperSdkSourceId: 104, // OPEN_FEATURE_NODE
+    // wrapperSdkVersion missing
+  }), { instanceOf: IllegalArgumentError });
+  t.is(error.message, 'Config is missing wrapperSdkVersion');
+});
+
+// 2. Defaults and allowed values
 test('should return a valid config with defaults (featureTag can be empty)', t => {
   const config = defineBKTConfig({
     apiKey: 'key',
@@ -22,37 +81,6 @@ test('should return a valid config with defaults (featureTag can be empty)', t =
   t.truthy(config.logger);
   t.is(config.enableLocalEvaluation, false);
 });
-
-test('should throw if apiKey is missing', t => {
-  t.throws(() => defineBKTConfig({
-    apiEndpoint: 'endpoint',
-    appVersion: '1.2.3',
-  }), { instanceOf: IllegalArgumentError });
-});
-
-test('should throw if apiKey is empty string', t => {
-  t.throws(() => defineBKTConfig({
-    apiKey: '',
-    apiEndpoint: 'endpoint',
-    appVersion: '1.2.3',
-  }), { instanceOf: IllegalArgumentError });
-});
-
-test('should throw if apiEndpoint is missing', t => {
-  t.throws(() => defineBKTConfig({
-    apiKey: 'key',
-    appVersion: '1.2.3',
-  }), { instanceOf: IllegalArgumentError });
-});
-
-test('should throw if apiEndpoint is empty string', t => {
-  t.throws(() => defineBKTConfig({
-    apiKey: 'key',
-    appVersion: '1.2.3',
-    apiEndpoint: '',
-  }), { instanceOf: IllegalArgumentError });
-});
-
 test('allow feature tag to be empty string', t => {
   const config = defineBKTConfig({
     apiKey: 'key',
@@ -62,7 +90,6 @@ test('allow feature tag to be empty string', t => {
   });
   t.is(config.featureTag, ''); // empty string is allowed
 });
-
 test('should not throw if appVersion is missing (default 1.0.0)', t => {
   const config = defineBKTConfig({
     apiKey: 'key',
@@ -74,6 +101,7 @@ test('should not throw if appVersion is missing (default 1.0.0)', t => {
   t.is(config.appVersion, '1.0.0'); // default value
 });
 
+// 3. Custom values
 test('should use provided values and not defaults when set', t => {
   const logger = new DefaultLogger();
   const config = defineBKTConfig({
@@ -94,7 +122,6 @@ test('should use provided values and not defaults when set', t => {
   t.is(config.enableLocalEvaluation, true);
   t.is(config.logger, logger);
 });
-
 test('should correct invalid intervals and queue size', t => {
   const config = defineBKTConfig({
     apiKey: 'key',
@@ -109,33 +136,7 @@ test('should correct invalid intervals and queue size', t => {
   t.true(config.pollingInterval >= 60000);
 });
 
-// Error message validation tests
-test('should throw with correct message if apiKey is missing', t => {
-  const error = t.throws(() => defineBKTConfig({
-    apiEndpoint: 'endpoint',
-    appVersion: '1.2.3',
-  }), { instanceOf: IllegalArgumentError });
-  t.is(error.message, 'apiKey is required');
-});
-
-test('should throw with correct message if apiEndpoint is missing', t => {
-  const error = t.throws(() => defineBKTConfig({
-    apiKey: 'key',
-    appVersion: '1.2.3',
-  }), { instanceOf: IllegalArgumentError });
-  t.is(error.message, 'apiEndpoint is required');
-});
-
-test('should throw with correct message if appVersion is empty', t => {
-  const error = t.throws(() => defineBKTConfig({
-    apiKey: 'key',
-    apiEndpoint: 'endpoint',
-    appVersion: '',
-  }), { instanceOf: IllegalArgumentError });
-  t.is(error.message, 'appVersion is required');
-});
-
-// Internal fields validation
+// 4. Internal fields
 test('should set sourceId and sdkVersion internally', t => {
   const config = defineBKTConfig({
     apiKey: 'key',
@@ -150,7 +151,7 @@ test('should set sourceId and sdkVersion internally', t => {
   t.is(config.sourceId, SourceId.NODE_SERVER); // Default SourceId.NODE_SERVER
 });
 
-// Wrapper SDK tests
+// 5. Wrapper SDK
 test('should handle valid wrapperSdkSourceId', t => {
   const config = defineBKTConfig({
     apiKey: 'key',
@@ -164,40 +165,6 @@ test('should handle valid wrapperSdkSourceId', t => {
   t.is(config.sourceId, SourceId.OPEN_FEATURE_NODE); // Should use wrapper sourceId
   t.is(config.sdkVersion, '2.0.0'); // Should use wrapper version
 });
-
-test('should throw on invalid wrapperSdkSourceId', t => {
-  const error = t.throws(() => defineBKTConfig({
-    apiKey: 'key',
-    apiEndpoint: 'endpoint',
-    appVersion: '1.2.3',
-    wrapperSdkSourceId: 999, // Invalid sourceId
-    wrapperSdkVersion: '2.0.0',
-  }), { instanceOf: IllegalArgumentError });
-  t.is(error.message, 'Unsupported wrapperSdkSourceId: 999');
-});
-
-test('should throw if wrapperSdkVersion is missing when wrapperSdkSourceId is provided', t => {
-  const error = t.throws(() => defineBKTConfig({
-    apiKey: 'key',
-    apiEndpoint: 'endpoint',
-    appVersion: '1.2.3',
-    wrapperSdkSourceId: 104, // OPEN_FEATURE_NODE
-    // wrapperSdkVersion missing
-  }), { instanceOf: IllegalArgumentError });
-  t.is(error.message, 'Config is missing wrapperSdkVersion');
-});
-
-// Boundary value tests
-test('should handle negative eventsMaxQueueSize', t => {
-  const config = defineBKTConfig({
-    apiKey: 'key',
-    apiEndpoint: 'endpoint',
-    appVersion: '1.2.3',
-    eventsMaxQueueSize: -1,
-  });
-  t.is(config.eventsMaxQueueSize, 50); // Should be corrected to default
-});
-
 test('should not include wrapperSdkVersion when not provided', t => {
   const config = defineBKTConfig({
     apiKey: 'key',
@@ -208,7 +175,16 @@ test('should not include wrapperSdkVersion when not provided', t => {
   t.is(config.wrapperSdkSourceId, undefined);
 });
 
-// Edge case: extremely large values
+// 6. Boundary and edge cases
+test('should handle negative eventsMaxQueueSize', t => {
+  const config = defineBKTConfig({
+    apiKey: 'key',
+    apiEndpoint: 'endpoint',
+    appVersion: '1.2.3',
+    eventsMaxQueueSize: -1,
+  });
+  t.is(config.eventsMaxQueueSize, 50); // Should be corrected to default
+});
 test('should handle very large queue size', t => {
   const config = defineBKTConfig({
     apiKey: 'key',
