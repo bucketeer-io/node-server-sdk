@@ -4,6 +4,7 @@ import { IllegalArgumentError } from '../objects/errors';
 import { InternalConfig } from '../internalConfig';
 import { SourceId } from '../objects/sourceId';
 import { version } from '../objects/version';
+import { DefaultLogger } from '../logger';
 
 test('should return a valid config with defaults (featureTag can be empty)', t => {
   const config = defineBKTConfig({
@@ -74,6 +75,7 @@ test('should not throw if appVersion is missing (default 1.0.0)', t => {
 });
 
 test('should use provided values and not defaults when set', t => {
+  const logger = new DefaultLogger();
   const config = defineBKTConfig({
     apiKey: 'key',
     apiEndpoint: 'endpoint',
@@ -83,12 +85,14 @@ test('should use provided values and not defaults when set', t => {
     eventsMaxQueueSize: 99,
     pollingInterval: 120000,
     enableLocalEvaluation: true,
+    logger: logger,
   });
   t.is(config.featureTag, 'tag');
   t.is(config.eventsFlushInterval, 120000);
   t.is(config.eventsMaxQueueSize, 99);
   t.is(config.pollingInterval, 120000);
   t.is(config.enableLocalEvaluation, true);
+  t.is(config.logger, logger);
 });
 
 test('should correct invalid intervals and queue size', t => {
