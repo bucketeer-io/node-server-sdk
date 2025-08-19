@@ -13,7 +13,7 @@ const createBasicConfig = (overrides: Partial<BKTConfig> = {}): Partial<BKTConfi
   eventsFlushInterval: 30000,
   eventsMaxQueueSize: 50,
   pollingInterval: 600000,
-  // When using Partial<BKTConfig>, we can omit optional fields wihout using undefined
+  // When using Partial<BKTConfig>, we can omit optional fields without using undefined
   // eslint-disable-next-line custom-rules/no-spread-after-defaults
   ...overrides
 });

@@ -120,8 +120,8 @@ export interface BKTConfig {
   wrapperSdkSourceId?: number
 }
 
-const MINIMUM_FLUSH_INTERVAL_MILLIS = 60_000 // 30 seconds
-const DEFAULT_FLUSH_INTERVAL_MILLIS = 60_000 // 30 seconds
+const MINIMUM_FLUSH_INTERVAL_MILLIS = 30_000 // 30 seconds
+const DEFAULT_FLUSH_INTERVAL_MILLIS = 30_000 // 30 seconds
 const DEFAULT_MAX_QUEUE_SIZE = 50
 const MINIMUM_POLLING_INTERVAL_MILLIS = 60_000 // 60 seconds
 const DEFAULT_POLLING_INTERVAL_MILLIS = 60_000 // 60 seconds
