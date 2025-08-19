@@ -77,8 +77,9 @@ export class BKTClientImpl implements Bucketeer {
       this.segementUsersCacheProcessor?.start();
     }
 
+    const featureTag = this.config.featureTag;
     this.eventEmitter.on('error', ({ error, apiId }) => {
-      this.saveErrorMetricsEvent(this.config.featureTag, error, apiId);
+      this.saveErrorMetricsEvent(featureTag, error, apiId);
     });
 
     this.eventEmitter.on('pushDefaultEvaluationEvent', ({ user, featureId }) => {
@@ -86,11 +87,11 @@ export class BKTClientImpl implements Bucketeer {
     });
 
     this.eventEmitter.on('pushLatencyMetricsEvent', ({ latency, apiId }) => {
-      this.saveLatencyMetricsEvent(config.featureTag, latency, apiId);
+      this.saveLatencyMetricsEvent(featureTag, latency, apiId);
     });
 
     this.eventEmitter.on('pushSizeMetricsEvent', ({ size, apiId }) => {
-      this.saveSizeMetricsEvent(config.featureTag, size, apiId);
+      this.saveSizeMetricsEvent(featureTag, size, apiId);
     });
 
     this.eventEmitter.on('pushEvaluationEvent', ({ user, evaluation }) => {
