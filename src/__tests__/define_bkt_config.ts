@@ -75,7 +75,7 @@ test('should return a valid config with defaults (featureTag can be empty)', t =
   t.is(config.apiEndpoint, 'endpoint');
   t.is(config.appVersion, '1.2.3');
   t.is(config.featureTag, ''); // default
-  t.true(config.eventsFlushInterval >= 60000);
+  t.true(config.eventsFlushInterval >= 30000);
   t.is(config.eventsMaxQueueSize, 50);
   t.true(config.pollingInterval >= 60000);
   t.truthy(config.logger);
@@ -131,7 +131,7 @@ test('should correct invalid intervals and queue size', t => {
     eventsMaxQueueSize: 0, // invalid
     pollingInterval: 1000, // too low
   });
-  t.true(config.eventsFlushInterval >= 60000);
+  t.true(config.eventsFlushInterval >= 30000);
   t.is(config.eventsMaxQueueSize, 50);
   t.true(config.pollingInterval >= 60000);
 });

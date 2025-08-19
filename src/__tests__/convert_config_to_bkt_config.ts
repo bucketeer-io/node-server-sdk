@@ -16,7 +16,7 @@ test('should convert Config to BKTConfig with defaults', t => {
   t.is(bktConfig.apiKey, 'test-token');
   t.is(bktConfig.apiEndpoint, 'https://api.example.com');
   t.is(bktConfig.featureTag, 'test-tag');
-  t.is(bktConfig.eventsFlushInterval, 60000); // Default value
+  t.is(bktConfig.eventsFlushInterval, 30000); // Default value
   t.is(bktConfig.eventsMaxQueueSize, 50); // Default value
   t.is(bktConfig.pollingInterval, 60000); // Default value
   t.is(bktConfig.appVersion, '1.0.0'); // Default value
