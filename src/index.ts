@@ -147,6 +147,7 @@ export interface Bucketeer {
  */
 export function initialize(config: Config): Bucketeer {
   // convert deprecated Config to InternalConfig (should be valid InternalConfig)
+  // This is to maintain backward compatibility with the old Config interface.
   const bktConfig: InternalConfig = convertConfigToBKTConfig(config);
   return defaultInitialize(bktConfig);
 }

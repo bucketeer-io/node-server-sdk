@@ -7,7 +7,7 @@ import { version } from './objects/version';
 /**
  * @deprecated use BKTConfig instead
  */
-export interface Config {
+interface Config {
   /**
    * API request destination. If you don't know what it should be, ask Bucketeer team.
    */
@@ -41,7 +41,7 @@ export interface Config {
 /**
  * @deprecated use BKTConfig instead
  */
-export const defaultConfig = {
+const defaultConfig = {
   host: '',
   port: '443',
   token: '',
@@ -53,7 +53,7 @@ export const defaultConfig = {
   cachePollingInterval: 1 * 60 * 1000,
 };
 
-export interface BKTConfig {
+interface BKTConfig {
   /**
    * API key to use for the SDK.
    * This is used to authenticate requests to the Bucketeer server.
@@ -126,7 +126,7 @@ const DEFAULT_MAX_QUEUE_SIZE = 50
 const MINIMUM_POLLING_INTERVAL_MILLIS = 60_000 // 60 seconds
 const DEFAULT_POLLING_INTERVAL_MILLIS = 60_000 // 60 seconds
 
-export const defineBKTConfig = (config: Partial<BKTConfig>): BKTConfig => {
+const defineBKTConfig = (config: Partial<BKTConfig>): BKTConfig => {
   let baseConfig: BKTConfig = {
     apiKey: config.apiKey ?? '',
     apiEndpoint: config.apiEndpoint ?? '',
@@ -191,7 +191,7 @@ export const defineBKTConfig = (config: Partial<BKTConfig>): BKTConfig => {
  * @param config Deprecated Config object
  * @returns BKTConfig object that is valid for the SDK
  */
-export const convertConfigToBKTConfig = (config: Config): InternalConfig => {
+const convertConfigToBKTConfig = (config: Config): InternalConfig => {
   return {
     apiKey: config.token, // token -> apiKey
     apiEndpoint: config.host, // host -> apiEndpoint  
@@ -210,4 +210,12 @@ export const convertConfigToBKTConfig = (config: Config): InternalConfig => {
     sourceId: SourceId.NODE_SERVER, // Default sourceId
     sdkVersion: version, // Default SDK version
   };
+};
+
+export {
+  Config,
+  BKTConfig,
+  defaultConfig,
+  defineBKTConfig,
+  convertConfigToBKTConfig
 };
