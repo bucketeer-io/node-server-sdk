@@ -81,7 +81,9 @@ const user: User = {
   data: {},
 };
 const value = 3;
-const sourceId = SourceId.NODE_SERVER;
+const defaultSourceId = SourceId.NODE_SERVER;
+const sourceIds = Object.values(SourceId);
+
 const userId = user.id;
 const sdkVersion = version;
 const metadata = {};
@@ -93,30 +95,39 @@ const id = 'id';
 const featureVersion = 7;
 const variationId = 'vid';
 const variationValue = 'value';
+const variationName = 'variationName';
 const second = (new Date(2000, 1, 2).getTime() - new Date(2000, 1, 2).getTime()) / 1000;
 const sizeByte = 1000;
 const apiId = ApiId.GET_EVALUATION;
 
 test('createGoalEvent', (t) => {
-  const goalEvent: GoalEvent = {
-    tag,
-    goalId,
-    user,
-    value,
-    sourceId,
-    timestamp: createTimestamp(),
-    userId,
-    sdkVersion,
-    metadata,
-    '@type': GOAL_EVENT_NAME,
-  };
-  const actual = createGoalEvent(goalEvent.tag, goalEvent.goalId, user, goalEvent.value);
-  t.true(isGoalEvent(goalEvent));
-  t.true(isGoalEvent(actual.event));
-  t.deepEqual(actual.event, goalEvent);
+  for (const sourceId of sourceIds) {
+    const goalEvent: GoalEvent = {
+      tag,
+      goalId,
+      user,
+      value,
+      sourceId: sourceId,
+      timestamp: createTimestamp(),
+      userId,
+      sdkVersion,
+      metadata,
+      '@type': GOAL_EVENT_NAME,
+    };
+    const actual = createGoalEvent(
+      goalEvent.tag,
+      goalEvent.goalId,
+      user,
+      goalEvent.value,
+      sourceId,
+    );
+    t.true(isGoalEvent(goalEvent));
+    t.true(isGoalEvent(actual.event));
+    t.deepEqual(actual.event, goalEvent);
+  }
 });
 
-test('isGoalEvent', (t) => {
+test('isNotGoalEvent', (t) => {
   const evaluationEvent: EvaluationEvent = {
     tag,
     user,
@@ -125,7 +136,7 @@ test('isGoalEvent', (t) => {
     featureVersion,
     userId,
     variationId,
-    sourceId,
+    sourceId: defaultSourceId,
     reason,
     '@type': EVALUATION_EVENT_NAME,
     sdkVersion,
@@ -144,35 +155,38 @@ test('isGoalEvent', (t) => {
 });
 
 test('createEvaluationEvent', (t) => {
-  const evaluationEvent: EvaluationEvent = {
-    tag,
-    user,
-    timestamp: createTimestamp(),
-    featureId,
-    featureVersion,
-    userId,
-    variationId,
-    sourceId,
-    reason,
-    '@type': EVALUATION_EVENT_NAME,
-    sdkVersion,
-    metadata,
-  };
-  const evaluation: Evaluation = {
-    id,
-    featureId,
-    featureVersion,
-    userId,
-    variationId,
-    reason,
-    variationValue,
-  };
-  const actual = createEvaluationEvent(tag, user, evaluation);
-  t.true(isEvaluationEvent(actual.event));
-  t.deepEqual(actual.event, evaluationEvent);
+  for (const sourceId of sourceIds) {
+    const evaluationEvent: EvaluationEvent = {
+      tag,
+      user,
+      timestamp: createTimestamp(),
+      featureId,
+      featureVersion,
+      userId,
+      variationId,
+      sourceId: sourceId,
+      reason,
+      '@type': EVALUATION_EVENT_NAME,
+      sdkVersion,
+      metadata,
+    };
+    const evaluation: Evaluation = {
+      id,
+      featureId,
+      featureVersion,
+      userId,
+      variationId,
+      reason,
+      variationValue,
+      variationName,
+    };
+    const actual = createEvaluationEvent(tag, user, evaluation, sourceId);
+    t.true(isEvaluationEvent(actual.event));
+    t.deepEqual(actual.event, evaluationEvent);
+  }
 });
 
-test('isEvaluationEvent', (t) => {
+test('isNotEvaluationEvent', (t) => {
   const evaluationEvent: EvaluationEvent = {
     tag,
     user,
@@ -181,7 +195,7 @@ test('isEvaluationEvent', (t) => {
     featureVersion,
     userId,
     variationId,
-    sourceId,
+    sourceId: defaultSourceId,
     reason,
     '@type': EVALUATION_EVENT_NAME,
     sdkVersion,
@@ -200,7 +214,7 @@ test('isEvaluationEvent', (t) => {
     goalId,
     user,
     value,
-    sourceId,
+    sourceId: defaultSourceId,
     timestamp: createTimestamp(),
     userId,
     sdkVersion,
@@ -221,13 +235,13 @@ test('createDefaultEvaluationEvent', (t) => {
     featureVersion: 0,
     userId,
     variationId: '',
-    sourceId,
+    sourceId: defaultSourceId,
     reason,
     '@type': EVALUATION_EVENT_NAME,
     sdkVersion,
     metadata,
   };
-  const actual = createDefaultEvaluationEvent(tag, user, featureId);
+  const actual = createDefaultEvaluationEvent(tag, user, featureId, defaultSourceId);
   t.deepEqual(actual.event, evaluationEvent);
 });
 
@@ -259,7 +273,7 @@ test('isMetricsEvent', (t) => {
     featureVersion,
     userId,
     variationId,
-    sourceId,
+    sourceId: defaultSourceId,
     reason,
     '@type': EVALUATION_EVENT_NAME,
     sdkVersion,
@@ -270,7 +284,7 @@ test('isMetricsEvent', (t) => {
     goalId,
     user,
     value,
-    sourceId,
+    sourceId: defaultSourceId,
     timestamp: createTimestamp(),
     userId,
     sdkVersion,
