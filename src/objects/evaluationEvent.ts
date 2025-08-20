@@ -8,7 +8,12 @@ import { version } from './version';
 
 const EVALUATION_EVENT_NAME = 'type.googleapis.com/bucketeer.event.client.EvaluationEvent';
 
-export function createEvaluationEvent(tag: string, user: User, evaluation: Evaluation): Event {
+export function createEvaluationEvent(
+  tag: string,
+  user: User,
+  evaluation: Evaluation,
+  sourceId: SourceId,
+): Event {
   const evaluationEvent: EvaluationEvent = {
     tag,
     user,
@@ -17,7 +22,7 @@ export function createEvaluationEvent(tag: string, user: User, evaluation: Evalu
     timestamp: createTimestamp(),
     featureVersion: evaluation.featureVersion,
     variationId: evaluation.variationId,
-    sourceId: SourceId.NODE_SERVER,
+    sourceId: sourceId,
     reason: evaluation.reason,
     sdkVersion: version,
     metadata: {},
@@ -35,13 +40,18 @@ export type EvaluationEvent = {
   user?: User;
   reason?: Reason;
   tag: string;
-  sourceId: typeof SourceId.NODE_SERVER;
+  sourceId: SourceId;
   sdkVersion: string;
   metadata: { [key: string]: string };
   '@type': typeof EVALUATION_EVENT_NAME;
 };
 
-export function createDefaultEvaluationEvent(tag: string, user: User, featureId: string): Event {
+export function createDefaultEvaluationEvent(
+  tag: string,
+  user: User,
+  featureId: string,
+  sourceId: SourceId,
+): Event {
   const evaluationEvent: EvaluationEvent = {
     tag,
     user,
@@ -50,7 +60,7 @@ export function createDefaultEvaluationEvent(tag: string, user: User, featureId:
     featureVersion: 0,
     userId: user.id,
     variationId: '',
-    sourceId: SourceId.NODE_SERVER,
+    sourceId: sourceId,
     reason: {
       type: 'CLIENT',
     },
@@ -71,7 +81,7 @@ export function isEvaluationEvent(obj: any): obj is EvaluationEvent {
   const hasUser = obj.user === undefined || typeof obj.user === 'object';
   const hasReason = obj.reason === undefined || typeof obj.reason === 'object';
   const hasTag = typeof obj.tag === 'string';
-  const hasSourceId = obj.sourceId === SourceId.NODE_SERVER;
+  const hasSourceId = obj.sourceId !== undefined && Object.values(SourceId).includes(obj.sourceId);
   const hasSdkVersion = typeof obj.sdkVersion === 'string';
   const hasMetadata = typeof obj.metadata === 'object' && obj.metadata !== null;
   const hasValidMetadata =

@@ -167,17 +167,29 @@ export class BKTClientImpl implements Bucketeer {
   }
 
   private saveDefaultEvaluationEvent(user: User, featureId: string) {
-    this.eventStore.add(createDefaultEvaluationEvent(this.config.featureTag, user, featureId));
+    this.eventStore.add(
+      createDefaultEvaluationEvent(this.config.featureTag, user, featureId, this.config.sourceId),
+    );
     this.registerEvents();
   }
 
   private saveEvaluationEvent(user: User, evaluation: Evaluation) {
-    this.eventStore.add(createEvaluationEvent(this.config.featureTag, user, evaluation));
+    this.eventStore.add(
+      createEvaluationEvent(this.config.featureTag, user, evaluation, this.config.sourceId),
+    );
     this.registerEvents();
   }
 
   private saveGoalEvent(user: User, goalId: string, value?: number) {
-    this.eventStore.add(createGoalEvent(this.config.featureTag, goalId, user, value ? value : 0));
+    this.eventStore.add(
+      createGoalEvent(
+        this.config.featureTag,
+        goalId,
+        user,
+        value ? value : 0,
+        this.config.sourceId,
+      ),
+    );
     this.registerEvents();
   }
 
@@ -269,7 +281,8 @@ export class BKTClientImpl implements Bucketeer {
         user && user.id ? user.id : '',
         featureId ?? '',
         defaultValue,
-        'DEFAULT');
+        'DEFAULT',
+      );
     }
 
     const evaluation = await this.getEvaluation(user, featureId);
