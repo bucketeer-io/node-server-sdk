@@ -24,12 +24,13 @@ export class APIClient {
     tag: string,
     user: User,
     featureId: string,
+    sourceId: SourceId
   ): Promise<[GetEvaluationResponse, number]> {
     const req: GetEvaluationRequest = {
       tag,
       user,
       featureId,
-      sourceId: SourceId.NODE_SERVER,
+      sourceId: sourceId,
       sdkVersion: version,
     };
     const chunk = JSON.stringify(req);
@@ -50,11 +51,14 @@ export class APIClient {
     });
   }
 
-  registerEvents(events: Array<Event>): Promise<[RegisterEventsResponse, number]> {
+  registerEvents(
+    events: Array<Event>,
+    sourceId: SourceId
+  ): Promise<[RegisterEventsResponse, number]> {
     const req: RegisterEventsRequest = {
       events,
       sdkVersion: version,
-      sourceId: SourceId.NODE_SERVER,
+      sourceId: sourceId,
     };
     const chunk = JSON.stringify(req);
     const url = scheme.concat(this.host, eventsAPI);
