@@ -160,7 +160,7 @@ export class BKTClientImpl implements Bucketeer {
   }
 
   private callRegisterEvents(events: Array<Event>): void {
-    this.apiClient.registerEvents(events).catch((e) => {
+    this.apiClient.registerEvents(events, this.config.sourceId).catch((e) => {
       this.saveErrorMetricsEvent(this.config.featureTag, e, ApiId.REGISTER_EVENTS);
       this.config.logger?.warn('register events failed', e);
     });
@@ -223,7 +223,12 @@ export class BKTClientImpl implements Bucketeer {
     let res: GetEvaluationResponse;
     let size: number;
     try {
-      [res, size] = await this.apiClient.getEvaluation(this.config.featureTag, user, featureId);
+      [res, size] = await this.apiClient.getEvaluation(
+        this.config.featureTag,
+        user,
+        featureId,
+        this.config.sourceId,
+      );
       const second = (Date.now() - startTime) / 1000;
       this.eventEmitter.emit('pushLatencyMetricsEvent', {
         latency: second,
