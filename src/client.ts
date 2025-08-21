@@ -194,17 +194,17 @@ export class BKTClientImpl implements Bucketeer {
   }
 
   private saveLatencyMetricsEvent(tag: string, second: number, apiId: NodeApiIds) {
-    this.eventStore.add(createLatencyMetricsEvent(tag, second, apiId));
+    this.eventStore.add(createLatencyMetricsEvent(tag, second, apiId, this.config.sourceId));
     this.registerEvents();
   }
 
   private saveSizeMetricsEvent(tag: string, size: number, apiId: NodeApiIds) {
-    this.eventStore.add(createSizeMetricsEvent(tag, size, apiId));
+    this.eventStore.add(createSizeMetricsEvent(tag, size, apiId, this.config.sourceId));
     this.registerEvents();
   }
 
   private saveErrorMetricsEvent(tag: string, e: any, apiId: NodeApiIds) {
-    const event = toErrorMetricsEvent(e, tag, apiId);
+    const event = toErrorMetricsEvent(e, tag, apiId, this.config.sourceId, this.config.logger);
     if (event) {
       this.eventStore.add(event);
       this.registerEvents();
