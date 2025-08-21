@@ -35,7 +35,7 @@ const version: string = require('../../package.json').version;
 export type MetricsEvent = {
   timestamp: number;
   event?: SuccessMetricsEvent | ErrorMetricsEvent | StatusMetricsEvent;
-  sourceId: typeof SourceId.NODE_SERVER;
+  sourceId: SourceId;
   sdkVersion: string;
   metadata: { [key: string]: string };
   '@type': typeof METRICS_EVENT_NAME;
@@ -87,7 +87,12 @@ export type UnknownErrorMetricsEvent = {
   '@type': typeof UNKNOWN_ERROR_METRICS_EVENT_NAME;
 };
 
-export function createSizeMetricsEvent(tag: string, size: number, apiId: NodeApiIds) {
+export function createSizeMetricsEvent(
+  tag: string,
+  size: number,
+  apiId: NodeApiIds,
+  sourceId: SourceId,
+) {
   const getEvaluationSizeMetricsEvent: SizeMetricsEvent = {
     apiId,
     sizeByte: size,
@@ -96,13 +101,14 @@ export function createSizeMetricsEvent(tag: string, size: number, apiId: NodeApi
     },
     '@type': SIZE_METRICS_EVENT_NAME,
   };
-  const metricsEvent = createMetricsEvent(getEvaluationSizeMetricsEvent);
+  const metricsEvent = createMetricsEvent(getEvaluationSizeMetricsEvent, sourceId);
   return createEvent(metricsEvent);
 }
 
 export function createInternalSdkErrorMetricsEvent(
   tag: string,
   apiId: NodeApiIds,
+  sourceId: SourceId,
   errorMessage?: string,
 ) {
   const internalErrorMetricsEvent: InternalSdkErrorMetricsEvent = {
@@ -115,11 +121,11 @@ export function createInternalSdkErrorMetricsEvent(
   if (errorMessage && errorMessage.length > 0) {
     internalErrorMetricsEvent.labels.error_message = errorMessage;
   }
-  const metricsEvent = createMetricsEvent(internalErrorMetricsEvent);
+  const metricsEvent = createMetricsEvent(internalErrorMetricsEvent, sourceId);
   return createEvent(metricsEvent);
 }
 
-export function createTimeoutErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
+export function createTimeoutErrorMetricsEvent(tag: string, apiId: NodeApiIds, sourceId: SourceId) {
   const timeoutErrorMetricsEvent: TimeoutErrorMetricsEvent = {
     apiId,
     labels: {
@@ -127,24 +133,30 @@ export function createTimeoutErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
     },
     '@type': TIMEOUT_ERROR_METRICS_EVENT_NAME,
   };
-  const metricsEvent = createMetricsEvent(timeoutErrorMetricsEvent);
+  const metricsEvent = createMetricsEvent(timeoutErrorMetricsEvent, sourceId);
   return createEvent(metricsEvent);
 }
 
 export function createMetricsEvent(
   b: SuccessMetricsEvent | ErrorMetricsEvent | StatusMetricsEvent,
+  sourceId: SourceId,
 ): MetricsEvent {
   return {
     timestamp: createTimestamp(),
     event: b,
-    sourceId: SourceId.NODE_SERVER,
+    sourceId: sourceId,
     sdkVersion: version,
     metadata: {},
     '@type': METRICS_EVENT_NAME,
   };
 }
 
-export function createLatencyMetricsEvent(tag: string, second: number, apiId: NodeApiIds) {
+export function createLatencyMetricsEvent(
+  tag: string,
+  second: number,
+  apiId: NodeApiIds,
+  sourceId: SourceId,
+) {
   const getEvaluationLatencyMetricsEvent: LatencyMetricsEvent = {
     apiId,
     latencySecond: second,
@@ -153,11 +165,11 @@ export function createLatencyMetricsEvent(tag: string, second: number, apiId: No
     },
     '@type': LATENCY_METRICS_EVENT_NAME,
   };
-  const metricsEvent = createMetricsEvent(getEvaluationLatencyMetricsEvent);
+  const metricsEvent = createMetricsEvent(getEvaluationLatencyMetricsEvent, sourceId);
   return createEvent(metricsEvent);
 }
 
-export function createNetworkErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
+export function createNetworkErrorMetricsEvent(tag: string, apiId: NodeApiIds, sourceId: SourceId) {
   const networkErrorMetricsEvent: NetworkErrorMetricsEvent = {
     apiId,
     labels: {
@@ -165,13 +177,14 @@ export function createNetworkErrorMetricsEvent(tag: string, apiId: NodeApiIds) {
     },
     '@type': NETWORK_ERROR_METRICS_EVENT_NAME,
   };
-  const metricsEvent = createMetricsEvent(networkErrorMetricsEvent);
+  const metricsEvent = createMetricsEvent(networkErrorMetricsEvent, sourceId);
   return createEvent(metricsEvent);
 }
 
 export function createUnknownErrorMetricsEvent(
   tag: string,
   apiId: NodeApiIds,
+  sourceId: SourceId,
   statusCode?: number,
   errorMessage?: string,
 ) {
@@ -188,7 +201,7 @@ export function createUnknownErrorMetricsEvent(
   if (errorMessage !== undefined && errorMessage.length > 0) {
     unknownErrorMetricsEvent.labels.error_message = errorMessage;
   }
-  const metricsEvent = createMetricsEvent(unknownErrorMetricsEvent);
+  const metricsEvent = createMetricsEvent(unknownErrorMetricsEvent, sourceId);
   return createEvent(metricsEvent);
 }
 
@@ -200,18 +213,19 @@ export const toErrorMetricsEvent = (
   e: any,
   tag: string,
   apiId: NodeApiIds,
+  sourceId: SourceId,
   logger?: Logger,
 ): Event | null => {
   if (e instanceof IllegalArgumentError || e instanceof IllegalStateError) {
-    return createInternalSdkErrorMetricsEvent(tag, apiId, e.message);
+    return createInternalSdkErrorMetricsEvent(tag, apiId, sourceId, e.message);
   }
   if (e instanceof InvalidStatusError) {
     const statusCode = e.code ?? 0;
     switch (true) {
       case statusCode >= 300 && statusCode < 400:
-        return createRedirectRequestErrorMetricsEvent(tag, apiId, statusCode);
+        return createRedirectRequestErrorMetricsEvent(tag, apiId, statusCode, sourceId);
       case statusCode == 400:
-        return createBadRequestErrorMetricsEvent(tag, apiId);
+        return createBadRequestErrorMetricsEvent(tag, apiId, sourceId);
       case statusCode == 401:
         logger?.error('An unauthorized error occurred. Please check your API Key.');
         return null;
@@ -219,35 +233,35 @@ export const toErrorMetricsEvent = (
         logger?.error('An forbidden error occurred. Please check your API Key.');
         return null;
       case statusCode == 404:
-        return createNotFoundErrorMetricsEvent(tag, apiId);
+        return createNotFoundErrorMetricsEvent(tag, apiId, sourceId);
       case statusCode == 405:
-        return createInternalSdkErrorMetricsEvent(tag, apiId, e.message);
+        return createInternalSdkErrorMetricsEvent(tag, apiId, sourceId, e.message);
       case statusCode == 408:
-        return createTimeoutErrorMetricsEvent(tag, apiId);
+        return createTimeoutErrorMetricsEvent(tag, apiId, sourceId);
       case statusCode == 413:
-        return createPayloadTooLargeErrorMetricsEvent(tag, apiId);
+        return createPayloadTooLargeErrorMetricsEvent(tag, apiId, sourceId);
       case statusCode == 499:
-        return createClientClosedRequestErrorMetricsEvent(tag, apiId);
+        return createClientClosedRequestErrorMetricsEvent(tag, apiId, sourceId);
       case statusCode == 500:
-        return createInternalServerErrorMetricsEvent(tag, apiId);
+        return createInternalServerErrorMetricsEvent(tag, apiId, sourceId);
       case [502, 503, 504].includes(statusCode):
-        return createServiceUnavailableErrorMetricsEvent(tag, apiId);
+        return createServiceUnavailableErrorMetricsEvent(tag, apiId, sourceId);
       default:
-        return createUnknownErrorMetricsEvent(tag, apiId, statusCode, e.message);
+        return createUnknownErrorMetricsEvent(tag, apiId, sourceId, statusCode, e.message);
     }
   }
   if (isNodeError(e)) {
     switch (e.code) {
       case 'ECONNRESET':
-        return createTimeoutErrorMetricsEvent(tag, apiId);
+        return createTimeoutErrorMetricsEvent(tag, apiId, sourceId);
       case 'EHOSTUNREACH':
       case 'ECONNREFUSED':
-        return createNetworkErrorMetricsEvent(tag, apiId);
+        return createNetworkErrorMetricsEvent(tag, apiId, sourceId);
       default:
-        return createUnknownErrorMetricsEvent(tag, apiId, undefined, e.message);
+        return createUnknownErrorMetricsEvent(tag, apiId, sourceId, undefined, e.message);
     }
   }
-  return createUnknownErrorMetricsEvent(tag, apiId, undefined, String(e));
+  return createUnknownErrorMetricsEvent(tag, apiId, sourceId, undefined, String(e));
 };
 
 function isNodeError(error: unknown): error is NodeJS.ErrnoException {
@@ -277,7 +291,7 @@ export function isMetricsEvent(obj: any): obj is MetricsEvent {
   const isObject = typeof obj === 'object' && obj !== null;
   const hasTimestamp = typeof obj.timestamp === 'number';
   const hasEvent = obj.event !== undefined;
-  const hasSourceId = obj.sourceId === SourceId.NODE_SERVER;
+  const hasSourceId = obj.sourceId !== undefined && Object.values(SourceId).includes(obj.sourceId);
   const hasSdkVersion = typeof obj.sdkVersion === 'string';
   const hasMetadata = typeof obj.metadata === 'object' && obj.metadata !== null;
   const hasValidMetadata =
