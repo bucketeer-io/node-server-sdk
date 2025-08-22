@@ -141,6 +141,7 @@ export interface Bucketeer {
 }
 
 /**
+ * @deprecated use initializeBKTClient instead
  * initialize initializes a Bucketeer instance and returns it.
  * @param config Configurations of the SDK.
  * @returns Bucketeer SDK instance.
