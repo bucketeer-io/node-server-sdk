@@ -19,6 +19,7 @@ import { MockCache } from '../../../mocks/cache';
 import { MockGRPCClient } from '../../../mocks/gprc';
 import { ApiId } from '../../../../objects/apiId';
 import { ProcessorEventsEmitter } from '../../../../processorEventsEmitter';
+import { SourceId } from '../../../../objects/sourceId';
 
 const test = anyTest as TestFn<{
   featureTag: string;
@@ -36,6 +37,7 @@ test.beforeEach((t) => {
   const eventEmitter = new ProcessorEventsEmitter();
   const clock = new Clock();
   const featureFlagCache = NewFeatureCache({ cache: cache, ttl: FEATURE_FLAG_CACHE_TTL });
+  const sourceId = SourceId.NODE_SERVER;
   const options = {
     cache: cache,
     featureFlagCache: featureFlagCache,
@@ -44,6 +46,7 @@ test.beforeEach((t) => {
     eventEmitter: eventEmitter,
     featureTag: 'nodejs',
     clock: clock,
+    sourceId: sourceId,
   };
   const singleFeature = createFeature({ id: 'feature-flag-id-2' });
   const archivedFeatureIds = ['feature-flags-id-3',
@@ -111,6 +114,7 @@ test('err: failed while requesting cache from the server', async (t) => {
       tag: featureTag,
       featureFlagsId: '',
       requestedAt: 0,
+      sourceId: options.sourceId,
     })
     .throws(error);
   mockProcessorEventsEmitter
@@ -151,6 +155,7 @@ test('err: failed while putting featureFlagsID, and the forceUpdate is true', as
       tag: featureTag,
       featureFlagsId: 'feature-flags-id-1',
       requestedAt: 10,
+      sourceId: options.sourceId,
     })
     .returns(response);
 
@@ -196,7 +201,6 @@ test('err: failed while putting requestedAt, and the forceUpdate is true', async
   mockCache.expects('get').withArgs(FEATURE_FLAG_REQUESTED_AT).returns(10);
   mockCache.expects('put').withArgs(FEATURE_FLAG_ID, 'feature-flags-id-2', FEATURE_FLAG_CACHE_TTL);
 
-
   const response = new GetFeatureFlagsResponse();
   response.setFeatureFlagsId('feature-flags-id-2');
   response.setRequestedAt(20);
@@ -213,6 +217,7 @@ test('err: failed while putting requestedAt, and the forceUpdate is true', async
       tag: featureTag,
       featureFlagsId: 'feature-flags-id-1',
       requestedAt: 10,
+      sourceId: options.sourceId,
     })
     .returns(response);
 
@@ -273,6 +278,7 @@ test('err: failed while putting featureFlagsID, and the forceUpdate is false', a
       tag: featureTag,
       featureFlagsId: 'feature-flags-id-1',
       requestedAt: 10,
+      sourceId: options.sourceId,
     })
     .returns(response);
 
@@ -332,6 +338,7 @@ test('err: failed while putting requestedAt, and the forceUpdate is false', asyn
       tag: featureTag,
       featureFlagsId: 'feature-flags-id-1',
       requestedAt: 10,
+      sourceId: options.sourceId,
     })
     .returns(response);
 
@@ -388,6 +395,7 @@ test('success: featureFlagsID not found', async (t) => {
       tag: featureTag,
       featureFlagsId: '',
       requestedAt: 10,
+      sourceId: options.sourceId,
     })
     .returns(response);
 
@@ -430,6 +438,7 @@ test('success: requestedAt not found', async (t) => {
       tag: featureTag,
       featureFlagsId: 'feature-flags-id-1',
       requestedAt: 0,
+      sourceId: options.sourceId,
     })
     .returns(response);
 
@@ -476,6 +485,7 @@ test('success: forceUpdate is true', async (t) => {
       tag: featureTag,
       featureFlagsId: 'feature-flags-id-1',
       requestedAt: 10,
+      sourceId: options.sourceId,
     })
     .returns(response);
 
@@ -528,6 +538,7 @@ test('success: forceUpdate is false', async (t) => {
       tag: featureTag,
       featureFlagsId: 'feature-flags-id-1',
       requestedAt: 10,
+      sourceId: options.sourceId,
     })
     .returns(response);
 

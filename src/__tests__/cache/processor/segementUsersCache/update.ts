@@ -18,6 +18,7 @@ import {
 } from '../../../../cache/segmentUsers';
 import { ApiId } from '../../../../objects/apiId';
 import { ProcessorEventsEmitter } from '../../../../processorEventsEmitter';
+import { SourceId } from '../../../../objects/sourceId';
 
 const test = anyTest as TestFn<{
   processor: DefaultSegementUserCacheProcessor;
@@ -34,6 +35,7 @@ test.beforeEach((t) => {
   const eventEmitter = new ProcessorEventsEmitter();
   const clock = new Clock();
   const segmentUsersCache = NewSegmentUsersCache({ cache: cache, ttl: SEGEMENT_USERS_CACHE_TTL });
+  const sourceId = SourceId.OPEN_FEATURE_NODE;
   const options = {
     cache: cache,
     segmentUsersCache: segmentUsersCache,
@@ -41,6 +43,7 @@ test.beforeEach((t) => {
     grpc: grpc,
     eventEmitter: eventEmitter,
     clock: clock,
+    sourceId: sourceId,
   } satisfies SegementUsersCacheProcessorOptions;
 
   const singleSegementUsers = new SegmentUsers();
@@ -128,6 +131,7 @@ test('err: failed while putting requestedAt, and the forceUpdate is true', async
   mockGRPCClient.expects('getSegmentUsers').withArgs({
     segmentIdsList: ['segment-id'],
     requestedAt: 10,
+    sourceId: options.sourceId,
   }).resolves(response);
   
   const mockProcessorEventsEmitter = sandbox.mock(options.eventEmitter);
@@ -183,6 +187,7 @@ test('err: failed while putting requestedAt, and the forceUpdate is false', asyn
   mockGRPCClient.expects('getSegmentUsers').withArgs({
     segmentIdsList: ['segment-id'],
     requestedAt: 10,
+    sourceId: options.sourceId,
   }).resolves(response);
   
   const mockProcessorEventsEmitter = sandbox.mock(options.eventEmitter);
@@ -235,6 +240,7 @@ test('success: get segment IDs not found', async (t) => {
   mockGRPCClient.expects('getSegmentUsers').withArgs({
     segmentIdsList: [],
     requestedAt: 10,
+    sourceId: options.sourceId,
   }).resolves(response);
   
   const mockProcessorEventsEmitter = sandbox.mock(options.eventEmitter);
@@ -279,6 +285,7 @@ test('success: requestedAt not found', async (t) => {
   mockGRPCClient.expects('getSegmentUsers').withArgs({
     segmentIdsList: ['segment-id'],
     requestedAt: 0,
+    sourceId: options.sourceId,
   }).resolves(response);
   
   const mockProcessorEventsEmitter = sandbox.mock(options.eventEmitter);
@@ -323,6 +330,7 @@ test('success: force update is true', async (t) => {
   mockGRPCClient.expects('getSegmentUsers').withArgs({
     segmentIdsList: ['segment-id'],
     requestedAt: 10,
+    sourceId: options.sourceId,
   }).resolves(response);
   
   const mockProcessorEventsEmitter = sandbox.mock(options.eventEmitter);
@@ -367,6 +375,7 @@ test('success: force update is false', async (t) => {
   mockGRPCClient.expects('getSegmentUsers').withArgs({
     segmentIdsList: ['segment-id'],
     requestedAt: 10,
+    sourceId: options.sourceId,
   }).resolves(response);
   
   const mockProcessorEventsEmitter = sandbox.mock(options.eventEmitter);

@@ -7,6 +7,7 @@ import { SegmentUsers } from '@bucketeer/evaluation';
 import { createSchedule, removeSchedule } from '../../schedule';
 import { Clock } from '../../utils/clock';
 import { InvalidStatusError } from '../../objects/errors';
+import { SourceId } from '../../objects/sourceId';
 
 interface SegementUsersCacheProcessor {
   start(): void;
@@ -20,6 +21,7 @@ type SegementUsersCacheProcessorOptions = {
   grpc: GRPCClient;
   eventEmitter: ProcessorEventsEmitter;
   clock: Clock;
+  sourceId: SourceId;
 };
 
 const SEGEMENT_USERS_REQUESTED_AT = 'bucketeer_segment_users_requested_at';
@@ -39,6 +41,7 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
   private eventEmitter: ProcessorEventsEmitter;
   private pollingScheduleID?: NodeJS.Timeout;
   private clock: Clock;
+  private sourceId: SourceId;
 
   constructor(options: SegementUsersCacheProcessorOptions) {
     this.cache = options.cache;
@@ -47,6 +50,7 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
     this.grpc = options.grpc;
     this.eventEmitter = options.eventEmitter;
     this.clock = options.clock;
+    this.sourceId = options.sourceId;
   }
 
   start() {
@@ -68,12 +72,14 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
   private async updateCache() {
     const segmentIds = await this.segmentUsersCache.getIds();
     const requestedAt = await this.getSegmentUsersRequestedAt();
+    const sourceId = this.sourceId;
     
     const startTime: number = this.clock.getTime();
 
     const resp = await this.grpc.getSegmentUsers({
       segmentIdsList: segmentIds,
       requestedAt: requestedAt,
+      sourceId: sourceId,
     });
 
     const endTime: number = this.clock.getTime();

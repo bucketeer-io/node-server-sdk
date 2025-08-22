@@ -3,7 +3,7 @@ export const SourceId = {
   ANDROID: 1,
   IOS: 2,
   // WEB: 3, // deprecated
-  GOAL_BATCH: 4,
+  // GOAL_BATCH: 4, // deprecated
   GO_SERVER: 5,
   NODE_SERVER: 6,
   JAVASCRIPT: 7,

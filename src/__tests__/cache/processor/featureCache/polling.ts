@@ -16,6 +16,7 @@ import { FEATURE_FLAG_REQUESTED_AT } from '../../../../../__test/cache/processor
 import { Clock } from '../../../../utils/clock';
 import { MockCache } from '../../../mocks/cache';
 import { MockGRPCClient } from '../../../mocks/gprc';
+import { SourceId } from '../../../../objects/sourceId';
 
 test('polling cache', async (t) => {
 
@@ -44,6 +45,7 @@ test('polling cache', async (t) => {
   const gRPCClient = new MockGRPCClient();
   const mockGRPCClient = sino.mock(gRPCClient);
 
+  const sourceId = SourceId.NODE_SERVER;
   const featureFlag = 'nodejs';
   const featuresResponse = new GetFeatureFlagsResponse();
   featuresResponse.setFeatureFlagsId('featureFlagsId');
@@ -67,6 +69,7 @@ test('polling cache', async (t) => {
     tag: featureFlag,
     featureFlagsId: '',
     requestedAt: 0,
+    sourceId: sourceId,
   })
   .resolves(featuresResponse);
 
@@ -77,6 +80,7 @@ test('polling cache', async (t) => {
     tag: featureFlag,
     featureFlagsId: 'featureFlagsId',
     requestedAt: 1100,
+    sourceId: sourceId,
   })
   .resolves(featuresResponse);
 
@@ -107,6 +111,7 @@ test('polling cache', async (t) => {
     eventEmitter: eventEmitter,
     featureTag: featureFlag,
     clock: clock,
+    sourceId: sourceId,
   });
 
   processor.start();

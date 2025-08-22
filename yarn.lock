@@ -992,10 +992,10 @@
   dependencies:
     google-protobuf "^3.6.1"
 
-"@bucketeer/evaluation@0.0.3":
-  version "0.0.3"
-  resolved "https://registry.yarnpkg.com/@bucketeer/evaluation/-/evaluation-0.0.3.tgz#ce0c2c8d2102ee569c85d8f230d3ccc0b4898ced"
-  integrity sha512-WXFv0kis0M28bRwPJW0t3CgKPU7G8FJUW3A0m6Fwfej/CxfSqRSKZp2fWcK3zYBhU9fvSw64zYjriH0j8suKUQ==
+"@bucketeer/evaluation@0.0.4":
+  version "0.0.4"
+  resolved "https://registry.yarnpkg.com/@bucketeer/evaluation/-/evaluation-0.0.4.tgz#e5d9ad15c2140167d6fc1a59eebd76e54d0d3986"
+  integrity sha512-pFDbx/QOqbSlWIyOJ6X8mP2gIPJYrDYcWWzCYLOzpcQ6HzxYSdP7jGwIkseEhsqu+mfHaO+yxz/vwLTHv+9B4A==
   dependencies:
     "@improbable-eng/grpc-web" "^0.15.0"
     "@types/fnv-plus" "^1.3.2"
