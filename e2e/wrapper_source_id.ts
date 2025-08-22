@@ -9,7 +9,7 @@ import {
   GOAL_VALUE,
 } from './constants/constants';
 import { BKTClientImpl } from '../lib/client';
-import { SourceId } from '../__test/objects/sourceId';
+import { SourceId } from '../lib/objects/sourceId';
 
 const test = anyTest as TestFn<{ bktClient: Bucketeer; targetedUser: User }>;
 const wrapperSdkSourceId = SourceId.OPEN_FEATURE_NODE;

@@ -18,7 +18,7 @@ import { isGoalEvent } from '../lib/objects/goalEvent';
 import { isMetricsEvent } from '../lib/objects/metricsEvent';
 import { isEvaluationEvent } from '../lib/objects/evaluationEvent';
 import { isStatusErrorMetricsEvent } from '../lib/objects/status';
-import { SourceId } from '../__test/objects/sourceId';
+import { SourceId } from '../lib/objects/sourceId';
 import { version } from '../lib/objects/version';
 
 const test = anyTest as TestFn<{ bktClient: Bucketeer; targetedUser: User }>;
