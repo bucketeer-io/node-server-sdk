@@ -19,6 +19,7 @@ import { isMetricsEvent } from '../lib/objects/metricsEvent';
 import { isEvaluationEvent } from '../lib/objects/evaluationEvent';
 import { isStatusErrorMetricsEvent } from '../lib/objects/status';
 import { SourceId } from '../__test/objects/sourceId';
+import { version } from '../lib/objects/version';
 
 const test = anyTest as TestFn<{ bktClient: Bucketeer; targetedUser: User }>;
 
@@ -43,13 +44,12 @@ test('goal event', async (t) => {
   const events = bktClientImpl.eventStore.getAll();
   // (EvaluationEvent, Metrics Event - Latency, Metrics Event - Metrics Size, Goal Event)
   t.is(events.length, 4);
-  t.true(events.some((e: { event: any }) => {
-    if (isGoalEvent(e.event)) {
-      // SourceId should be NODE_SEVER
-      return e.event.sourceId === SourceId.NODE_SERVER;
-    };
-    return false;
-  }));
+  t.true(events.some((e: { event: any }) => isGoalEvent(e.event)));
+  t.true(
+    events.every(
+      (e) => e.event.sourceId === SourceId.NODE_SERVER && e.event.sdkVersion === version,
+    ),
+  );
 });
 
 test('evaluation event', async (t) => {
@@ -70,20 +70,13 @@ test('evaluation event', async (t) => {
   const events = bktClientImpl.eventStore.getAll();
   // (EvaluationEvent, Metrics Event - Latency, Metrics Event - Metrics Size) x 6
   t.is(events.length, 18);
-  t.true(events.some((e) => {
-    if (isEvaluationEvent(e.event)) {
-      // SourceId should be NODE_SEVER
-      return e.event.sourceId === SourceId.NODE_SERVER;
-    }
-    return false;
-  }));
-  t.true(events.some((e) => {
-    if (isMetricsEvent(e.event)) {
-      // SourceId should be NODE_SEVER
-      return e.event.sourceId === SourceId.NODE_SERVER;
-    }
-    return false;
-  }));
+  t.true(events.some((e) => isEvaluationEvent(e.event)));
+  t.true(events.some((e) => isMetricsEvent(e.event)));
+  t.true(
+    events.every(
+      (e) => e.event.sourceId === SourceId.NODE_SERVER && e.event.sdkVersion === version,
+    ),
+  );
 });
 
 test('default evaluation event', async (t) => {
@@ -103,22 +96,15 @@ test('default evaluation event', async (t) => {
   const events = bktClientImpl.eventStore.getAll();
   // (DefaultEvaluationEvent, Error Event) x 6
   t.is(events.length, 12);
-  t.true(events.some((e) => {
-    if (isEvaluationEvent(e.event)) {
-      // SourceId should be NODE_SEVER
-      return e.event.sourceId === SourceId.NODE_SERVER;
-    }
-    return false;
-  }));
-  t.true(events.some((e) => {
-    if (isMetricsEvent(e.event)) {
-      // SourceId should be NODE_SEVER
-      return e.event.sourceId === SourceId.NODE_SERVER;
-    }
-    return false;
-  }));
+  t.true(events.some((e) => isEvaluationEvent(e.event)));
+  t.true(events.some((e) => isMetricsEvent(e.event)));
   t.true(
     events.some((e) => isStatusErrorMetricsEvent(e.event, NOT_FOUND_ERROR_METRICS_EVENT_NAME)),
+  );
+  t.true(
+    events.every(
+      (e) => e.event.sourceId === SourceId.NODE_SERVER && e.event.sdkVersion === version,
+    ),
   );
 });
 
