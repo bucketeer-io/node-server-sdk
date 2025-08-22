@@ -183,6 +183,7 @@ function defaultInitialize(resolvedConfig: InternalConfig): Bucketeer {
       eventEmitter: eventEmitter,
       featureTag: resolvedConfig.featureTag,
       clock: clock,
+      sourceId: resolvedConfig.sourceId,
     });
 
     segementUsersCacheProcessor = NewSegementUserCacheProcessor({
@@ -192,6 +193,7 @@ function defaultInitialize(resolvedConfig: InternalConfig): Bucketeer {
       grpc: grpcClient,
       eventEmitter: eventEmitter,
       clock: clock,
+      sourceId: resolvedConfig.sourceId,
     });
 
     localEvaluator = new LocalEvaluator({

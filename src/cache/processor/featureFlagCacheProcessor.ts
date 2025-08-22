@@ -6,6 +6,7 @@ import { createSchedule, removeSchedule } from '../../schedule';
 import { Feature } from '@bucketeer/evaluation';
 import { ApiId } from '../../objects/apiId';
 import { Clock } from '../../utils/clock';
+import { SourceId } from '../../objects/sourceId';
 
 interface FeatureFlagProcessor {
   start(): void;
@@ -20,6 +21,7 @@ type FeatureFlagProcessorOptions = {
   eventEmitter: ProcessorEventsEmitter;
   featureTag: string;
   clock: Clock;
+  sourceId: SourceId;
 };
 
 function NewFeatureFlagProcessor(options: FeatureFlagProcessorOptions): FeatureFlagProcessor {
@@ -39,6 +41,7 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
   private pollingInterval: number;
   private clock: Clock;
   featureTag: string;
+  sourceId: SourceId;
 
   constructor(options: FeatureFlagProcessorOptions) {
     this.featureFlagCache = options.featureFlagCache;
@@ -48,6 +51,7 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
     this.pollingInterval = options.pollingInterval;
     this.featureTag = options.featureTag;
     this.clock = options.clock;
+    this.sourceId = options.sourceId;
   }
 
   start() {
@@ -76,6 +80,7 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
       requestedAt: requestedAt,
       tag: this.featureTag,
       featureFlagsId: featureFlagsId,
+      sourceId: this.sourceId,
     });
 
     const endTime = this.clock.getTime();

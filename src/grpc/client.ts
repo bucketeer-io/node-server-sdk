@@ -17,6 +17,7 @@ interface GRPCClient {
     options: {
       segmentIdsList: Array<string>,
       requestedAt: number,
+      sourceId: SourceId,
     }
   ): Promise<GetSegmentUsersResponse> 
 
@@ -25,6 +26,7 @@ interface GRPCClient {
       tag: string,
       featureFlagsId: string,
       requestedAt: number,
+      sourceId: SourceId,
     }
   ): Promise<GetFeatureFlagsResponse>
 }
@@ -55,13 +57,13 @@ class DefaultGRPCClient {
     options: {
       segmentIdsList: Array<string>,
       requestedAt: number,
+      sourceId: SourceId,
     }
   ): Promise<GetSegmentUsersResponse> {
     const req = new GetSegmentUsersRequest();
     req.setSegmentIdsList(options.segmentIdsList);
     req.setRequestedAt(options.requestedAt);
-
-    req.setSourceId(SourceId.NODE_SERVER);
+    req.setSourceId(options.sourceId);
     req.setSdkVersion(version);
 
     return new Promise((resolve, reject) => {
@@ -84,14 +86,14 @@ class DefaultGRPCClient {
       tag: string,
       featureFlagsId: string,
       requestedAt: number,
+      sourceId: SourceId,
     }
   ): Promise<GetFeatureFlagsResponse> {
     const req = new GetFeatureFlagsRequest();
     req.setTag(options.tag);
     req.setFeatureFlagsId(options.featureFlagsId);
     req.setRequestedAt(options.requestedAt);
-
-    req.setSourceId(SourceId.NODE_SERVER);
+    req.setSourceId(options.sourceId);
     req.setSdkVersion(version);
 
     return new Promise((resolve, reject) => {

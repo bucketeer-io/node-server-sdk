@@ -14,10 +14,7 @@
     "@bucketeer/evaluation": "0.0.4",
     "@improbable-eng/grpc-web": "^0.15.0",
     "@improbable-eng/grpc-web-node-http-transport": "^0.15.0",
-    "@types/node": "^22.15.3",
-    "@types/uuid": "^10.0.0",
-    "google-protobuf": "^3.21.4",
-    "uuid": "^11.1.0"
+    "google-protobuf": "^3.21.4"
   },
   "devDependencies": {
     "@ava/babel": "2.0.0",
