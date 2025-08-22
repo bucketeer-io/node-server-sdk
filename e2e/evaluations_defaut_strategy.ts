@@ -1,18 +1,30 @@
 import anyTest, { TestFn } from 'ava';
 import { Bucketeer, DefaultLogger, User, initialize } from '../lib';
-import { HOST, TOKEN, FEATURE_TAG, FEATURE_ID_BOOLEAN, FEATURE_ID_STRING, FEATURE_ID_INT, FEATURE_ID_JSON, FEATURE_ID_FLOAT } from './constants/constants';
+import {
+  HOST,
+  TOKEN,
+  FEATURE_TAG,
+  FEATURE_ID_BOOLEAN,
+  FEATURE_ID_STRING,
+  FEATURE_ID_INT,
+  FEATURE_ID_JSON,
+  FEATURE_ID_FLOAT,
+} from './constants/constants';
 import { assetEvaluationDetails } from './utils/assert';
+import { initializeBKTClient } from '../src';
+import { defineBKTConfig } from '../src/config';
 
 const test = anyTest as TestFn<{ bktClient: Bucketeer; defaultUser: User }>;
 
 test.beforeEach((t) => {
+  const config = defineBKTConfig({
+    apiEndpoint: HOST,
+    apiKey: TOKEN,
+    featureTag: FEATURE_TAG,
+    logger: new DefaultLogger('error'),
+  });
   t.context = {
-    bktClient: initialize({
-      host: HOST,
-      token: TOKEN,
-      tag: FEATURE_TAG,
-      logger: new DefaultLogger("error")
-    }),
+    bktClient: initializeBKTClient(config),
     defaultUser: { id: 'user-1', data: {} },
   };
 });
@@ -31,8 +43,8 @@ test('boolVariation', async (t) => {
       variationName: 'variation 1',
       variationValue: true,
       reason: 'DEFAULT',
-    }
-  )
+    },
+  );
 });
 
 test('stringVariation', async (t) => {
@@ -49,8 +61,8 @@ test('stringVariation', async (t) => {
       variationName: 'variation 1',
       variationValue: 'value-1',
       reason: 'DEFAULT',
-    }
-  )
+    },
+  );
 });
 
 test('numberVariation', async (t) => {
@@ -67,8 +79,8 @@ test('numberVariation', async (t) => {
       variationName: 'variation 1',
       variationValue: 10,
       reason: 'DEFAULT',
-    }
-  )
+    },
+  );
 
   t.is(await bktClient.numberVariation(defaultUser, FEATURE_ID_FLOAT, 0.0), 2.1);
   assetEvaluationDetails(
@@ -82,15 +94,20 @@ test('numberVariation', async (t) => {
       variationName: 'variation 1',
       variationValue: 2.1,
       reason: 'DEFAULT',
-    }
-  )
-
+    },
+  );
 });
 
 test('objectVariation', async (t) => {
   const { bktClient, defaultUser } = t.context;
-  t.deepEqual(await bktClient.getJsonVariation(defaultUser, FEATURE_ID_JSON, {}), { "str": "str1", "int": "int1" });
-  t.deepEqual(await bktClient.objectVariation(defaultUser, FEATURE_ID_JSON, {}), { "str": "str1", "int": "int1" });
+  t.deepEqual(await bktClient.getJsonVariation(defaultUser, FEATURE_ID_JSON, {}), {
+    str: 'str1',
+    int: 'int1',
+  });
+  t.deepEqual(await bktClient.objectVariation(defaultUser, FEATURE_ID_JSON, {}), {
+    str: 'str1',
+    int: 'int1',
+  });
   assetEvaluationDetails(
     t,
     await bktClient.objectVariationDetails(defaultUser, FEATURE_ID_JSON, {}),
@@ -102,12 +119,11 @@ test('objectVariation', async (t) => {
       variationName: 'variation 1',
       variationValue: { str: 'str1', int: 'int1' },
       reason: 'DEFAULT',
-    }
-  )
+    },
+  );
 });
 
 test.afterEach(async (t) => {
   const { bktClient } = t.context;
   bktClient.destroy();
 });
-
