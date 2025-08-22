@@ -1,5 +1,5 @@
 import test from 'ava';
-import { initializeBKTClient, defineBKTConfig, DefaultLogger } from '../lib';
+import { initializeBKTClient, defineBKTConfig, DefaultLogger, initialize } from '../lib';
 import {
   HOST,
   TOKEN,
@@ -10,6 +10,7 @@ import {
 import { MetricsEvent, isMetricsEvent } from '../lib/objects/metricsEvent';
 import { ApiId } from '../lib/objects/apiId';
 import { BKTClientImpl } from '../lib/client';
+import { Config } from '../src';
 
 const FORBIDDEN_ERROR_METRICS_EVENT_NAME =
   'type.googleapis.com/bucketeer.event.client.ForbiddenErrorMetricsEvent';
@@ -125,6 +126,29 @@ test('Using a random string in the featureTag setting should affect api request'
       return false;
     }),
   );
+
+  bktClient.destroy();
+});
+
+test('The deprecated function for initializing the client should still work.', async (t) => {
+  const config: Config = {
+    host: HOST,
+    token: TOKEN,
+    tag: FEATURE_TAG,
+    logger: new DefaultLogger('error'),
+  };
+  const bktClient = initialize(config);
+  const user = { id: TARGETED_USER_ID, data: {} };
+  const result = await t.notThrowsAsync(
+    bktClient.booleanVariation(user, FEATURE_ID_BOOLEAN, false),
+  );
+  t.true(result);
+  config.tag = 'RANDOME';
+
+  const resultAfterAlterAPIKey = await t.notThrowsAsync(
+    bktClient.booleanVariation(user, FEATURE_ID_BOOLEAN, false),
+  );
+  t.true(resultAfterAlterAPIKey);
 
   bktClient.destroy();
 });
