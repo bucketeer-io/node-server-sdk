@@ -18,6 +18,8 @@ import { BKTClientImpl } from '../../lib/client';
 import { isGoalEvent } from '../../lib/objects/goalEvent';
 import { isErrorMetricsEvent, isMetricsEvent } from '../../lib/objects/metricsEvent';
 import { isEvaluationEvent } from '../../lib/objects/evaluationEvent';
+import { SourceId } from '../../lib/objects/sourceId';
+import { version } from '../../lib/objects/version';
 
 const test = anyTest as TestFn<{ bktClient: Bucketeer; targetedUser: User }>;
 
@@ -53,6 +55,11 @@ test('goal event', async (t) => {
   // SUM : 7 events
   t.is(events.length, 7);
   t.true(events.some((e: { event: any }) => isGoalEvent(e.event)));
+  t.true(
+    events.every(
+      (e) => e.event.sourceId === SourceId.NODE_SERVER && e.event.sdkVersion === version,
+    ),
+  );
 });
 
 test('evaluation event', async (t) => {
@@ -77,6 +84,11 @@ test('evaluation event', async (t) => {
   t.is(events.length, 16);
   t.true(events.some((e) => isEvaluationEvent(e.event)));
   t.true(events.some((e) => isMetricsEvent(e.event)));
+  t.true(
+    events.every(
+      (e) => e.event.sourceId === SourceId.NODE_SERVER && e.event.sdkVersion === version,
+    ),
+  );
 });
 
 test('default evaluation event', async (t) => {
@@ -101,6 +113,11 @@ test('default evaluation event', async (t) => {
   t.true(events.some((e) => isEvaluationEvent(e.event)));
   t.true(events.some((e) => isMetricsEvent(e.event)));
   t.true(events.some((e) => isErrorMetricsEvent(e.event, NOT_FOUND_ERROR_METRICS_EVENT_NAME)));
+  t.true(
+    events.every(
+      (e) => e.event.sourceId === SourceId.NODE_SERVER && e.event.sdkVersion === version,
+    ),
+  );
 });
 
 test.afterEach(async (t) => {
