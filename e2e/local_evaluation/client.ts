@@ -1,5 +1,5 @@
 import test from 'ava';
-import { initialize, DefaultLogger } from '../../lib';
+import { DefaultLogger, initializeBKTClient, defineBKTConfig } from '../../lib';
 import {
   HOST,
   TOKEN,
@@ -10,8 +10,6 @@ import {
 } from '../constants/constants';
 import { isMetricsEvent } from '../../lib/objects/metricsEvent';
 import { BKTClientImpl } from '../../lib/client';
-import { defineBKTConfig } from '../../src/config';
-import { initializeBKTClient } from '../../src';
 
 test('Using a random string in the api key setting should not throw exception', async (t) => {
   const config = defineBKTConfig({

@@ -1,5 +1,5 @@
 import anyTest, { TestFn } from 'ava';
-import { Bucketeer, DefaultLogger, User, initialize } from '../../lib';
+import { Bucketeer, DefaultLogger, User, initializeBKTClient, defineBKTConfig } from '../../lib';
 import {
   HOST,
   TOKEN,
@@ -18,8 +18,6 @@ import { BKTClientImpl } from '../../lib/client';
 import { isGoalEvent } from '../../lib/objects/goalEvent';
 import { isErrorMetricsEvent, isMetricsEvent } from '../../lib/objects/metricsEvent';
 import { isEvaluationEvent } from '../../lib/objects/evaluationEvent';
-import { defineBKTConfig } from '../../src/config';
-import { initializeBKTClient } from '../../src';
 
 const test = anyTest as TestFn<{ bktClient: Bucketeer; targetedUser: User }>;
 
@@ -85,20 +83,24 @@ test('default evaluation event', async (t) => {
   const { bktClient, targetedUser } = t.context;
   const notFoundFeatureId = 'not-found-feature-id';
   t.is(await bktClient.booleanVariation(targetedUser, notFoundFeatureId, true), true);
-  t.deepEqual(await bktClient.getJsonVariation(targetedUser, notFoundFeatureId, { "str": "str2", }), { "str": "str2" });
-  t.deepEqual(await bktClient.objectVariation(targetedUser, notFoundFeatureId, { "str": "str2" }), { "str": "str2" });
+  t.deepEqual(await bktClient.getJsonVariation(targetedUser, notFoundFeatureId, { str: 'str2' }), {
+    str: 'str2',
+  });
+  t.deepEqual(await bktClient.objectVariation(targetedUser, notFoundFeatureId, { str: 'str2' }), {
+    str: 'str2',
+  });
   t.is(await bktClient.numberVariation(targetedUser, notFoundFeatureId, 10), 10);
   t.is(await bktClient.numberVariation(targetedUser, notFoundFeatureId, 3.3), 3.3);
   t.is(await bktClient.stringVariation(targetedUser, notFoundFeatureId, 'value-9'), 'value-9');
-  const bktClientImpl = bktClient as BKTClientImpl
-  const events = bktClientImpl.eventStore.getAll()
+  const bktClientImpl = bktClient as BKTClientImpl;
+  const events = bktClientImpl.eventStore.getAll();
   // Feature Cache : 2 events (Metrics Event - Latency, Metrics Event - Metrics Size)
   // Segment User Cache : 2 events (Metrics Event - Latency, Metrics Event - Metrics Size)
   // (DefaultEvaluationEvent, Error Event) x 6
   t.is(events.length, 16);
-  t.true(events.some((e) => (isEvaluationEvent(e.event))));
-  t.true(events.some((e) => (isMetricsEvent(e.event))));
-  t.true(events.some((e) => (isErrorMetricsEvent(e.event, NOT_FOUND_ERROR_METRICS_EVENT_NAME))));
+  t.true(events.some((e) => isEvaluationEvent(e.event)));
+  t.true(events.some((e) => isMetricsEvent(e.event)));
+  t.true(events.some((e) => isErrorMetricsEvent(e.event, NOT_FOUND_ERROR_METRICS_EVENT_NAME)));
 });
 
 test.afterEach(async (t) => {

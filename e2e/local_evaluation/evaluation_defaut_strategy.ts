@@ -1,5 +1,11 @@
 import anyTest, { TestFn } from 'ava';
-import { Bucketeer, DefaultLogger, User, initialize } from '../../lib';
+import {
+  Bucketeer,
+  DefaultLogger,
+  User,
+  defineBKTConfig,
+  initializeBKTClient,
+} from '../../lib';
 import {
   HOST,
   SERVER_ROLE_TOKEN,
@@ -11,9 +17,6 @@ import {
   FEATURE_ID_FLOAT,
 } from '../constants/constants';
 import { assetEvaluationDetails } from '../utils/assert';
-import exp from 'constants';
-import { defineBKTConfig } from '../../lib/config';
-import { initializeBKTClient } from '../../src';
 
 const test = anyTest as TestFn<{ bktClient: Bucketeer; defaultUser: User }>;
 

@@ -1,5 +1,5 @@
 import test from 'ava';
-import { initialize, DefaultLogger } from '../lib';
+import { initializeBKTClient, defineBKTConfig, DefaultLogger } from '../lib';
 import {
   HOST,
   TOKEN,
@@ -10,8 +10,6 @@ import {
 import { MetricsEvent, isMetricsEvent } from '../lib/objects/metricsEvent';
 import { ApiId } from '../lib/objects/apiId';
 import { BKTClientImpl } from '../lib/client';
-import { defineBKTConfig } from '../src/config';
-import { initializeBKTClient } from '../src';
 
 const FORBIDDEN_ERROR_METRICS_EVENT_NAME =
   'type.googleapis.com/bucketeer.event.client.ForbiddenErrorMetricsEvent';
