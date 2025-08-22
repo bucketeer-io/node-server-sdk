@@ -18,19 +18,22 @@ import { BKTClientImpl } from '../../lib/client';
 import { isGoalEvent } from '../../lib/objects/goalEvent';
 import { isErrorMetricsEvent, isMetricsEvent } from '../../lib/objects/metricsEvent';
 import { isEvaluationEvent } from '../../lib/objects/evaluationEvent';
+import { defineBKTConfig } from '../../src/config';
+import { initializeBKTClient } from '../../src';
 
 const test = anyTest as TestFn<{ bktClient: Bucketeer; targetedUser: User }>;
 
 test.beforeEach(async (t) => {
+  const config = defineBKTConfig({
+    apiEndpoint: HOST,
+    apiKey: SERVER_ROLE_TOKEN,
+    featureTag: FEATURE_TAG,
+    logger: new DefaultLogger('error'),
+    enableLocalEvaluation: true,
+    cachePollingInterval: 3000,
+  });
   t.context = {
-    bktClient: initialize({
-      host: HOST,
-      token: SERVER_ROLE_TOKEN,
-      tag: FEATURE_TAG,
-      logger: new DefaultLogger('error'),
-      enableLocalEvaluation: true,
-      cachePollingInterval: 3000,
-    }),
+    bktClient: initializeBKTClient(config),
     targetedUser: { id: TARGETED_USER_ID, data: {} },
   };
   // Waiting for the cache available
@@ -82,8 +85,8 @@ test('default evaluation event', async (t) => {
   const { bktClient, targetedUser } = t.context;
   const notFoundFeatureId = 'not-found-feature-id';
   t.is(await bktClient.booleanVariation(targetedUser, notFoundFeatureId, true), true);
-  t.deepEqual(await bktClient.getJsonVariation(targetedUser, notFoundFeatureId, { "str": "str2",}), { "str": "str2" });
-  t.deepEqual(await bktClient.objectVariation(targetedUser, notFoundFeatureId, { "str": "str2" }),  { "str": "str2" });
+  t.deepEqual(await bktClient.getJsonVariation(targetedUser, notFoundFeatureId, { "str": "str2", }), { "str": "str2" });
+  t.deepEqual(await bktClient.objectVariation(targetedUser, notFoundFeatureId, { "str": "str2" }), { "str": "str2" });
   t.is(await bktClient.numberVariation(targetedUser, notFoundFeatureId, 10), 10);
   t.is(await bktClient.numberVariation(targetedUser, notFoundFeatureId, 3.3), 3.3);
   t.is(await bktClient.stringVariation(targetedUser, notFoundFeatureId, 'value-9'), 'value-9');

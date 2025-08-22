@@ -2,21 +2,24 @@ import anyTest, { TestFn } from 'ava';
 import { Bucketeer, DefaultLogger, User, initialize } from '../../lib';
 import { HOST, FEATURE_TAG, TARGETED_USER_ID, FEATURE_ID_BOOLEAN, FEATURE_ID_STRING, FEATURE_ID_INT, FEATURE_ID_JSON, FEATURE_ID_FLOAT, SERVER_ROLE_TOKEN } from '../constants/constants';
 import { assetEvaluationDetails } from '../utils/assert';
+import { initializeBKTClient } from '../../src';
+import { defineBKTConfig } from '../../lib/config';
 
 const test = anyTest as TestFn<{ bktClient: Bucketeer; targetedUser: User }>;
 
-test.before( async (t) => {
+test.before(async (t) => {
+  const config = defineBKTConfig({
+    apiEndpoint: HOST,
+    apiKey: SERVER_ROLE_TOKEN,
+    featureTag: FEATURE_TAG,
+    logger: new DefaultLogger('error'),
+    enableLocalEvaluation: true,
+    cachePollingInterval: 3000,
+  });
   t.context = {
-    bktClient: initialize({
-      host: HOST,
-      token: SERVER_ROLE_TOKEN,
-      tag: FEATURE_TAG,
-      logger: new DefaultLogger('error'),
-      enableLocalEvaluation: true,
-      cachePollingInterval: 3000,
-    }),
+    bktClient: initializeBKTClient(config),
     targetedUser: { id: TARGETED_USER_ID, data: {} },
-  };   
+  };
 
   await new Promise(resolve => {
     setTimeout(resolve, 5000);

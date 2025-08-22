@@ -1,13 +1,14 @@
 import { http, HttpResponse } from 'msw';
 import { SetupServer } from 'msw/node';
 import anyTest, { TestFn } from 'ava';
-import { Bucketeer, initialize } from '..';
+import { Bucketeer, initialize, initializeBKTClient } from '..';
 import { Config, User } from '../bootstrap';
 import { DefaultLogger } from '../logger';
 import { setupServerAndListen } from './utils/setup_server';
 import { GetEvaluationResponse } from '../objects/response';
 import { GetEvaluationRequest } from '../objects/request';
 import { newDefaultBKTEvaluationDetails } from '../evaluationDetails';
+import { BKTConfig, defineBKTConfig } from '../config';
 
 const scheme = 'https://';
 const host = 'api.bucketeer.io';
@@ -16,19 +17,19 @@ const evaluationAPI = `${scheme}${host}/get_evaluation`;
 const test = anyTest as TestFn<{
   bktClient: Bucketeer;
   targetedUser: User;
-  config: Config;
+  config: BKTConfig;
   server: SetupServer;
 }>;
 
 test.before((t) => {
-  const config = {
-    host: 'api.bucketeer.io',
-    token: 'api_key_value',
-    tag: 'feature_tag_value',
+  const config = defineBKTConfig({
+    apiEndpoint: 'api.bucketeer.io',
+    apiKey: 'api_key_value',
+    featureTag: 'feature_tag_value',
     logger: new DefaultLogger('error'),
-  };
+  });
   t.context = {
-    bktClient: initialize(config),
+    bktClient: initializeBKTClient(config),
     targetedUser: { id: 'user_id', data: {} },
     config: config,
     server: setupServerAndListen(),
