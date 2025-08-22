@@ -28,7 +28,7 @@ export interface BuildInfo {
   readonly GIT_REVISION: string;
 }
 
-export { Config } from './config';
+export { Config, BKTConfig, defineBKTConfig } from './config';
 
 export { Logger, DefaultLogger } from './logger';
 
