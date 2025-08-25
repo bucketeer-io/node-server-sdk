@@ -1,25 +1,26 @@
 import anyTest, { TestFn } from 'ava';
-import { Bucketeer, initialize } from '..';
+import { Bucketeer, initialize, initializeBKTClient } from '..';
 import { Config, User } from '../bootstrap';
 import { DefaultLogger } from '../logger';
 import { newDefaultBKTEvaluationDetails } from '../evaluationDetails';
 import { BKTClientImpl } from '../client';
+import { BKTConfig, defineBKTConfig } from '../config';
 
 const test = anyTest as TestFn<{
   bktClient: Bucketeer;
   targetedUser: User;
-  config: Config;
+  config: BKTConfig;
 }>;
 
 test.beforeEach((t) => {
-  const config = {
-    host: 'api.bucketeer.io',
-    token: 'api_key_value',
-    tag: 'feature_tag_value',
+  const config = defineBKTConfig({
+    apiEndpoint: 'api.bucketeer.io',
+    apiKey: 'api_key_value',
+    featureTag: 'feature_tag_value',
     logger: new DefaultLogger('expected'),
-  };
+  });
   t.context = {
-    bktClient: initialize(config),
+    bktClient: initializeBKTClient(config),
     targetedUser: { id: 'user_id', data: {} },
     config: config,
   };
@@ -36,7 +37,12 @@ const testCases = [
     description: 'return default value when userID is empty',
     featureId: 'stringEvaluationDetails',
     user: { id: '', data: {} },
-    expected: newDefaultBKTEvaluationDetails('', 'stringEvaluationDetails', 'default-test', 'DEFAULT'),
+    expected: newDefaultBKTEvaluationDetails(
+      '',
+      'stringEvaluationDetails',
+      'default-test',
+      'DEFAULT',
+    ),
   },
   {
     description: 'return default value when userID & featureID is empty',
@@ -105,10 +111,17 @@ for (const testCase of testCases) {
 
     t.deepEqual(
       // Type cast for simulate the case where the user object is null when passed from JavaScript code.
-      await client.stringVariationDetails(testCase.user as User, testCase.featureId as string, 'default-test'),
+      await client.stringVariationDetails(
+        testCase.user as User,
+        testCase.featureId as string,
+        'default-test',
+      ),
       testCase.expected,
     );
-    t.true(clientImpl.eventStore.size() == 0, 'eventStore should be empty and not contain any error events');
+    t.true(
+      clientImpl.eventStore.size() == 0,
+      'eventStore should be empty and not contain any error events',
+    );
   });
 }
 

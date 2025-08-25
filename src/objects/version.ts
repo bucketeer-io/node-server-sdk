@@ -1,1 +1,1 @@
-export const version: string = require('../../package.json').version;
+export const nodeSDKVersion: string = require('../../package.json').version;

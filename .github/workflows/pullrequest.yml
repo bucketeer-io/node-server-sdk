@@ -65,7 +65,9 @@ jobs:
       - name: Format
         run: make fmt
       - name: Lint
-        run: make lint
+        run: |
+          make lint
+          make test-eslint
 
   unit-test:
     name: Unit test
