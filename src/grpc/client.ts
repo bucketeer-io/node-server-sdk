@@ -9,7 +9,6 @@ import {
 import { grpc } from '@improbable-eng/grpc-web';
 import { NodeHttpTransport } from '@improbable-eng/grpc-web-node-http-transport';
 import { SourceId } from '../objects/sourceId';
-import { version } from '../objects/version';
 import { InvalidStatusError } from '../objects/errors';
 
 interface GRPCClient {
@@ -18,8 +17,9 @@ interface GRPCClient {
       segmentIdsList: Array<string>,
       requestedAt: number,
       sourceId: SourceId,
+      sdkVersion: string,
     }
-  ): Promise<GetSegmentUsersResponse> 
+  ): Promise<GetSegmentUsersResponse>
 
   getFeatureFlags(
     options: {
@@ -27,6 +27,7 @@ interface GRPCClient {
       featureFlagsId: string,
       requestedAt: number,
       sourceId: SourceId,
+      sdkVersion: string,
     }
   ): Promise<GetFeatureFlagsResponse>
 }
@@ -58,13 +59,14 @@ class DefaultGRPCClient {
       segmentIdsList: Array<string>,
       requestedAt: number,
       sourceId: SourceId,
+      sdkVersion: string,
     }
   ): Promise<GetSegmentUsersResponse> {
     const req = new GetSegmentUsersRequest();
     req.setSegmentIdsList(options.segmentIdsList);
     req.setRequestedAt(options.requestedAt);
     req.setSourceId(options.sourceId);
-    req.setSdkVersion(version);
+    req.setSdkVersion(options.sdkVersion);
 
     return new Promise((resolve, reject) => {
       this.client.getSegmentUsers(req, this.getMetadata(), (err, res) => {
@@ -87,6 +89,7 @@ class DefaultGRPCClient {
       featureFlagsId: string,
       requestedAt: number,
       sourceId: SourceId,
+      sdkVersion: string,
     }
   ): Promise<GetFeatureFlagsResponse> {
     const req = new GetFeatureFlagsRequest();
@@ -94,7 +97,7 @@ class DefaultGRPCClient {
     req.setFeatureFlagsId(options.featureFlagsId);
     req.setRequestedAt(options.requestedAt);
     req.setSourceId(options.sourceId);
-    req.setSdkVersion(version);
+    req.setSdkVersion(options.sdkVersion);
 
     return new Promise((resolve, reject) => {
       this.client.getFeatureFlags(req, this.getMetadata(), (err, res) => {
@@ -119,23 +122,23 @@ function convertSerivceError(err: ServiceError): InvalidStatusError {
 function grpcToRestStatus(grpcCode: number): number {
   // https://grpc.github.io/grpc/core/md_doc_statuscodes.html
   const grpcToRestMap: { [key: number]: number } = {
-      0: 200, // OK
-      1: 499, // CANCELLED
-      2: 500, // UNKNOWN
-      3: 400, // INVALID_ARGUMENT
-      4: 504, // DEADLINE_EXCEEDED
-      5: 404, // NOT_FOUND
-      6: 409, // ALREADY_EXISTS
-      7: 403, // PERMISSION_DENIED
-      8: 429, // RESOURCE_EXHAUSTED
-      9: 400, // FAILED_PRECONDITION
-      10: 409, // ABORTED
-      11: 400, // OUT_OF_RANGE
-      12: 501, // UNIMPLEMENTED
-      13: 500, // INTERNAL
-      14: 503, // UNAVAILABLE
-      15: 500, // DATA_LOSS
-      16: 401  // UNAUTHENTICATED
+    0: 200, // OK
+    1: 499, // CANCELLED
+    2: 500, // UNKNOWN
+    3: 400, // INVALID_ARGUMENT
+    4: 504, // DEADLINE_EXCEEDED
+    5: 404, // NOT_FOUND
+    6: 409, // ALREADY_EXISTS
+    7: 403, // PERMISSION_DENIED
+    8: 429, // RESOURCE_EXHAUSTED
+    9: 400, // FAILED_PRECONDITION
+    10: 409, // ABORTED
+    11: 400, // OUT_OF_RANGE
+    12: 501, // UNIMPLEMENTED
+    13: 500, // INTERNAL
+    14: 503, // UNAVAILABLE
+    15: 500, // DATA_LOSS
+    16: 401  // UNAUTHENTICATED
   };
 
   return grpcToRestMap[grpcCode] || 500; // Default to 500 if gRPC code is unrecognized

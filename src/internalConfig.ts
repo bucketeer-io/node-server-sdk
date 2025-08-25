@@ -1,7 +1,7 @@
 import { BKTConfig } from './config';
 import { IllegalArgumentError } from './objects/errors';
 import { SourceId, sourceIdFromNumber } from './objects/sourceId';
-import { version } from './objects/version';
+import { nodeSDKVersion } from './objects/version';
 
 // The internal config is used for the SDK's internal use only
 // and should not be exposed to the user.
@@ -60,7 +60,7 @@ function resolveSDKVersion(
     }
     throw new IllegalArgumentError('Config is missing wrapperSdkVersion')
   }
-  return version
+  return nodeSDKVersion
 }
 
 export {

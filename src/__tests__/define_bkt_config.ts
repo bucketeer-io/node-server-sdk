@@ -3,8 +3,8 @@ import { defineBKTConfig } from '../config';
 import { IllegalArgumentError } from '../objects/errors';
 import { InternalConfig } from '../internalConfig';
 import { SourceId } from '../objects/sourceId';
-import { version } from '../objects/version';
 import { DefaultLogger } from '../logger';
+import { nodeSDKVersion } from '../objects/version';
 
 // 1. Validation error tests
 test('should throw if apiKey is missing', t => {
@@ -147,7 +147,7 @@ test('should set sourceId and sdkVersion internally', t => {
   t.truthy(config.sdkVersion); // Should be set
   t.is(typeof config.sourceId, 'number'); // SourceId is a number
   t.is(typeof config.sdkVersion, 'string'); // Version is a string
-  t.is(config.sdkVersion, version); // Should match appVersion
+  t.is(config.sdkVersion, nodeSDKVersion); // Should match appVersion
   t.is(config.sourceId, SourceId.NODE_SERVER); // Default SourceId.NODE_SERVER
 });
 

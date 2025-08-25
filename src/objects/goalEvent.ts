@@ -4,7 +4,6 @@ import { SourceId } from './sourceId';
 import { User } from './user';
 
 const GOAL_EVENT_NAME = 'type.googleapis.com/bucketeer.event.client.GoalEvent';
-const version: string = require('../../package.json').version;
 
 export function createGoalEvent(
   tag: string,
@@ -12,6 +11,7 @@ export function createGoalEvent(
   user: User,
   value: number,
   sourceId: SourceId,
+  sdkVersion: string,
 ): Event {
   const goalEvent: GoalEvent = {
     tag,
@@ -21,7 +21,7 @@ export function createGoalEvent(
     sourceId: sourceId,
     timestamp: createTimestamp(),
     userId: user.id,
-    sdkVersion: version,
+    sdkVersion: sdkVersion,
     metadata: {},
     '@type': GOAL_EVENT_NAME,
   };

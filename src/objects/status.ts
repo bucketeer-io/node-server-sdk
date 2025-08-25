@@ -91,6 +91,7 @@ export function createBadRequestErrorMetricsEvent(
   tag: string,
   apiId: NodeApiIds,
   sourceId: SourceId,
+  sdkVersion: string,
 ) {
   const internalErrorMetricsEvent: BadRequestErrorMetricsEvent = {
     apiId,
@@ -99,7 +100,7 @@ export function createBadRequestErrorMetricsEvent(
     },
     '@type': BAD_REQUEST_ERROR_METRICS_EVENT_NAME,
   };
-  const metricsEvent = createMetricsEvent(internalErrorMetricsEvent, sourceId);
+  const metricsEvent = createMetricsEvent(internalErrorMetricsEvent, sourceId, sdkVersion);
   return createEvent(metricsEvent);
 }
 
@@ -107,6 +108,7 @@ export function createUnauthorizedErrorMetricsEvent(
   tag: string,
   apiId: NodeApiIds,
   sourceId: SourceId,
+  sdkVersion: string,
 ) {
   const internalErrorMetricsEvent: UnauthorizedErrorMetricsEvent = {
     apiId,
@@ -115,7 +117,7 @@ export function createUnauthorizedErrorMetricsEvent(
     },
     '@type': UNAUTHORIZED_ERROR_METRICS_EVENT_NAME,
   };
-  const metricsEvent = createMetricsEvent(internalErrorMetricsEvent, sourceId);
+  const metricsEvent = createMetricsEvent(internalErrorMetricsEvent, sourceId, sdkVersion);
   return createEvent(metricsEvent);
 }
 
@@ -123,6 +125,7 @@ export function createForbiddenErrorMetricsEvent(
   tag: string,
   apiId: NodeApiIds,
   sourceId: SourceId,
+  sdkVersion: string,
 ) {
   const internalErrorMetricsEvent: ForbiddenErrorMetricsEvent = {
     apiId,
@@ -131,7 +134,7 @@ export function createForbiddenErrorMetricsEvent(
     },
     '@type': FORBIDDEN_ERROR_METRICS_EVENT_NAME,
   };
-  const metricsEvent = createMetricsEvent(internalErrorMetricsEvent, sourceId);
+  const metricsEvent = createMetricsEvent(internalErrorMetricsEvent, sourceId, sdkVersion);
   return createEvent(metricsEvent);
 }
 
@@ -139,6 +142,7 @@ export function createNotFoundErrorMetricsEvent(
   tag: string,
   apiId: NodeApiIds,
   sourceId: SourceId,
+  sdkVersion: string,
 ) {
   const internalErrorMetricsEvent: NotFoundErrorMetricsEvent = {
     apiId,
@@ -147,7 +151,7 @@ export function createNotFoundErrorMetricsEvent(
     },
     '@type': NOT_FOUND_ERROR_METRICS_EVENT_NAME,
   };
-  const metricsEvent = createMetricsEvent(internalErrorMetricsEvent, sourceId);
+  const metricsEvent = createMetricsEvent(internalErrorMetricsEvent, sourceId, sdkVersion);
   return createEvent(metricsEvent);
 }
 
@@ -155,6 +159,7 @@ export function createClientClosedRequestErrorMetricsEvent(
   tag: string,
   apiId: NodeApiIds,
   sourceId: SourceId,
+  sdkVersion: string,
 ) {
   const internalErrorMetricsEvent: ClientClosedRequestErrorMetricsEvent = {
     apiId,
@@ -163,7 +168,7 @@ export function createClientClosedRequestErrorMetricsEvent(
     },
     '@type': CLIENT_CLOSED_REQUEST_ERROR_METRICS_EVENT_NAME,
   };
-  const metricsEvent = createMetricsEvent(internalErrorMetricsEvent, sourceId);
+  const metricsEvent = createMetricsEvent(internalErrorMetricsEvent, sourceId, sdkVersion);
   return createEvent(metricsEvent);
 }
 
@@ -171,6 +176,7 @@ export function createInternalServerErrorMetricsEvent(
   tag: string,
   apiId: NodeApiIds,
   sourceId: SourceId,
+  sdkVersion: string,
 ) {
   const internalErrorMetricsEvent: InternalServerErrorMetricsEvent = {
     apiId,
@@ -179,7 +185,7 @@ export function createInternalServerErrorMetricsEvent(
     },
     '@type': INTERNAL_SERVER_ERROR_METRICS_EVENT_NAME,
   };
-  const metricsEvent = createMetricsEvent(internalErrorMetricsEvent, sourceId);
+  const metricsEvent = createMetricsEvent(internalErrorMetricsEvent, sourceId, sdkVersion);
   return createEvent(metricsEvent);
 }
 
@@ -187,6 +193,7 @@ export function createServiceUnavailableErrorMetricsEvent(
   tag: string,
   apiId: NodeApiIds,
   sourceId: SourceId,
+  sdkVersion: string,
 ) {
   const internalErrorMetricsEvent: ServiceUnavailableErrorMetricsEvent = {
     apiId,
@@ -195,7 +202,7 @@ export function createServiceUnavailableErrorMetricsEvent(
     },
     '@type': SERVICE_UNAVAILABLE_ERROR_METRICS_EVENT_NAME,
   };
-  const metricsEvent = createMetricsEvent(internalErrorMetricsEvent, sourceId);
+  const metricsEvent = createMetricsEvent(internalErrorMetricsEvent, sourceId, sdkVersion);
   return createEvent(metricsEvent);
 }
 
@@ -204,6 +211,7 @@ export function createRedirectRequestErrorMetricsEvent(
   apiId: NodeApiIds,
   statusCode: number,
   sourceId: SourceId,
+  sdkVersion: string,
 ) {
   const redirectRequestErrorMetricsEvent: RedirectRequestErrorMetricsEvent = {
     apiId,
@@ -213,7 +221,7 @@ export function createRedirectRequestErrorMetricsEvent(
     },
     '@type': REDIRECT_REQUEST_ERROR_METRICS_EVENT_NAME,
   };
-  const metricsEvent = createMetricsEvent(redirectRequestErrorMetricsEvent, sourceId);
+  const metricsEvent = createMetricsEvent(redirectRequestErrorMetricsEvent, sourceId, sdkVersion);
   return createEvent(metricsEvent);
 }
 
@@ -221,6 +229,7 @@ export function createPayloadTooLargeErrorMetricsEvent(
   tag: string,
   apiId: NodeApiIds,
   sourceId: SourceId,
+  sdkVersion: string,
 ) {
   const payloadTooLargeMetricsEvent: PayLoadTooLargetErrorMetricsEvent = {
     apiId,
@@ -229,7 +238,7 @@ export function createPayloadTooLargeErrorMetricsEvent(
     },
     '@type': PAYLOAD_TOO_LARGE_ERROR_METRICS_EVENT_NAME,
   };
-  const metricsEvent = createMetricsEvent(payloadTooLargeMetricsEvent, sourceId);
+  const metricsEvent = createMetricsEvent(payloadTooLargeMetricsEvent, sourceId, sdkVersion);
   return createEvent(metricsEvent);
 }
 
