@@ -27,6 +27,7 @@ test('polling cache', async (t) => {
   const clock = new Clock();
   const featureTag = 'featureTag';
   const sourceId = SourceId.OPEN_FEATURE_NODE;
+  const sdkVersion = '0.1.0';
 
   const options = {
     cache,
@@ -37,6 +38,7 @@ test('polling cache', async (t) => {
     featureTag: featureTag,
     clock,
     sourceId: sourceId,
+    sdkVersion: sdkVersion,
   };
 
   const mockClock = sino.mock(clock);

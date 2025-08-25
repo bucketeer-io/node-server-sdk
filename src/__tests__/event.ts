@@ -567,7 +567,7 @@ test('createInternalSdkErrorMetricsEvent with errorMessage', (t) => {
       },
       '@type': INTERNAL_SDK_ERROR_METRICS_EVENT_NAME,
     };
-    const actual = createInternalSdkErrorMetricsEvent(tag, apiId, sourceId, 'internal error');
+    const actual = createInternalSdkErrorMetricsEvent(tag, apiId, sourceId, sdkVersion, 'internal error');
     const metrics = actual.event as MetricsEvent;
     t.deepEqual(metrics.event, expectedEvent);
   }

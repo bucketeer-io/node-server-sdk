@@ -37,6 +37,7 @@ class SpyGRPCCLient implements GRPCClient {
     requestedAt: number;
     version: string;
     sourceId: SourceId;
+    sdkVersion: string;
   }): Promise<GetSegmentUsersResponse> {
 
     this.getSegementUsersRequest = options
@@ -56,6 +57,7 @@ class SpyGRPCCLient implements GRPCClient {
     requestedAt: number;
     version: string;
     sourceId: SourceId;
+    sdkVersion: string;
   }): Promise<GetFeatureFlagsResponse> {
 
     this.getFeatureFlagsRequest = options
@@ -101,6 +103,7 @@ test('polling cache - using InMemoryCache()', async (t) => {
     featureTag: featureFlag,
     clock: clock,
     sourceId: sourceId,
+    sdkVersion: '2.0.1',
   });
 
   processor.start();
@@ -124,5 +127,6 @@ test('polling cache - using InMemoryCache()', async (t) => {
     featureFlagsId: 'featureFlagsId',
     requestedAt: 1000,
     sourceId: sourceId,
+    sdkVersion: '2.0.1',
   });
 });

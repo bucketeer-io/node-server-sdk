@@ -36,6 +36,7 @@ test.beforeEach((t) => {
   const clock = new Clock();
   const segmentUsersCache = NewSegmentUsersCache({ cache: cache, ttl: SEGEMENT_USERS_CACHE_TTL });
   const sourceId = SourceId.OPEN_FEATURE_NODE;
+  const sdkVersion = '10.1.1';
   const options = {
     cache: cache,
     segmentUsersCache: segmentUsersCache,
@@ -44,6 +45,7 @@ test.beforeEach((t) => {
     eventEmitter: eventEmitter,
     clock: clock,
     sourceId: sourceId,
+    sdkVersion: sdkVersion,
   } satisfies SegementUsersCacheProcessorOptions;
 
   const singleSegementUsers = new SegmentUsers();
@@ -132,6 +134,7 @@ test('err: failed while putting requestedAt, and the forceUpdate is true', async
     segmentIdsList: ['segment-id'],
     requestedAt: 10,
     sourceId: options.sourceId,
+    sdkVersion: options.sdkVersion,
   }).resolves(response);
   
   const mockProcessorEventsEmitter = sandbox.mock(options.eventEmitter);
@@ -188,6 +191,7 @@ test('err: failed while putting requestedAt, and the forceUpdate is false', asyn
     segmentIdsList: ['segment-id'],
     requestedAt: 10,
     sourceId: options.sourceId,
+    sdkVersion: options.sdkVersion,
   }).resolves(response);
   
   const mockProcessorEventsEmitter = sandbox.mock(options.eventEmitter);
@@ -241,6 +245,7 @@ test('success: get segment IDs not found', async (t) => {
     segmentIdsList: [],
     requestedAt: 10,
     sourceId: options.sourceId,
+    sdkVersion: options.sdkVersion,
   }).resolves(response);
   
   const mockProcessorEventsEmitter = sandbox.mock(options.eventEmitter);
@@ -286,6 +291,7 @@ test('success: requestedAt not found', async (t) => {
     segmentIdsList: ['segment-id'],
     requestedAt: 0,
     sourceId: options.sourceId,
+    sdkVersion: options.sdkVersion,
   }).resolves(response);
   
   const mockProcessorEventsEmitter = sandbox.mock(options.eventEmitter);
@@ -331,6 +337,7 @@ test('success: force update is true', async (t) => {
     segmentIdsList: ['segment-id'],
     requestedAt: 10,
     sourceId: options.sourceId,
+    sdkVersion: options.sdkVersion,
   }).resolves(response);
   
   const mockProcessorEventsEmitter = sandbox.mock(options.eventEmitter);
@@ -376,6 +383,7 @@ test('success: force update is false', async (t) => {
     segmentIdsList: ['segment-id'],
     requestedAt: 10,
     sourceId: options.sourceId,
+    sdkVersion: options.sdkVersion,
   }).resolves(response);
   
   const mockProcessorEventsEmitter = sandbox.mock(options.eventEmitter);

@@ -38,6 +38,7 @@ test.beforeEach((t) => {
   const clock = new Clock();
   const featureFlagCache = NewFeatureCache({ cache: cache, ttl: FEATURE_FLAG_CACHE_TTL });
   const sourceId = SourceId.NODE_SERVER;
+  const sdkVersion = '5.3.1';
   const options = {
     cache: cache,
     featureFlagCache: featureFlagCache,
@@ -47,6 +48,7 @@ test.beforeEach((t) => {
     featureTag: 'nodejs',
     clock: clock,
     sourceId: sourceId,
+    sdkVersion: sdkVersion,
   };
   const singleFeature = createFeature({ id: 'feature-flag-id-2' });
   const archivedFeatureIds = ['feature-flags-id-3',
@@ -115,6 +117,7 @@ test('err: failed while requesting cache from the server', async (t) => {
       featureFlagsId: '',
       requestedAt: 0,
       sourceId: options.sourceId,
+      sdkVersion: options.sdkVersion,
     })
     .throws(error);
   mockProcessorEventsEmitter
@@ -156,6 +159,7 @@ test('err: failed while putting featureFlagsID, and the forceUpdate is true', as
       featureFlagsId: 'feature-flags-id-1',
       requestedAt: 10,
       sourceId: options.sourceId,
+      sdkVersion: options.sdkVersion,
     })
     .returns(response);
 
@@ -218,6 +222,7 @@ test('err: failed while putting requestedAt, and the forceUpdate is true', async
       featureFlagsId: 'feature-flags-id-1',
       requestedAt: 10,
       sourceId: options.sourceId,
+      sdkVersion: options.sdkVersion,
     })
     .returns(response);
 
@@ -279,6 +284,7 @@ test('err: failed while putting featureFlagsID, and the forceUpdate is false', a
       featureFlagsId: 'feature-flags-id-1',
       requestedAt: 10,
       sourceId: options.sourceId,
+      sdkVersion: options.sdkVersion,
     })
     .returns(response);
 
@@ -339,6 +345,7 @@ test('err: failed while putting requestedAt, and the forceUpdate is false', asyn
       featureFlagsId: 'feature-flags-id-1',
       requestedAt: 10,
       sourceId: options.sourceId,
+      sdkVersion: options.sdkVersion,
     })
     .returns(response);
 
@@ -396,6 +403,7 @@ test('success: featureFlagsID not found', async (t) => {
       featureFlagsId: '',
       requestedAt: 10,
       sourceId: options.sourceId,
+      sdkVersion: options.sdkVersion,
     })
     .returns(response);
 
@@ -439,6 +447,7 @@ test('success: requestedAt not found', async (t) => {
       featureFlagsId: 'feature-flags-id-1',
       requestedAt: 0,
       sourceId: options.sourceId,
+      sdkVersion: options.sdkVersion,
     })
     .returns(response);
 
@@ -486,6 +495,7 @@ test('success: forceUpdate is true', async (t) => {
       featureFlagsId: 'feature-flags-id-1',
       requestedAt: 10,
       sourceId: options.sourceId,
+      sdkVersion: options.sdkVersion,
     })
     .returns(response);
 
@@ -539,6 +549,7 @@ test('success: forceUpdate is false', async (t) => {
       featureFlagsId: 'feature-flags-id-1',
       requestedAt: 10,
       sourceId: options.sourceId,
+      sdkVersion: options.sdkVersion,
     })
     .returns(response);
 
