@@ -2,7 +2,7 @@ import test from 'ava';
 import { convertConfigToBKTConfig } from '../config';
 import { DefaultLogger } from '../logger';
 import { SourceId } from '../objects/sourceId';
-import { version } from '../objects/version';
+import { nodeSDKVersion } from '../objects/version';
 
 test('should convert Config to BKTConfig with defaults', t => {
   const config = {
@@ -61,5 +61,5 @@ test('should include sourceId and sdkVersion in the converted config', t => {
   const bktConfig = convertConfigToBKTConfig(config);
 
   t.is(bktConfig.sourceId, SourceId.NODE_SERVER); // Default sourceId
-  t.is(bktConfig.sdkVersion, version); // Default SDK version
+  t.is(bktConfig.sdkVersion, nodeSDKVersion); // Default SDK version
 });

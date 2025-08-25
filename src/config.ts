@@ -2,7 +2,7 @@ import { InternalConfig, resolveSDKVersion, resolveSourceId } from './internalCo
 import { DefaultLogger, Logger } from './logger';
 import { IllegalArgumentError } from './objects/errors';
 import { SourceId } from './objects/sourceId';
-import { version } from './objects/version';
+import { nodeSDKVersion } from './objects/version';
 
 /**
  * @deprecated use BKTConfig instead
@@ -208,7 +208,7 @@ const convertConfigToBKTConfig = (config: Config): InternalConfig => {
     wrapperSdkSourceId: undefined, // Not applicable in Config
     // Resolve sourceId and sdkVersion
     sourceId: SourceId.NODE_SERVER, // Default sourceId
-    sdkVersion: version, // Default SDK version
+    sdkVersion: nodeSDKVersion, // Default SDK version
   };
 };
 

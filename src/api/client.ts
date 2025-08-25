@@ -4,7 +4,6 @@ import { Event } from '../objects/event';
 import { SourceId } from '../objects/sourceId';
 import { GetEvaluationRequest, RegisterEventsRequest } from '../objects/request';
 import { GetEvaluationResponse, RegisterEventsResponse } from '../objects/response';
-import { version } from '../objects/version';
 import { InvalidStatusError } from '../objects/errors';
 
 const scheme = 'https://';
@@ -24,14 +23,15 @@ export class APIClient {
     tag: string,
     user: User,
     featureId: string,
-    sourceId: SourceId
+    sourceId: SourceId,
+    sdkVersion: string,
   ): Promise<[GetEvaluationResponse, number]> {
     const req: GetEvaluationRequest = {
       tag,
       user,
       featureId,
       sourceId: sourceId,
-      sdkVersion: version,
+      sdkVersion: sdkVersion,
     };
     const chunk = JSON.stringify(req);
     const url = scheme.concat(this.host, evaluationAPI);
@@ -53,11 +53,12 @@ export class APIClient {
 
   registerEvents(
     events: Array<Event>,
-    sourceId: SourceId
+    sourceId: SourceId,
+    sdkVersion: string,
   ): Promise<[RegisterEventsResponse, number]> {
     const req: RegisterEventsRequest = {
       events,
-      sdkVersion: version,
+      sdkVersion: sdkVersion,
       sourceId: sourceId,
     };
     const chunk = JSON.stringify(req);

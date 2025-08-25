@@ -4,7 +4,6 @@ import { Event, createEvent } from './event';
 import { Reason } from './reason';
 import { SourceId } from './sourceId';
 import { User } from './user';
-import { version } from './version';
 
 const EVALUATION_EVENT_NAME = 'type.googleapis.com/bucketeer.event.client.EvaluationEvent';
 
@@ -13,6 +12,7 @@ export function createEvaluationEvent(
   user: User,
   evaluation: Evaluation,
   sourceId: SourceId,
+  sdkVersion: string,
 ): Event {
   const evaluationEvent: EvaluationEvent = {
     tag,
@@ -24,7 +24,7 @@ export function createEvaluationEvent(
     variationId: evaluation.variationId,
     sourceId: sourceId,
     reason: evaluation.reason,
-    sdkVersion: version,
+    sdkVersion: sdkVersion,
     metadata: {},
     '@type': EVALUATION_EVENT_NAME,
   };
@@ -51,6 +51,7 @@ export function createDefaultEvaluationEvent(
   user: User,
   featureId: string,
   sourceId: SourceId,
+  sdkVersion: string,
 ): Event {
   const evaluationEvent: EvaluationEvent = {
     tag,
@@ -65,7 +66,7 @@ export function createDefaultEvaluationEvent(
       type: 'CLIENT',
     },
     '@type': EVALUATION_EVENT_NAME,
-    sdkVersion: version,
+    sdkVersion: sdkVersion,
     metadata: {},
   };
   return createEvent(evaluationEvent);

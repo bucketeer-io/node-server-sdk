@@ -40,8 +40,6 @@ import {
   createUnauthorizedErrorMetricsEvent,
 } from '../objects/status';
 
-const version: string = require('../../package.json').version;
-
 const GOAL_EVENT_NAME = 'type.googleapis.com/bucketeer.event.client.GoalEvent';
 const EVALUATION_EVENT_NAME = 'type.googleapis.com/bucketeer.event.client.EvaluationEvent';
 const METRICS_EVENT_NAME = 'type.googleapis.com/bucketeer.event.client.MetricsEvent';
@@ -85,7 +83,7 @@ const defaultSourceId = SourceId.NODE_SERVER;
 const sourceIds = Object.values(SourceId);
 
 const userId = user.id;
-const sdkVersion = version;
+const sdkVersion = '3.1.2-test';
 const metadata = {};
 const featureId = 'featureId';
 const reason: Reason = {
@@ -120,6 +118,7 @@ test('createGoalEvent', (t) => {
       user,
       goalEvent.value,
       sourceId,
+      sdkVersion,
     );
     t.true(isGoalEvent(goalEvent));
     t.true(isGoalEvent(actual.event));
@@ -180,7 +179,7 @@ test('createEvaluationEvent', (t) => {
       variationValue,
       variationName,
     };
-    const actual = createEvaluationEvent(tag, user, evaluation, sourceId);
+    const actual = createEvaluationEvent(tag, user, evaluation, sourceId, sdkVersion);
     t.true(isEvaluationEvent(actual.event));
     t.deepEqual(actual.event, evaluationEvent);
   }
@@ -241,7 +240,7 @@ test('createDefaultEvaluationEvent', (t) => {
     sdkVersion,
     metadata,
   };
-  const actual = createDefaultEvaluationEvent(tag, user, featureId, defaultSourceId);
+  const actual = createDefaultEvaluationEvent(tag, user, featureId, defaultSourceId, sdkVersion);
   t.deepEqual(actual.event, evaluationEvent);
 });
 
@@ -255,11 +254,11 @@ test('createLatencyMetricsEvent', (t) => {
       },
       '@type': LATENCY_METRICS_EVENT_NAME,
     };
-    const actual = createLatencyMetricsEvent(tag, second, apiId, sourceId);
+    const actual = createLatencyMetricsEvent(tag, second, apiId, sourceId, sdkVersion);
     const metrics = actual.event as MetricsEvent;
     t.is(metrics['@type'], METRICS_EVENT_NAME);
     t.is(metrics.sourceId, sourceId);
-    t.is(metrics.sdkVersion, version);
+    t.is(metrics.sdkVersion, sdkVersion);
     t.deepEqual(metrics.metadata, {});
     t.deepEqual(metrics.event, getEvaluationLatencyMetricsEvent);
     t.true(isMetricsEvent(metrics));
@@ -320,9 +319,9 @@ test('isMetricsEvent', (t) => {
       '@type': REDIRECT_REQUEST_ERROR_METRICS_EVENT_NAME,
     };
 
-    const successMetrics = createMetricsEvent(getEvaluationLatencyMetricsEvent, sourceId);
-    const errorMetrics = createMetricsEvent(timeoutErrorMetricsEvent, sourceId);
-    const statusMetrics = createMetricsEvent(redirectRequestErrorMetricsEvent, sourceId);
+    const successMetrics = createMetricsEvent(getEvaluationLatencyMetricsEvent, sourceId, sdkVersion);
+    const errorMetrics = createMetricsEvent(timeoutErrorMetricsEvent, sourceId, sdkVersion);
+    const statusMetrics = createMetricsEvent(redirectRequestErrorMetricsEvent, sourceId, sdkVersion);
 
     t.true(isMetricsEvent(successMetrics));
     t.true(isMetricsEvent(errorMetrics));
@@ -343,7 +342,7 @@ test('createSizeMetricsEvent', (t) => {
       },
       '@type': SIZE_METRICS_EVENT_NAME,
     };
-    const actual = createSizeMetricsEvent(tag, sizeByte, apiId, sourceId);
+    const actual = createSizeMetricsEvent(tag, sizeByte, apiId, sourceId, sdkVersion);
     const metrics = actual.event as MetricsEvent;
     t.deepEqual(metrics.event, getEvaluationSizeMetricsEvent);
   }
@@ -358,7 +357,7 @@ test('createInternalSdkErrorMetricsEvent', (t) => {
       },
       '@type': INTERNAL_SDK_ERROR_METRICS_EVENT_NAME,
     };
-    const actual = createInternalSdkErrorMetricsEvent(tag, apiId, sourceId);
+    const actual = createInternalSdkErrorMetricsEvent(tag, apiId, sourceId, sdkVersion);
     const metrics = actual.event as MetricsEvent;
     t.deepEqual(metrics.event, internalErrorMetricsEvent);
   }
@@ -373,7 +372,7 @@ test('timeoutErrorMetricsEvent', (t) => {
       },
       '@type': TIMEOUT_ERROR_METRICS_EVENT_NAME,
     };
-    const actual = createTimeoutErrorMetricsEvent(tag, apiId, sourceId);
+    const actual = createTimeoutErrorMetricsEvent(tag, apiId, sourceId, sdkVersion);
     const metrics = actual.event as MetricsEvent;
     t.deepEqual(metrics.event, timeoutErrorMetricsEvent);
   }
@@ -389,7 +388,7 @@ test('createRedirectRequestErrorMetricsEvent', (t) => {
       },
       '@type': REDIRECT_REQUEST_ERROR_METRICS_EVENT_NAME,
     };
-    const actual = createRedirectRequestErrorMetricsEvent(tag, apiId, 301, sourceId);
+    const actual = createRedirectRequestErrorMetricsEvent(tag, apiId, 301, sourceId, sdkVersion);
     const metrics = actual.event as MetricsEvent;
     t.deepEqual(metrics.event, redirectRequestErrorMetricsEvent);
   }
@@ -404,7 +403,7 @@ test('createPayloadTooLargeErrorMetricsEvent', (t) => {
       },
       '@type': PAYLOAD_TOO_LARGE_ERROR_METRICS_EVENT_NAME,
     };
-    const actual = createPayloadTooLargeErrorMetricsEvent(tag, apiId, sourceId);
+    const actual = createPayloadTooLargeErrorMetricsEvent(tag, apiId, sourceId, sdkVersion);
     const metrics = actual.event as MetricsEvent;
     t.deepEqual(metrics.event, payloadTooLargeErrorMetricsEvent);
   }
@@ -419,7 +418,7 @@ test('createForbiddenErrorMetricsEvent', (t) => {
       },
       '@type': FORBIDDEN_ERROR_METRICS_EVENT_NAME,
     };
-    const actual = createForbiddenErrorMetricsEvent(tag, apiId, sourceId);
+    const actual = createForbiddenErrorMetricsEvent(tag, apiId, sourceId, sdkVersion);
     const metrics = actual.event as MetricsEvent;
     t.deepEqual(metrics.event, forbidenErrorMetricsEvent);
   }
@@ -434,7 +433,7 @@ test('createNotFoundErrorMetricsEvent', (t) => {
       },
       '@type': NOT_FOUND_ERROR_METRICS_EVENT_NAME,
     };
-    const actual = createNotFoundErrorMetricsEvent(tag, apiId, sourceId);
+    const actual = createNotFoundErrorMetricsEvent(tag, apiId, sourceId, sdkVersion);
     const metrics = actual.event as MetricsEvent;
     t.deepEqual(metrics.event, requestNotFoundErrorMetricsEvent);
   }
@@ -449,7 +448,7 @@ test('createServiceUnavailableErrorMetricsEvent', (t) => {
       },
       '@type': SERVICE_UNAVAILABLE_ERROR_METRICS_EVENT_NAME,
     };
-    const actual = createServiceUnavailableErrorMetricsEvent(tag, apiId, sourceId);
+    const actual = createServiceUnavailableErrorMetricsEvent(tag, apiId, sourceId, sdkVersion);
     const metrics = actual.event as MetricsEvent;
     t.deepEqual(metrics.event, serviceUnavailableErrorMetricsEvent);
   }
@@ -464,7 +463,7 @@ test('createUnauthorizedErrorMetricsEvent', (t) => {
       },
       '@type': UNAUTHORIZED_ERROR_METRICS_EVENT_NAME,
     };
-    const actual = createUnauthorizedErrorMetricsEvent(tag, apiId, sourceId);
+    const actual = createUnauthorizedErrorMetricsEvent(tag, apiId, sourceId, sdkVersion);
     const metrics = actual.event as MetricsEvent;
     t.deepEqual(metrics.event, unauthorizedErrorMetricsEvent);
   }
@@ -479,7 +478,7 @@ test('createInternalServerErrorMetricsEvent', (t) => {
       },
       '@type': INTERNAL_SERVER_ERROR_METRICS_EVENT_NAME,
     };
-    const actual = createInternalServerErrorMetricsEvent(tag, apiId, sourceId);
+    const actual = createInternalServerErrorMetricsEvent(tag, apiId, sourceId, sdkVersion);
     const metrics = actual.event as MetricsEvent;
     t.deepEqual(metrics.event, internalServerErrorMetricsEvent);
   }
@@ -494,7 +493,7 @@ test('createClientClosedRequestErrorMetricsEvent', (t) => {
       },
       '@type': CLIENT_CLOSED_REQUEST_ERROR_METRICS_EVENT_NAME,
     };
-    const actual = createClientClosedRequestErrorMetricsEvent(tag, apiId, sourceId);
+    const actual = createClientClosedRequestErrorMetricsEvent(tag, apiId, sourceId, sdkVersion);
     const metrics = actual.event as MetricsEvent;
     t.deepEqual(metrics.event, clientClosedRequestErrorMetricsEvent);
   }
@@ -509,7 +508,7 @@ test('createBadRequestErrorMetricsEvent', (t) => {
       },
       '@type': BAD_REQUEST_ERROR_METRICS_EVENT_NAME,
     };
-    const actual = createBadRequestErrorMetricsEvent(tag, apiId, sourceId);
+    const actual = createBadRequestErrorMetricsEvent(tag, apiId, sourceId, sdkVersion);
     const metrics = actual.event as MetricsEvent;
     t.deepEqual(metrics.event, badRequestErrorMetricsEvent);
   }
@@ -522,7 +521,7 @@ test('createNetworkErrorMetricsEvent', (t) => {
       labels: { tag },
       '@type': NETWORK_ERROR_METRICS_EVENT_NAME,
     };
-    const actual = createNetworkErrorMetricsEvent(tag, apiId, sourceId);
+    const actual = createNetworkErrorMetricsEvent(tag, apiId, sourceId, sdkVersion);
     const metrics = actual.event as MetricsEvent;
     t.deepEqual(metrics.event, expectedEvent);
   }
@@ -535,7 +534,7 @@ test('createUnknownErrorMetricsEvent without statusCode and errorMessage', (t) =
       labels: { tag },
       '@type': UNKNOWN_ERROR_METRICS_EVENT_NAME,
     };
-    const actual = createUnknownErrorMetricsEvent(tag, apiId, sourceId);
+    const actual = createUnknownErrorMetricsEvent(tag, apiId, sourceId, sdkVersion);
     const metrics = actual.event as MetricsEvent;
     t.deepEqual(metrics.event, expectedEvent);
   }
@@ -552,7 +551,7 @@ test('createUnknownErrorMetricsEvent with statusCode and errorMessage', (t) => {
       },
       '@type': UNKNOWN_ERROR_METRICS_EVENT_NAME,
     };
-    const actual = createUnknownErrorMetricsEvent(tag, apiId, sourceId, 599, 'unknown error');
+    const actual = createUnknownErrorMetricsEvent(tag, apiId, sourceId, sdkVersion, 599, 'unknown error');
     const metrics = actual.event as MetricsEvent;
     t.deepEqual(metrics.event, expectedEvent);
   }
