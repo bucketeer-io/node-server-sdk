@@ -70,6 +70,7 @@ test('polling cache', async (t) => {
     featureFlagsId: '',
     requestedAt: 0,
     sourceId: sourceId,
+    sdkVersion: '2.3.1',
   })
   .resolves(featuresResponse);
 
@@ -81,6 +82,7 @@ test('polling cache', async (t) => {
     featureFlagsId: 'featureFlagsId',
     requestedAt: 1100,
     sourceId: sourceId,
+    sdkVersion: '2.3.1',
   })
   .resolves(featuresResponse);
 
@@ -112,6 +114,7 @@ test('polling cache', async (t) => {
     featureTag: featureFlag,
     clock: clock,
     sourceId: sourceId,
+    sdkVersion: '2.3.1',
   });
 
   processor.start();

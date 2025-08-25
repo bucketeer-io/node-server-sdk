@@ -160,22 +160,36 @@ export class BKTClientImpl implements Bucketeer {
   }
 
   private callRegisterEvents(events: Array<Event>): void {
-    this.apiClient.registerEvents(events, this.config.sourceId).catch((e) => {
-      this.saveErrorMetricsEvent(this.config.featureTag, e, ApiId.REGISTER_EVENTS);
-      this.config.logger?.warn('register events failed', e);
-    });
+    this.apiClient
+      .registerEvents(events, this.config.sourceId, this.config.sdkVersion)
+      .catch((e) => {
+        this.saveErrorMetricsEvent(this.config.featureTag, e, ApiId.REGISTER_EVENTS);
+        this.config.logger?.warn('register events failed', e);
+      });
   }
 
   private saveDefaultEvaluationEvent(user: User, featureId: string) {
     this.eventStore.add(
-      createDefaultEvaluationEvent(this.config.featureTag, user, featureId, this.config.sourceId),
+      createDefaultEvaluationEvent(
+        this.config.featureTag,
+        user,
+        featureId,
+        this.config.sourceId,
+        this.config.sdkVersion,
+      ),
     );
     this.registerEvents();
   }
 
   private saveEvaluationEvent(user: User, evaluation: Evaluation) {
     this.eventStore.add(
-      createEvaluationEvent(this.config.featureTag, user, evaluation, this.config.sourceId),
+      createEvaluationEvent(
+        this.config.featureTag,
+        user,
+        evaluation,
+        this.config.sourceId,
+        this.config.sdkVersion,
+      ),
     );
     this.registerEvents();
   }
@@ -188,23 +202,35 @@ export class BKTClientImpl implements Bucketeer {
         user,
         value ? value : 0,
         this.config.sourceId,
+        this.config.sdkVersion,
       ),
     );
     this.registerEvents();
   }
 
   private saveLatencyMetricsEvent(tag: string, second: number, apiId: NodeApiIds) {
-    this.eventStore.add(createLatencyMetricsEvent(tag, second, apiId, this.config.sourceId));
+    this.eventStore.add(
+      createLatencyMetricsEvent(tag, second, apiId, this.config.sourceId, this.config.sdkVersion),
+    );
     this.registerEvents();
   }
 
   private saveSizeMetricsEvent(tag: string, size: number, apiId: NodeApiIds) {
-    this.eventStore.add(createSizeMetricsEvent(tag, size, apiId, this.config.sourceId));
+    this.eventStore.add(
+      createSizeMetricsEvent(tag, size, apiId, this.config.sourceId, this.config.sdkVersion),
+    );
     this.registerEvents();
   }
 
   private saveErrorMetricsEvent(tag: string, e: any, apiId: NodeApiIds) {
-    const event = toErrorMetricsEvent(e, tag, apiId, this.config.sourceId, this.config.logger);
+    const event = toErrorMetricsEvent(
+      e,
+      tag,
+      apiId,
+      this.config.sourceId,
+      this.config.sdkVersion,
+      this.config.logger,
+    );
     if (event) {
       this.eventStore.add(event);
       this.registerEvents();
@@ -228,6 +254,7 @@ export class BKTClientImpl implements Bucketeer {
         user,
         featureId,
         this.config.sourceId,
+        this.config.sdkVersion,
       );
       const second = (Date.now() - startTime) / 1000;
       this.eventEmitter.emit('pushLatencyMetricsEvent', {

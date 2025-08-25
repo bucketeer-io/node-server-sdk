@@ -22,6 +22,7 @@ type SegementUsersCacheProcessorOptions = {
   eventEmitter: ProcessorEventsEmitter;
   clock: Clock;
   sourceId: SourceId;
+  sdkVersion: string;
 };
 
 const SEGEMENT_USERS_REQUESTED_AT = 'bucketeer_segment_users_requested_at';
@@ -42,6 +43,7 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
   private pollingScheduleID?: NodeJS.Timeout;
   private clock: Clock;
   private sourceId: SourceId;
+  private sdkVersion: string;
 
   constructor(options: SegementUsersCacheProcessorOptions) {
     this.cache = options.cache;
@@ -51,6 +53,7 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
     this.eventEmitter = options.eventEmitter;
     this.clock = options.clock;
     this.sourceId = options.sourceId;
+    this.sdkVersion = options.sdkVersion;
   }
 
   start() {
@@ -73,6 +76,7 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
     const segmentIds = await this.segmentUsersCache.getIds();
     const requestedAt = await this.getSegmentUsersRequestedAt();
     const sourceId = this.sourceId;
+    const sdkVersion = this.sdkVersion;
     
     const startTime: number = this.clock.getTime();
 
@@ -80,6 +84,7 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
       segmentIdsList: segmentIds,
       requestedAt: requestedAt,
       sourceId: sourceId,
+      sdkVersion: sdkVersion,
     });
 
     const endTime: number = this.clock.getTime();

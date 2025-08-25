@@ -22,6 +22,7 @@ type FeatureFlagProcessorOptions = {
   featureTag: string;
   clock: Clock;
   sourceId: SourceId;
+  sdkVersion: string;
 };
 
 function NewFeatureFlagProcessor(options: FeatureFlagProcessorOptions): FeatureFlagProcessor {
@@ -42,6 +43,7 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
   private clock: Clock;
   featureTag: string;
   sourceId: SourceId;
+  sdkVersion: string;
 
   constructor(options: FeatureFlagProcessorOptions) {
     this.featureFlagCache = options.featureFlagCache;
@@ -52,6 +54,7 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
     this.featureTag = options.featureTag;
     this.clock = options.clock;
     this.sourceId = options.sourceId;
+    this.sdkVersion = options.sdkVersion;
   }
 
   start() {
@@ -81,6 +84,7 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
       tag: this.featureTag,
       featureFlagsId: featureFlagsId,
       sourceId: this.sourceId,
+      sdkVersion: this.sdkVersion,
     });
 
     const endTime = this.clock.getTime();
