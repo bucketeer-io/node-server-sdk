@@ -15,17 +15,18 @@ export const SourceId = {
   OPEN_FEATURE_JAVASCRIPT: 102,
   OPEN_FEATURE_GO: 103,
   OPEN_FEATURE_NODE: 104,
-
-} as const
+  
+} as const;
 
 export type SourceId = (typeof SourceId)[keyof typeof SourceId]
+// Create a Set of all valid SourceId values for efficient lookup
+const SourceIdValuesSet: Set<number> = new Set(Object.values(SourceId));
 
 export function sourceIdFromNumber(
   sourceId: number,
 ): SourceId {
-  const sourceIdValue = Object.values(SourceId).find((value) => value === sourceId)
-  if (sourceIdValue !== undefined) {
-    return sourceIdValue
+  if (SourceIdValuesSet.has(sourceId)) {
+    return sourceId as SourceId;
   }
-  return SourceId.UNKNOWN
+  return SourceId.UNKNOWN;
 }

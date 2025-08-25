@@ -1,4 +1,4 @@
-class InvalidStatusError extends Error {
+export class InvalidStatusError extends Error {
   name = 'InvalidStatusError'
   readonly code: number | undefined;
   constructor(message: string, code: number | undefined) {
@@ -9,7 +9,7 @@ class InvalidStatusError extends Error {
   }
 }
 
-class IllegalArgumentError extends Error {
+export class IllegalArgumentError extends Error {
   name = 'BKTBaseException'
   constructor(message: string) {
     super(message);
@@ -18,7 +18,7 @@ class IllegalArgumentError extends Error {
   }
 }
 
-class IllegalStateError extends Error {
+export class IllegalStateError extends Error {
   name = 'IllegalStateError'
   constructor(message: string) {
     super(message);
@@ -26,5 +26,3 @@ class IllegalStateError extends Error {
     Object.setPrototypeOf(this, new.target.prototype);
   }
 }
-
-export { InvalidStatusError, IllegalArgumentError, IllegalStateError };
