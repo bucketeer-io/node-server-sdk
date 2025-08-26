@@ -143,7 +143,6 @@ export function createTimeoutErrorMetricsEvent(
   return createEvent(metricsEvent);
 }
 
-//TODO: missing tests
 export function createMetricsEvent(
   b: SuccessMetricsEvent | ErrorMetricsEvent | StatusMetricsEvent,
   sourceId: SourceId,
@@ -221,10 +220,6 @@ export function createUnknownErrorMetricsEvent(
   return createEvent(metricsEvent);
 }
 
-function convertMS(ms: number): string {
-  return (ms / 1000).toString() + 's';
-}
-
 export const toErrorMetricsEvent = (
   e: any,
   tag: string,
@@ -234,7 +229,7 @@ export const toErrorMetricsEvent = (
   logger?: Logger,
 ): Event | null => {
   if (e instanceof IllegalArgumentError || e instanceof IllegalStateError) {
-    return createInternalSdkErrorMetricsEvent(tag, apiId, sourceId, e.message);
+    return createInternalSdkErrorMetricsEvent(tag, apiId, sourceId, sdkVersion, e.message);
   }
   if (e instanceof InvalidStatusError) {
     const statusCode = e.code ?? 0;
