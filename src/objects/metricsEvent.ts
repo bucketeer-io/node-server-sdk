@@ -85,6 +85,7 @@ export type UnknownErrorMetricsEvent = {
   '@type': typeof UNKNOWN_ERROR_METRICS_EVENT_NAME;
 };
 
+//TODO: missing tests
 export function createSizeMetricsEvent(
   tag: string,
   size: number,
@@ -142,6 +143,7 @@ export function createTimeoutErrorMetricsEvent(
   return createEvent(metricsEvent);
 }
 
+//TODO: missing tests
 export function createMetricsEvent(
   b: SuccessMetricsEvent | ErrorMetricsEvent | StatusMetricsEvent,
   sourceId: SourceId,
@@ -157,6 +159,7 @@ export function createMetricsEvent(
   };
 }
 
+//TODO: missing tests
 export function createLatencyMetricsEvent(
   tag: string,
   second: number,

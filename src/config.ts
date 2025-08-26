@@ -58,36 +58,36 @@ interface BKTConfig {
    * API key to use for the SDK.
    * This is used to authenticate requests to the Bucketeer server.
    */
-  apiKey: string
+  apiKey: string;
   /**
    * API endpoint to use for the SDK.
    * This is the base URL for all API requests.
    */
-  apiEndpoint: string
+  apiEndpoint: string;
   /**
    * Feature tag to use for feature flag evaluation.
    * This is used to group feature flags and should match the tag used in the Bucketeer console.
    */
-  featureTag: string
+  featureTag: string;
   /**
    * Interval for flushing events to the server. Specify in milliseconds.
    * Default: 60 seconds
    */
-  eventsFlushInterval: number
+  eventsFlushInterval: number;
   /**
    * Maximum number of events to be queued before flushing.
    * Default: 50
    */
-  eventsMaxQueueSize: number
+  eventsMaxQueueSize: number;
   /**
    * Sets the polling interval for cache updating. Default: 1 min - specify in milliseconds.
    */
-  pollingInterval: number
+  pollingInterval: number;
   /**
    * Optional property. Application version.
    * If not provided, '1.0.0' will be used as default.
    */
-  appVersion: string
+  appVersion: string;
   /**
    * Optional property. Logger for the SDK.
    * If not provided, DefaultLogger will be used.
@@ -110,14 +110,14 @@ interface BKTConfig {
   // It should NOT be set by developers directly integrating this SDK.
   // Use this option ONLY when another SDK acts as a proxy and wraps this native SDK.
   // In such cases, set this value to the version of the proxy SDK.
-  wrapperSdkVersion?: string
+  wrapperSdkVersion?: string;
   // Use wrapperSdkSourceId to set the source ID explicitly.
   // IMPORTANT: This option is intended for internal use only.
   // It should NOT be set by developers directly integrating this SDK.
   // Use this option ONLY when another SDK acts as a proxy and wraps this native SDK.
   // In such cases, set this value to the sourceID of the proxy SDK.
   // The sourceID is used to identify the origin of the request.
-  wrapperSdkSourceId?: number
+  wrapperSdkSourceId?: number;
 }
 
 const MINIMUM_FLUSH_INTERVAL_MILLIS = 30_000 // 30 seconds

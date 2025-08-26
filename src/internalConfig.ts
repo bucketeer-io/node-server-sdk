@@ -7,8 +7,8 @@ import { nodeSDKVersion } from './objects/version';
 // and should not be exposed to the user.
 // The intent is not exposing the `SourceId` to the user
 interface InternalConfig extends BKTConfig {
-  sourceId: SourceId
-  sdkVersion: string
+  sourceId: SourceId;
+  sdkVersion: string;
 }
 
 const supportedWrapperSdkSourceIds: SourceId[] = [

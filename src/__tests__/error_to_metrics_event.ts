@@ -28,6 +28,7 @@ test('toErrorMetricsEvent returns correct event for IllegalStateError', (t) => {
     tag,
     apiId,
     SourceId.OPEN_FEATURE_NODE,
+    sdkVersion,
     'Feature not found',
   ).event;
   const actualEvent = toErrorMetricsEvent(
@@ -50,6 +51,7 @@ test('toErrorMetricsEvent returns correct event for IllegalArgumentError', (t) =
     tag,
     apiId,
     SourceId.OPEN_FEATURE_NODE,
+    sdkVersion,
     'Input string must be non-blank',
   ).event;
   const actualEvent = toErrorMetricsEvent(
