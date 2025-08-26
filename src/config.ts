@@ -186,7 +186,7 @@ const defineBKTConfig = (config: Partial<BKTConfig>): BKTConfig => {
     baseConfig.pollingInterval = DEFAULT_POLLING_INTERVAL_MILLIS;
   }
 
-  // Resolve SDK version and source Id without exposing SourceId to outside
+  // Resolve SDK version and sourceId without exposing SourceId to outside
   const sourceId = resolveSourceId(baseConfig);
   const sdkVersion = resolveSDKVersion(baseConfig, sourceId);
   const internalConfig = {
