@@ -17,13 +17,11 @@ export const SourceId = {
   OPEN_FEATURE_NODE: 104,
 } as const;
 
-export type SourceId = (typeof SourceId)[keyof typeof SourceId]
+export type SourceId = (typeof SourceId)[keyof typeof SourceId];
 // Create a Set of all valid SourceId values for efficient lookup
 const SourceIdValuesSet: Set<number> = new Set(Object.values(SourceId));
 
-export function sourceIdFromNumber(
-  sourceId: number,
-): SourceId {
+export function sourceIdFromNumber(sourceId: number): SourceId {
   if (SourceIdValuesSet.has(sourceId)) {
     return sourceId as SourceId;
   }
