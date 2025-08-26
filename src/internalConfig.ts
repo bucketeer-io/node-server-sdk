@@ -11,19 +11,17 @@ interface InternalConfig extends BKTConfig {
   sdkVersion: string;
 }
 
-const supportedWrapperSdkSourceIds: SourceId[] = [
-  SourceId.OPEN_FEATURE_NODE,
-]
+const supportedWrapperSdkSourceIds: SourceId[] = [SourceId.OPEN_FEATURE_NODE];
 
 const requiredInternalConfig = (config: BKTConfig): InternalConfig => {
-  const internalConfig = config as InternalConfig
+  const internalConfig = config as InternalConfig;
 
   // sourceId is a number enum - only check for undefined, not falsy values
   // (SourceId.UNKNOWN = 0 is a valid value)
   if (internalConfig.sourceId === undefined) {
     throw new IllegalArgumentError(
       'Config is missing sourceId. Must be processed by defineBKTConfig first.',
-    )
+    );
   }
 
   // sdkVersion is a string - check for falsy values including empty string
@@ -31,43 +29,33 @@ const requiredInternalConfig = (config: BKTConfig): InternalConfig => {
   if (!internalConfig.sdkVersion) {
     throw new IllegalArgumentError(
       'Config is missing sdkVersion. Must be processed by defineBKTConfig first.',
-    )
+    );
   }
 
-  return internalConfig
-}
+  return internalConfig;
+};
 
 function resolveSourceId(config: BKTConfig): SourceId {
   if (config.wrapperSdkSourceId !== undefined) {
-    const wrapperSdkSourceId = sourceIdFromNumber(config.wrapperSdkSourceId)
+    const wrapperSdkSourceId = sourceIdFromNumber(config.wrapperSdkSourceId);
     if (supportedWrapperSdkSourceIds.includes(wrapperSdkSourceId)) {
-      return wrapperSdkSourceId
+      return wrapperSdkSourceId;
     }
-    throw new IllegalArgumentError(
-      `Unsupported wrapperSdkSourceId: ${config.wrapperSdkSourceId}`,
-    )
+    throw new IllegalArgumentError(`Unsupported wrapperSdkSourceId: ${config.wrapperSdkSourceId}`);
   }
-  return SourceId.NODE_SERVER
+  return SourceId.NODE_SERVER;
 }
 
-function resolveSDKVersion(
-  config: BKTConfig,
-  resolvedSourceId: SourceId,
-): string {
+function resolveSDKVersion(config: BKTConfig, resolvedSourceId: SourceId): string {
   if (resolvedSourceId !== SourceId.NODE_SERVER) {
     if (config.wrapperSdkVersion) {
-      return config.wrapperSdkVersion
+      return config.wrapperSdkVersion;
     }
-    throw new IllegalArgumentError('Config is missing wrapperSdkVersion')
+    throw new IllegalArgumentError('Config is missing wrapperSdkVersion');
   }
-  return nodeSDKVersion
+  return nodeSDKVersion;
 }
 
-export {
-  requiredInternalConfig,
-  supportedWrapperSdkSourceIds,
-  resolveSourceId,
-  resolveSDKVersion,
-}
+export { requiredInternalConfig, supportedWrapperSdkSourceIds, resolveSourceId, resolveSDKVersion };
 
-export type { InternalConfig }
+export type { InternalConfig };
