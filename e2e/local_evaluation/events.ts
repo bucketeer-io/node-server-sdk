@@ -19,7 +19,7 @@ import { isGoalEvent } from '../../lib/objects/goalEvent';
 import { isErrorMetricsEvent, isMetricsEvent } from '../../lib/objects/metricsEvent';
 import { isEvaluationEvent } from '../../lib/objects/evaluationEvent';
 import { SourceId } from '../../lib/objects/sourceId';
-import { version } from '../../lib/objects/version';
+import { nodeSDKVersion } from '../../lib/objects/version';
 
 const test = anyTest as TestFn<{ bktClient: Bucketeer; targetedUser: User }>;
 
@@ -57,7 +57,7 @@ test('goal event', async (t) => {
   t.true(events.some((e: { event: any }) => isGoalEvent(e.event)));
   t.true(
     events.every(
-      (e) => e.event.sourceId === SourceId.NODE_SERVER && e.event.sdkVersion === version,
+      (e) => e.event.sourceId === SourceId.NODE_SERVER && e.event.sdkVersion === nodeSDKVersion,
     ),
   );
 });
@@ -86,7 +86,7 @@ test('evaluation event', async (t) => {
   t.true(events.some((e) => isMetricsEvent(e.event)));
   t.true(
     events.every(
-      (e) => e.event.sourceId === SourceId.NODE_SERVER && e.event.sdkVersion === version,
+      (e) => e.event.sourceId === SourceId.NODE_SERVER && e.event.sdkVersion === nodeSDKVersion,
     ),
   );
 });
@@ -115,7 +115,7 @@ test('default evaluation event', async (t) => {
   t.true(events.some((e) => isErrorMetricsEvent(e.event, NOT_FOUND_ERROR_METRICS_EVENT_NAME)));
   t.true(
     events.every(
-      (e) => e.event.sourceId === SourceId.NODE_SERVER && e.event.sdkVersion === version,
+      (e) => e.event.sourceId === SourceId.NODE_SERVER && e.event.sdkVersion === nodeSDKVersion,
     ),
   );
 });
