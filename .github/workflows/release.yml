@@ -20,7 +20,7 @@ jobs:
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
     steps:
-      - uses: googleapis/release-please-action@1155c2c8dcbd6b15e85bae6bc6d1fed9552663cb # v4.2.0
+      - uses: googleapis/release-please-action@58fbed0b875bc2f73d60680e175b4c152bf0eb39 # v4.2.0
         id: release
         with:
           token: ${{ secrets.WORKFLOW_TOKEN }} # We need to set the PAT so the update changelog docs page workflow can be triggered
