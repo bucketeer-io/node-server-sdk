@@ -1,20 +1,23 @@
 version: 2
 updates:
+  # --- GitHub Actions (CI) ---
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "monthly"
       time: "10:00"
       timezone: "Asia/Tokyo"
-    ignore:
-      - dependency-name: "google-github-actions/release-please-action"
     commit-message:
-      prefix: "build"
-      include: "scope"
+      prefix: "ci" # -> ci(deps): ...
+      include: "scope" # adds "(deps)" or "(deps-dev)"
     groups:
-      dependencies:
-        patterns:
-          - "*"
+      # Group all PATCH and MINOR updates into one PR
+      ci-patch-minor:
+        patterns: ["*"]
+        update-types: ["patch", "minor"]
+      # NOTE: major updates are left ungrouped -> one PR per major bump
+
+  # --- npm (build) ---
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
@@ -22,9 +25,15 @@ updates:
       time: "10:00"
       timezone: "Asia/Tokyo"
     commit-message:
-      prefix: "build"
-      include: "scope"
+      prefix: "build" # -> build(deps): ...
+      include: "scope" # adds "(deps)" or "(deps-dev)"
     groups:
-      dependencies:
-        patterns:
-          - "*"
+      # Group all PATCH updates into one PR
+      npm-patch:
+        patterns: ["*"]
+        update-types: ["patch"]
+      # Group all MINOR updates into one PR
+      npm-minor:
+        patterns: ["*"]
+        update-types: ["minor"]
+      # NOTE: major updates are left ungrouped -> one PR per major bump
