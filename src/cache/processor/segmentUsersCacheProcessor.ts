@@ -8,11 +8,12 @@ import { createSchedule, removeSchedule } from '../../schedule';
 import { Clock } from '../../utils/clock';
 import { InvalidStatusError } from '../../objects/errors';
 import { SourceId } from '../../objects/sourceId';
+import { InitializationPromise } from '../../utils/initializationPromise';
 
 interface SegementUsersCacheProcessor {
   start(): void;
   stop(): void;
-  // waitForInitialization(options: { timeoutMs: number }): Promise<void>;
+  waitForInitialization(options: { timeoutMs: number }): Promise<void>;
 }
 
 type SegementUsersCacheProcessorOptions = {
@@ -45,10 +46,7 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
   private clock: Clock;
   private sourceId: SourceId;
   private sdkVersion: string;
-  private initializationResolver?: (value: void) => void;
-  private initializationRejecter?: (reason: any) => void;
-  private initializationPromise?: Promise<void>;
-  private isInitialized: boolean = false;
+  private initializationPromise = new InitializationPromise();
 
   constructor(options: SegementUsersCacheProcessorOptions) {
     this.cache = options.cache;
@@ -70,53 +68,25 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
   }
 
   async runUpdateCache() {
+    const isFirstTime = !this.initializationPromise.isComplete();
+    
     try {
       await this.updateCache();
 
-      // Success: Mark as initialized if this is the first successful update
-      if (!this.isInitialized && this.initializationResolver) {
-        this.isInitialized = true;
-        this.initializationResolver();
-        this.initializationResolver = undefined;
-        this.initializationRejecter = undefined;
+      if (isFirstTime) {
+        this.initializationPromise.markAsInitialized();
       }
     } catch (error) {
-      // Error: If this is the first attempt and it failed, reject initialization
-      if (!this.isInitialized && this.initializationRejecter) {
-        this.initializationRejecter(error);
-        this.initializationResolver = undefined;
-        this.initializationRejecter = undefined;
+      if (isFirstTime) {
+        this.initializationPromise.markAsFailed(error);
       }
-      // If already initialized, just log the error but don't affect initialization state
+      // Always log the error regardless of initialization state
       this.pushErrorMetricsEvent(error);
     }
   }
 
   async waitForInitialization(options: { timeoutMs: number }): Promise<void> {
-    if (this.isInitialized) {
-      return Promise.resolve();
-    }
-
-    // If initialization is already in progress, return the existing promise
-    // Otherwise, create a new promise for initialization
-    // So this will work if someone calls waitForInitialization
-    if (!this.initializationPromise) {
-      this.initializationPromise = new Promise<void>((resolve, reject) => {
-        this.initializationResolver = resolve;
-        this.initializationRejecter = reject;
-      });
-    }
-
-    const timeoutMs = options.timeoutMs;
-
-    return Promise.race([
-      this.initializationPromise,
-      new Promise<never>((_, reject) => {
-        setTimeout(() => {
-          reject(new Error(`Initialization timeout after ${timeoutMs} ms`));
-        }, timeoutMs);
-      })
-    ]);
+    return this.initializationPromise.waitForInitialization(options.timeoutMs);
   }
 
   private async updateCache() {

@@ -7,10 +7,12 @@ import { Feature } from '@bucketeer/evaluation';
 import { ApiId } from '../../objects/apiId';
 import { Clock } from '../../utils/clock';
 import { SourceId } from '../../objects/sourceId';
+import { InitializationPromise } from '../../utils/initializationPromise';
 
 interface FeatureFlagProcessor {
   start(): void;
   stop(): void;
+  waitForInitialization(options: { timeoutMs: number }): Promise<void>;
 }
 
 type FeatureFlagProcessorOptions = {
@@ -41,10 +43,7 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
   private pollingScheduleID?: NodeJS.Timeout;
   private pollingInterval: number;
   private clock: Clock;
-  private initializationResolver?: (value: void) => void;
-  private initializationRejecter?: (reason: any) => void;
-  private initializationPromise?: Promise<void>;
-  private isInitialized: boolean = false;
+  private initializationPromise = new InitializationPromise();
 
   featureTag: string;
   sourceId: SourceId;
@@ -73,54 +72,25 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
   }
 
   async runUpdateCache() {
+    const isFirstTime = !this.initializationPromise.isComplete();
+    
     try {
       await this.updateCache();
 
-      // Success: Mark as initialized if this is the first successful update
-      if (!this.isInitialized && this.initializationResolver) {
-        this.isInitialized = true;
-        this.initializationResolver();
-        this.initializationResolver = undefined;
-        this.initializationRejecter = undefined;
+      if (isFirstTime) {
+        this.initializationPromise.markAsInitialized();
       }
     } catch (error) {
-      // Error: If this is the first attempt and it failed, reject initialization
-      if (!this.isInitialized && this.initializationRejecter) {
-        this.initializationRejecter(error);
-        this.initializationResolver = undefined;
-        this.initializationRejecter = undefined;
+      if (isFirstTime) {
+        this.initializationPromise.markAsFailed(error);
       }
-      // If already initialized, just log the error but don't affect initialization state
+      // Always log the error regardless of initialization state
       this.pushErrorMetricsEvent(error);
-
     }
   }
 
   async waitForInitialization(options: { timeoutMs: number }): Promise<void> {
-    if (this.isInitialized) {
-      return Promise.resolve();
-    }
-
-    // If initialization is already in progress, return the existing promise
-    // Otherwise, create a new promise for initialization
-    // So this will work if someone calls waitForInitialization
-    if (!this.initializationPromise) {
-      this.initializationPromise = new Promise<void>((resolve, reject) => {
-        this.initializationResolver = resolve;
-        this.initializationRejecter = reject;
-      });
-    }
-
-    const timeoutMs = options.timeoutMs;
-
-    return Promise.race([
-      this.initializationPromise,
-      new Promise<never>((_, reject) => {
-        setTimeout(() => {
-          reject(new Error(`Initialization timeout after ${timeoutMs} ms`));
-        }, timeoutMs);
-      })
-    ]);
+    return this.initializationPromise.waitForInitialization(options.timeoutMs);
   }
 
   private async updateCache() {
