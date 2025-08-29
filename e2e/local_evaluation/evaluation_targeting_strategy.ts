@@ -28,10 +28,8 @@ test.before(async (t) => {
     bktClient: initializeBKTClient(config),
     targetedUser: { id: TARGETED_USER_ID, data: {} },
   };
-
-  await new Promise((resolve) => {
-    setTimeout(resolve, 5000);
-  });
+  // Waiting for the cache available
+  await t.context.bktClient.waitForInitialization({ timeout: 5000 });
 });
 
 test.after(async (t) => {
