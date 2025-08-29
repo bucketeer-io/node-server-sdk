@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.4.2](https://github.com/bucketeer-io/node-server-sdk/compare/v0.4.1...v0.4.2) (2025-08-29)
+
+
+### Build System
+
+* **deps-dev:** bump the npm-minor-all group with 14 updates ([#120](https://github.com/bucketeer-io/node-server-sdk/issues/120)) ([83865ba](https://github.com/bucketeer-io/node-server-sdk/commit/83865ba357cb87376849d7ed0d3cc62e269be14a))
+* **deps:** bump the dependencies group across 1 directory with 19 updates ([#100](https://github.com/bucketeer-io/node-server-sdk/issues/100)) ([11eccf7](https://github.com/bucketeer-io/node-server-sdk/commit/11eccf7022383c3a51f1681e5de8cad8b3245850))
+* **deps:** bump the npm-patch-all group with 5 updates ([#119](https://github.com/bucketeer-io/node-server-sdk/issues/119)) ([3525485](https://github.com/bucketeer-io/node-server-sdk/commit/3525485d198b7ac2db62ae69ca13a3d255fa9969))
+
 ## [0.4.1](https://github.com/bucketeer-io/node-server-sdk/compare/v0.4.0...v0.4.1) (2025-03-10)
 
 
