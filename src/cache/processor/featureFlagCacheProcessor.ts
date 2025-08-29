@@ -41,6 +41,11 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
   private pollingScheduleID?: NodeJS.Timeout;
   private pollingInterval: number;
   private clock: Clock;
+  private initializationResolver?: (value: void) => void;
+  private initializationRejecter?: (reason: any) => void;
+  private initializationPromise?: Promise<void>;
+  private isInitialized: boolean = false;
+
   featureTag: string;
   sourceId: SourceId;
   sdkVersion: string;
@@ -70,9 +75,52 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
   async runUpdateCache() {
     try {
       await this.updateCache();
+
+      // Success: Mark as initialized if this is the first successful update
+      if (!this.isInitialized && this.initializationResolver) {
+        this.isInitialized = true;
+        this.initializationResolver();
+        this.initializationResolver = undefined;
+        this.initializationRejecter = undefined;
+      }
     } catch (error) {
+      // Error: If this is the first attempt and it failed, reject initialization
+      if (!this.isInitialized && this.initializationRejecter) {
+        this.initializationRejecter(error);
+        this.initializationResolver = undefined;
+        this.initializationRejecter = undefined;
+      }
+      // If already initialized, just log the error but don't affect initialization state
       this.pushErrorMetricsEvent(error);
+
     }
+  }
+
+  async waitForInitialization(options: { timeoutMs: number }): Promise<void> {
+    if (this.isInitialized) {
+      return Promise.resolve();
+    }
+
+    // If initialization is already in progress, return the existing promise
+    // Otherwise, create a new promise for initialization
+    // So this will work if someone calls waitForInitialization
+    if (!this.initializationPromise) {
+      this.initializationPromise = new Promise<void>((resolve, reject) => {
+        this.initializationResolver = resolve;
+        this.initializationRejecter = reject;
+      });
+    }
+
+    const timeoutMs = options.timeoutMs;
+
+    return Promise.race([
+      this.initializationPromise,
+      new Promise<never>((_, reject) => {
+        setTimeout(() => {
+          reject(new Error(`Initialization timeout after ${timeoutMs} seconds`));
+        }, timeoutMs);
+      })
+    ]);
   }
 
   private async updateCache() {
