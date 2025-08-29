@@ -1,7 +1,7 @@
 import { User } from './objects/user';
 import { EventStore } from './stores/EventStore';
 import { APIClient } from './api/client';
-import { Config, defaultConfig } from './config';
+import { BKTConfig, Config, defaultConfig, defineBKTConfig, convertConfigToBKTConfig } from './config';
 import { BKTEvaluationDetails } from './evaluationDetails';
 import { BKTValue } from './types';
 import { InMemoryCache } from './cache/inMemoryCache';
@@ -22,12 +22,13 @@ import { ProcessorEventsEmitter } from './processorEventsEmitter';
 import { Clock } from './utils/clock';
 import { LocalEvaluator } from './evaluator/local';
 import { BKTClientImpl } from './client';
+import { InternalConfig, requiredInternalConfig } from './internalConfig';
 
 export interface BuildInfo {
   readonly GIT_REVISION: string;
 }
 
-export { Config } from './config';
+export { Config, BKTConfig, defineBKTConfig } from './config';
 
 export { Logger, DefaultLogger } from './logger';
 
@@ -140,20 +141,25 @@ export interface Bucketeer {
 }
 
 /**
+ * @deprecated use initializeBKTClient instead
  * initialize initializes a Bucketeer instance and returns it.
  * @param config Configurations of the SDK.
  * @returns Bucketeer SDK instance.
  */
 export function initialize(config: Config): Bucketeer {
-  const resolvedConfig = {
-    ...defaultConfig,
-    ...config,
-  };
-  return defaultInitialize(resolvedConfig);
+  // convert deprecated Config to InternalConfig (should be valid InternalConfig)
+  // This is to maintain backward compatibility with the old Config interface.
+  const bktConfig: InternalConfig = convertConfigToBKTConfig(config);
+  return defaultInitialize(bktConfig);
 }
 
-function defaultInitialize(resolvedConfig: Config): Bucketeer {
-  const apiClient = new APIClient(resolvedConfig.host, resolvedConfig.token);
+export function initializeBKTClient(config: BKTConfig): Bucketeer {
+  const internalConfig = requiredInternalConfig(config); 
+  return defaultInitialize(internalConfig);
+}
+
+function defaultInitialize(resolvedConfig: InternalConfig): Bucketeer {
+  const apiClient = new APIClient(resolvedConfig.apiEndpoint, resolvedConfig.apiKey);
   const eventStore = new EventStore();
   const eventEmitter = new ProcessorEventsEmitter();
   
@@ -161,10 +167,10 @@ function defaultInitialize(resolvedConfig: Config): Bucketeer {
   let segementUsersCacheProcessor: SegementUsersCacheProcessor | null = null;
   let localEvaluator: LocalEvaluator | null = null;
   if (resolvedConfig.enableLocalEvaluation === true) {
-    const grpcClient = new DefaultGRPCClient(resolvedConfig.host, resolvedConfig.token);
+    const grpcClient = new DefaultGRPCClient(resolvedConfig.apiEndpoint, resolvedConfig.apiKey);
     const cache = new InMemoryCache();
     const featureFlagCache = NewFeatureCache({ cache: cache, ttl: FEATURE_FLAG_CACHE_TTL });
-
+    const clock = new Clock();
     const segementUsersCache = NewSegmentUsersCache({
       cache: cache,
       ttl: SEGEMENT_USERS_CACHE_TTL,
@@ -176,8 +182,10 @@ function defaultInitialize(resolvedConfig: Config): Bucketeer {
       pollingInterval: resolvedConfig.cachePollingInterval!,
       grpc: grpcClient,
       eventEmitter: eventEmitter,
-      featureTag: resolvedConfig.tag,
-      clock: new Clock(),
+      featureTag: resolvedConfig.featureTag,
+      clock: clock,
+      sourceId: resolvedConfig.sourceId,
+      sdkVersion: resolvedConfig.sdkVersion,
     });
 
     segementUsersCacheProcessor = NewSegementUserCacheProcessor({
@@ -186,11 +194,13 @@ function defaultInitialize(resolvedConfig: Config): Bucketeer {
       pollingInterval: resolvedConfig.cachePollingInterval!,
       grpc: grpcClient,
       eventEmitter: eventEmitter,
-      clock: new Clock(),
+      clock: clock,
+      sourceId: resolvedConfig.sourceId,
+      sdkVersion: resolvedConfig.sdkVersion,
     });
 
     localEvaluator = new LocalEvaluator({
-      tag: resolvedConfig.tag,
+      tag: resolvedConfig.featureTag,
       featuresCache: featureFlagCache,
       segementUsersCache: segementUsersCache,
     });

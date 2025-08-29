@@ -18,6 +18,7 @@ import {
 } from '../../../../cache/segmentUsers';
 import { ApiId } from '../../../../objects/apiId';
 import { ProcessorEventsEmitter } from '../../../../processorEventsEmitter';
+import { SourceId } from '../../../../objects/sourceId';
 
 test('polling cache', async (t) => {
   const cache = new MockCache();
@@ -25,6 +26,8 @@ test('polling cache', async (t) => {
   const eventEmitter = new ProcessorEventsEmitter();
   const clock = new Clock();
   const featureTag = 'featureTag';
+  const sourceId = SourceId.OPEN_FEATURE_NODE;
+  const sdkVersion = '0.1.0';
 
   const options = {
     cache,
@@ -34,6 +37,8 @@ test('polling cache', async (t) => {
     eventEmitter,
     featureTag: featureTag,
     clock,
+    sourceId: sourceId,
+    sdkVersion: sdkVersion,
   };
 
   const mockClock = sino.mock(clock);
@@ -70,10 +75,11 @@ test('polling cache', async (t) => {
   const responseSize = response.serializeBinary().length;
 
   const mockGRPCClient = sino.mock(grpc);
+  //TODO: should verify arguments for twice calls
   const mockGRPCClientGetSegmentUsersExpect = mockGRPCClient.expects('getSegmentUsers').twice();
   mockGRPCClientGetSegmentUsersExpect.onFirstCall().resolves(response);
   mockGRPCClientGetSegmentUsersExpect.resolves(response);
-
+  
   mockCache.expects('put').twice().withArgs(SEGEMENT_USERS_REQUESTED_AT, 1200);
   mockCache
     .expects('put')

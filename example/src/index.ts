@@ -5,18 +5,20 @@ import express from 'express';
 // NOTE: If you want to use SDK published on npm,
 // replace the line below with the following.
 // import { initialize } from '@bucketeer/node-server-sdk';
-import { initialize } from '../../lib';
+import { initialize, initializeBKTClient } from '../../lib';
+import { defineBKTConfig } from '../../lib/config';
 
 const PORT = 3000;
 
 /**
  *  Initialize bucketeer.
  */
-const bucketeer = initialize({
-  host: '<API_ENDPOINT>', // e.g. api-media.bucketeer.jp
-  token: '<TOKEN>',
-  tag: 'node',
+const config = defineBKTConfig({
+  apiEndpoint: '<API_ENDPOINT>', // e.g. api-media.bucketeer.jp
+  apiKey: '<TOKEN>',
+  featureTag: 'node',
 });
+const bucketeer = initializeBKTClient(config);
 
 /**
  *  Useful for trouble shooting.
