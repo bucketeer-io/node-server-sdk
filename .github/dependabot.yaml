@@ -27,13 +27,37 @@ updates:
     commit-message:
       prefix: "build" # -> build(deps): ...
       include: "scope" # adds "(deps)" or "(deps-dev)"
+    ignore:
+      # Ignore minor and major Node.js updates (only allow patch updates)
+      - dependency-name: "node"
+        update-types:
+          ["version-update:semver-minor", "version-update:semver-major"]
+
+      # TypeScript - only allow patch updates (type safety)
+      - dependency-name: "typescript"
+        update-types:
+          ["version-update:semver-minor", "version-update:semver-major"]
+
+      # ESLint - only allow patch updates (avoid new rules breaking builds)
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
+
+      # Testing framework - be cautious with major updates
+      - dependency-name: "ava"
+        update-types: ["version-update:semver-major"]
+
+      # Build tools - major updates can break compatibility
+      - dependency-name: "rollup"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "esbuild"
+        update-types: ["version-update:semver-major"]
     groups:
-      # Group all PATCH updates into one PR
-      npm-patch:
+      # Group all PATCH updates (deps + deps-dev) into one PR
+      npm-patch-all:
         patterns: ["*"]
         update-types: ["patch"]
-      # Group all MINOR updates into one PR
-      npm-minor:
+      # Group all MINOR updates (deps + deps-dev) into one PR
+      npm-minor-all:
         patterns: ["*"]
         update-types: ["minor"]
       # NOTE: major updates are left ungrouped -> one PR per major bump
