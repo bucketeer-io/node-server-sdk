@@ -99,6 +99,20 @@ export class BKTClientImpl implements Bucketeer {
     });
   }
 
+  async waitForInitialization(options: { timeoutMs: number }): Promise<void> {
+    if (this.config.enableLocalEvaluation !== true) {
+      return Promise.resolve();
+    }
+    if (this.featureFlagProcessor === null || this.segementUsersCacheProcessor === null) {
+      return Promise.reject(new IllegalStateError('Cache processors are not initialized'));
+    }
+    //TODO: handle error and catch timeout error separately
+    await Promise.all([
+      this.featureFlagProcessor.waitForInitialization({ timeoutMs: options.timeoutMs }),
+      this.segementUsersCacheProcessor.waitForInitialization({ timeoutMs: options.timeoutMs }),
+    ]);
+  }
+
   async stringVariation(user: User, featureId: string, defaultValue: string): Promise<string> {
     return (await this.stringVariationDetails(user, featureId, defaultValue)).variationValue;
   }
