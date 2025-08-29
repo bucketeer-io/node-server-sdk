@@ -10,6 +10,7 @@ updates:
     commit-message:
       prefix: "ci" # -> ci(deps): ...
       include: "scope" # adds "(deps)" or "(deps-dev)"
+    open-pull-requests-limit: 5
     groups:
       # Group all PATCH and MINOR updates into one PR
       ci-patch-minor:
@@ -27,6 +28,7 @@ updates:
     commit-message:
       prefix: "build" # -> build(deps): ...
       include: "scope" # adds "(deps)" or "(deps-dev)"
+    open-pull-requests-limit: 5
     ignore:
       # Ignore minor and major Node.js updates (only allow patch updates)
       - dependency-name: "node"
