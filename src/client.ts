@@ -3,7 +3,6 @@ import { EventStore } from './stores/EventStore';
 import { createSchedule, removeSchedule } from './schedule';
 import { GIT_REVISION } from './shared';
 import { APIClient } from './api/client';
-import { Config } from './config';
 import { createDefaultEvaluationEvent, createEvaluationEvent } from './objects/evaluationEvent';
 import { createGoalEvent } from './objects/goalEvent';
 import {
@@ -29,7 +28,7 @@ import { SegementUsersCacheProcessor } from './cache/processor/segmentUsersCache
 import { ProcessorEventsEmitter } from './processorEventsEmitter';
 import { NodeEvaluator } from './evaluator/evaluator';
 import { Bucketeer, BuildInfo } from '.';
-import { IllegalStateError } from './objects/errors';
+import { IllegalStateError, toBKTError } from './objects/errors';
 import { assertGetEvaluationRequest } from './assert';
 import { InternalConfig } from './internalConfig';
 
@@ -97,6 +96,31 @@ export class BKTClientImpl implements Bucketeer {
     this.eventEmitter.on('pushEvaluationEvent', ({ user, evaluation }) => {
       this.saveEvaluationEvent(user, evaluation);
     });
+  }
+
+  async waitForInitialization(options: { timeout: number }): Promise<void> {
+    if (this.config.enableLocalEvaluation !== true) {
+      return;
+    }
+    if (this.featureFlagProcessor === null || this.segementUsersCacheProcessor === null) {
+      throw new IllegalStateError('Cache processors are not initialized');
+    }
+
+    // Keep compatibility with older versions below ES2020, we use Promise.all with catch.
+    // Note: This code can be replaced with Promise.allSettled in the future.
+    const results = await Promise.all(
+      [
+        this.featureFlagProcessor.waitForInitialization({ timeout: options.timeout }),
+        this.segementUsersCacheProcessor.waitForInitialization({ timeout: options.timeout }),
+      ].map((p) => p.catch((e) => e)),
+    );
+
+    for (const result of results) {
+      if (result instanceof Error) {
+        const e = toBKTError(result, { timeout: options.timeout });
+        throw e;
+      }
+    }
   }
 
   async stringVariation(user: User, featureId: string, defaultValue: string): Promise<string> {

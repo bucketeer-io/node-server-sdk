@@ -97,7 +97,7 @@ test('Altering the api key should not affect api request', async (t) => {
   bktClient.destroy();
 });
 
-//Note: There is a different compared to other SDK clients.
+//Note: There is a different compared to other SDK clients. Because node.js is using REST API v1
 test('Using a random string in the featureTag setting should affect api request', async (t) => {
   const config = defineBKTConfig({
     apiEndpoint: HOST,

@@ -1,5 +1,5 @@
 import { Logger } from '../logger';
-import { IllegalArgumentError, IllegalStateError, InvalidStatusError } from '../objects/errors';
+import { IllegalArgumentError, IllegalStateError, InvalidStatusError, isNodeError } from '../objects/errors';
 import { createTimestamp } from '../utils/time';
 import { NodeApiIds } from './apiId';
 import { createEvent, Event } from './event';
@@ -16,7 +16,6 @@ import {
   createServiceUnavailableErrorMetricsEvent,
   createUnauthorizedErrorMetricsEvent,
 } from './status';
-import typeUtils from 'node:util/types';
 
 const METRICS_EVENT_NAME = 'type.googleapis.com/bucketeer.event.client.MetricsEvent';
 const LATENCY_METRICS_EVENT_NAME = 'type.googleapis.com/bucketeer.event.client.LatencyMetricsEvent';
@@ -289,10 +288,6 @@ export const toErrorMetricsEvent = (
   }
   return createUnknownErrorMetricsEvent(tag, apiId, sourceId, sdkVersion, undefined, String(e));
 };
-
-function isNodeError(error: unknown): error is NodeJS.ErrnoException {
-  return typeUtils.isNativeError(error);
-}
 
 export function isErrorMetricsEvent(obj: any, specificErrorType?: string): obj is MetricsEvent {
   if (!isMetricsEvent(obj) || !obj.event) {

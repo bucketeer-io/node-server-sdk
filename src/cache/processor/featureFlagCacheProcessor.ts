@@ -7,10 +7,12 @@ import { Feature } from '@bucketeer/evaluation';
 import { ApiId } from '../../objects/apiId';
 import { Clock } from '../../utils/clock';
 import { SourceId } from '../../objects/sourceId';
+import { InitializationPromise } from '../../utils/initializationPromise';
 
 interface FeatureFlagProcessor {
   start(): void;
   stop(): void;
+  waitForInitialization(options: { timeout: number }): Promise<void>;
 }
 
 type FeatureFlagProcessorOptions = {
@@ -41,6 +43,8 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
   private pollingScheduleID?: NodeJS.Timeout;
   private pollingInterval: number;
   private clock: Clock;
+  private initializationPromise = new InitializationPromise();
+
   featureTag: string;
   sourceId: SourceId;
   sdkVersion: string;
@@ -70,11 +74,25 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
   }
 
   async runUpdateCache() {
+    const isFirstTime = !this.initializationPromise.isComplete();
+    
     try {
       await this.updateCache();
+
+      if (isFirstTime) {
+        this.initializationPromise.markAsInitialized();
+      }
     } catch (error) {
+      if (isFirstTime) {
+        this.initializationPromise.markAsFailed(error);
+      }
+      // Always log the error regardless of initialization state
       this.pushErrorMetricsEvent(error);
     }
+  }
+
+  async waitForInitialization(options: { timeout: number }): Promise<void> {
+    return this.initializationPromise.waitForInitialization(options.timeout);
   }
 
   private async updateCache() {

@@ -37,9 +37,7 @@ test.beforeEach(async (t) => {
     targetedUser: { id: TARGETED_USER_ID, data: {} },
   };
   // Waiting for the cache available
-  await new Promise((resolve) => {
-    setTimeout(resolve, 5000);
-  });
+  await t.context.bktClient.waitForInitialization({ timeout: 5000 });
 });
 
 test('goal event', async (t) => {

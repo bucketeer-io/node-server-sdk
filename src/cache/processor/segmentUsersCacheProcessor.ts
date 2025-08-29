@@ -8,10 +8,12 @@ import { createSchedule, removeSchedule } from '../../schedule';
 import { Clock } from '../../utils/clock';
 import { InvalidStatusError } from '../../objects/errors';
 import { SourceId } from '../../objects/sourceId';
+import { InitializationPromise } from '../../utils/initializationPromise';
 
 interface SegementUsersCacheProcessor {
   start(): void;
   stop(): void;
+  waitForInitialization(options: { timeout: number }): Promise<void>;
 }
 
 type SegementUsersCacheProcessorOptions = {
@@ -44,6 +46,7 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
   private clock: Clock;
   private sourceId: SourceId;
   private sdkVersion: string;
+  private initializationPromise = new InitializationPromise();
 
   constructor(options: SegementUsersCacheProcessorOptions) {
     this.cache = options.cache;
@@ -67,11 +70,25 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
   }
 
   async runUpdateCache() {
+    const isFirstTime = !this.initializationPromise.isComplete();
+    
     try {
       await this.updateCache();
+
+      if (isFirstTime) {
+        this.initializationPromise.markAsInitialized();
+      }
     } catch (error) {
+      if (isFirstTime) {
+        this.initializationPromise.markAsFailed(error);
+      }
+      // Always log the error regardless of initialization state
       this.pushErrorMetricsEvent(error);
     }
+  }
+
+  async waitForInitialization(options: { timeout: number }): Promise<void> {
+    return this.initializationPromise.waitForInitialization(options.timeout);
   }
 
   private async updateCache() {
