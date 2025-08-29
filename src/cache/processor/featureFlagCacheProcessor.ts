@@ -117,7 +117,7 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
       this.initializationPromise,
       new Promise<never>((_, reject) => {
         setTimeout(() => {
-          reject(new Error(`Initialization timeout after ${timeoutMs} seconds`));
+          reject(new Error(`Initialization timeout after ${timeoutMs} ms`));
         }, timeoutMs);
       })
     ]);
