@@ -190,11 +190,6 @@ export function initializeBKTClient(config: BKTConfig): Bucketeer {
   return defaultInitialize(internalConfig);
 }
 
-export async function initializeBKTClientAsync(config: BKTConfig): Promise<Bucketeer> {
-  const internalConfig = requiredInternalConfig(config); 
-  return defaultInitialize(internalConfig);  
-}
-
 function defaultInitialize(resolvedConfig: InternalConfig): BKTClientImpl {
   const apiClient = new APIClient(resolvedConfig.apiEndpoint, resolvedConfig.apiKey);
   const eventStore = new EventStore();
