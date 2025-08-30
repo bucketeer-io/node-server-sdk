@@ -21,7 +21,9 @@ test('Using a random string in the api key setting should not throw exception', 
     logger: new DefaultLogger('error'),
   });
   const bktClient = initializeBKTClient(config);
-
+  await bktClient.waitForInitialization({ timeoutMs: 3000 }).catch((e) => {
+    
+  });
   await new Promise((resolve) => {
     setTimeout(resolve, 3000);
   });
