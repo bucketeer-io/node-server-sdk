@@ -57,6 +57,8 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
   }
 
   start() {
+    // Execute immediately
+    this.runUpdateCache();
     this.pollingScheduleID = createSchedule(() => this.runUpdateCache(), this.pollingInterval);
   }
 

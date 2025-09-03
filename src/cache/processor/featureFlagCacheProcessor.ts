@@ -58,6 +58,8 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
   }
 
   start() {
+    // Execute immediately
+    this.runUpdateCache();
     this.pollingScheduleID = createSchedule(() => {
       this.runUpdateCache();
     }, this.pollingInterval);
