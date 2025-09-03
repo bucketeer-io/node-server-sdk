@@ -64,10 +64,11 @@ make init
 make fmt
 ```
 
-#### Lint
+#### Lint & Type check
 
 ```bash
 make lint
+make type-check
 ```
 
 #### Build
