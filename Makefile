@@ -55,6 +55,11 @@ test:
 test-eslint:
 	node eslint-rules/no-spread-after-defaults.test.mjs
 
+.PHONY: type-check
+type-check:
+	$(NPM_BIN_DIR)/tsc --noEmit --project tsconfig.json
+	$(NPM_BIN_DIR)/tsc --noEmit --project tsconfig.test.json
+
 .PHONY: e2e
 e2e: copy-genfiles
 	rm -rf $(CURDIR)/__e2e

@@ -5,7 +5,7 @@ import customRules from './eslint-rules/no-spread-after-defaults.mjs';
 
 export default [
   {
-    files: ['src/**/*.ts', 'test/**/*.ts', '__test/**/*.ts', 'example/**/*.ts'],
+    files: ['src/**/*.ts', 'src/__tests__/**/*.ts', 'test/**/*.ts', '__tests/**/*.ts', 'example/**/*.ts'],
     ignores: ['**/*.d.ts'],
     languageOptions: {
       parser: tsParser,

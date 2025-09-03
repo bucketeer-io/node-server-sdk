@@ -64,6 +64,8 @@ jobs:
             ${{ runner.os }}-yarn-
       - name: Format
         run: make fmt
+      - name: Type Check
+        run: make type-check
       - name: Lint
         run: |
           make lint
