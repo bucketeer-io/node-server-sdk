@@ -12,7 +12,7 @@ import {
   createFeature,
 } from '@bucketeer/evaluation';
 
-import { FEATURE_FLAG_REQUESTED_AT } from '../../../../../__test/cache/processor/featureFlagCacheProcessor';
+import { FEATURE_FLAG_REQUESTED_AT } from '../../../../cache/processor/featureFlagCacheProcessor';
 import { Clock } from '../../../../utils/clock';
 import { MockCache } from '../../../mocks/cache';
 import { MockGRPCClient } from '../../../mocks/gprc';
