@@ -101,7 +101,7 @@ make publish
 ```
 
 ### Write tests
-- Write tests in the `src/__tests__` directory. The test files should have the `.test.ts` suffix, following snake_case naming convention. Its differ from the library code which uses camelCase.
+- Write tests in the `src/__tests__` directory. The test files should following snake_case naming convention. Its differ from the library code which uses camelCase.
 - Use `ava` as the test runner. You can find the configuration in the [ava.config.mjs](./ava.config.mjs) file.
 - Run all tests using `make test` command.
 - Run single test using `make test-single <path-to-test-file>` command.
