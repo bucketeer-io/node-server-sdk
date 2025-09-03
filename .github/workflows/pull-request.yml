@@ -64,12 +64,12 @@ jobs:
             ${{ runner.os }}-yarn-
       - name: Format
         run: make fmt
+      - name: Lint
+        run: make lint
       - name: Type Check
         run: make type-check
-      - name: Lint
-        run: |
-          make lint
-          make test-eslint
+      - name: Test custom ESLint rules
+        run: make test-eslint
 
   unit-test:
     name: Unit test
