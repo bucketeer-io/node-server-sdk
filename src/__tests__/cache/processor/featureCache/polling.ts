@@ -18,7 +18,7 @@ import { MockCache } from '../../../mocks/cache';
 import { MockGRPCClient } from '../../../mocks/gprc';
 import { SourceId } from '../../../../objects/sourceId';
 
-test('polling cache', async (t) => {
+test('polling cache', async () => {
 
   const clock = new Clock();
   const mockClock = sino.mock(clock);

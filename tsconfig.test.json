@@ -9,10 +9,12 @@
       "es6",
     ],
     "esModuleInterop": true,
+    "skipLibCheck": true,
     "outDir": "./__test/",
     "types": [
       "@types/node",
     ]
   },
   "exclude": [],
+  "pretty": true,
 }

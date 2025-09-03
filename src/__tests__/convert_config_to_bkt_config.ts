@@ -18,7 +18,7 @@ test('should convert Config to BKTConfig with defaults', t => {
   t.is(bktConfig.featureTag, 'test-tag');
   t.is(bktConfig.eventsFlushInterval, 30000); // Default value
   t.is(bktConfig.eventsMaxQueueSize, 50); // Default value
-  t.is(bktConfig.pollingInterval, 60000); // Default value
+  t.is(bktConfig.cachePollingInterval, 60000); // Default value
   t.is(bktConfig.appVersion, '1.0.0'); // Default value
   t.true(bktConfig.logger instanceof DefaultLogger); // Default logger
   t.false(bktConfig.enableLocalEvaluation); // Default value
@@ -44,7 +44,6 @@ test('should override defaults with provided values', t => {
   t.is(bktConfig.featureTag, 'test-tag');
   t.is(bktConfig.eventsFlushInterval, 30000); // Overridden value
   t.is(bktConfig.eventsMaxQueueSize, 50); // Default value
-  t.is(bktConfig.pollingInterval, 60000); // Default value
   t.is(bktConfig.appVersion, '1.0.0'); // Default value
   t.true(bktConfig.logger === logger); // Overridden logger
   t.true(bktConfig.enableLocalEvaluation); // Overridden value

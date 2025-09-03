@@ -79,15 +79,13 @@ interface BKTConfig {
    * Default: 50
    */
   eventsMaxQueueSize: number;
-  /**
-   * Sets the polling interval for cache updating. Default: 1 min - specify in milliseconds.
-   */
-  pollingInterval: number;
+  
   /**
    * Optional property. Application version.
    * If not provided, '1.0.0' will be used as default.
    */
   appVersion: string;
+
   /**
    * Optional property. Logger for the SDK.
    * If not provided, DefaultLogger will be used.
@@ -135,7 +133,6 @@ const defineBKTConfig = (config: Partial<BKTConfig>): BKTConfig => {
     featureTag: config.featureTag ?? '',
     eventsFlushInterval: config.eventsFlushInterval ?? DEFAULT_FLUSH_INTERVAL_MILLIS,
     eventsMaxQueueSize: config.eventsMaxQueueSize ?? DEFAULT_MAX_QUEUE_SIZE,
-    pollingInterval: config.pollingInterval ?? DEFAULT_POLLING_INTERVAL_MILLIS,
     appVersion: config.appVersion ?? '1.0.0',
     logger: config.logger ?? new DefaultLogger(),
     enableLocalEvaluation: config.enableLocalEvaluation ?? false,
@@ -178,12 +175,12 @@ const defineBKTConfig = (config: Partial<BKTConfig>): BKTConfig => {
     baseConfig.eventsMaxQueueSize = DEFAULT_MAX_QUEUE_SIZE;
   }
 
-  // Validate pollingInterval
-  if (baseConfig.pollingInterval < MINIMUM_POLLING_INTERVAL_MILLIS) {
+  // Validate cachPollingInterval
+  if (baseConfig.cachePollingInterval < MINIMUM_POLLING_INTERVAL_MILLIS) {
     baseConfig.logger?.warn?.(
-      `pollingInterval (${baseConfig.pollingInterval}) is less than the minimum allowed (${MINIMUM_POLLING_INTERVAL_MILLIS}). Using default value (${DEFAULT_POLLING_INTERVAL_MILLIS}).`,
+      `cachePollingInterval (${baseConfig.cachePollingInterval}) is less than the minimum allowed (${MINIMUM_POLLING_INTERVAL_MILLIS}). Using default value (${DEFAULT_POLLING_INTERVAL_MILLIS}).`,
     );
-    baseConfig.pollingInterval = DEFAULT_POLLING_INTERVAL_MILLIS;
+    baseConfig.cachePollingInterval = DEFAULT_POLLING_INTERVAL_MILLIS;
   }
 
   // Resolve SDK version and sourceId without exposing SourceId to outside
@@ -209,7 +206,6 @@ const convertConfigToBKTConfig = (config: Config): InternalConfig => {
     featureTag: config.tag, // tag -> featureTag
     eventsFlushInterval: config.pollingIntervalForRegisterEvents ?? DEFAULT_FLUSH_INTERVAL_MILLIS,
     eventsMaxQueueSize: DEFAULT_MAX_QUEUE_SIZE,
-    pollingInterval: DEFAULT_POLLING_INTERVAL_MILLIS,
     appVersion: '1.0.0', // Default since Config doesn't have appVersion
     logger: config.logger ?? new DefaultLogger(),
     enableLocalEvaluation: config.enableLocalEvaluation ?? false,

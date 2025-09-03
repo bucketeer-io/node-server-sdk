@@ -17,7 +17,7 @@ const baseConfig: Partial<BKTConfig> = {
   appVersion: '1.0.0',
   eventsFlushInterval: 30000,
   eventsMaxQueueSize: 50,
-  pollingInterval: 600000,
+  cachePollingInterval: 600000,
 };
 
 // requiredInternalConfig should throw error when config is not a InternalConfig

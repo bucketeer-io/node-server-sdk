@@ -14,23 +14,23 @@ import { ProcessorEventsEmitter } from '../../../../processorEventsEmitter';
 import { SourceId } from '../../../../objects/sourceId';
 
 class SpyGRPCCLient implements GRPCClient {
-  segmentUsersRes: GetSegmentUsersResponse | null;
-  featureFlags: GetFeatureFlagsResponse | null;
-  getSegmentUsersError: Error | null;
-  getFeatureFlagsError: Error | null;
+  segmentUsersRes: GetSegmentUsersResponse | null = null;
+  featureFlags: GetFeatureFlagsResponse | null = null;
+  getSegmentUsersError: Error | null = null;
+  getFeatureFlagsError: Error | null = null;
 
   getSegementUsersRequest: {
     segmentIdsList: Array<string>;
     requestedAt: number;
     version: string;
-  } | null;
+  } | null = null;
 
   getFeatureFlagsRequest: {
     tag: string;
     featureFlagsId: string;
     requestedAt: number;
     version: string;
-  } | null;
+  } | null = null;
 
   getSegmentUsers(options: {
     segmentIdsList: Array<string>;

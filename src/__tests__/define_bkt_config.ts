@@ -77,7 +77,7 @@ test('should return a valid config with defaults (featureTag can be empty)', t =
   t.is(config.featureTag, ''); // default
   t.true(config.eventsFlushInterval >= 30000);
   t.is(config.eventsMaxQueueSize, 50);
-  t.true(config.pollingInterval >= 60000);
+  t.true(config.cachePollingInterval >= 60000);
   t.truthy(config.logger);
   t.is(config.enableLocalEvaluation, false);
 });
@@ -96,7 +96,7 @@ test('should not throw if appVersion is missing (default 1.0.0)', t => {
     apiEndpoint: 'endpoint',
     eventsFlushInterval: 1000, // too low
     eventsMaxQueueSize: 0, // invalid
-    pollingInterval: 1000, // too low
+    cachePollingInterval: 1000, // too low
   });
   t.is(config.appVersion, '1.0.0'); // default value
 });
@@ -111,14 +111,14 @@ test('should use provided values and not defaults when set', t => {
     featureTag: 'tag',
     eventsFlushInterval: 120000,
     eventsMaxQueueSize: 99,
-    pollingInterval: 120000,
+    cachePollingInterval: 120000,
     enableLocalEvaluation: true,
     logger: logger,
   });
   t.is(config.featureTag, 'tag');
   t.is(config.eventsFlushInterval, 120000);
   t.is(config.eventsMaxQueueSize, 99);
-  t.is(config.pollingInterval, 120000);
+  t.is(config.cachePollingInterval, 120000);
   t.is(config.enableLocalEvaluation, true);
   t.is(config.logger, logger);
 });
@@ -129,11 +129,11 @@ test('should correct invalid intervals and queue size', t => {
     appVersion: '1.2.3',
     eventsFlushInterval: 1000, // too low
     eventsMaxQueueSize: 0, // invalid
-    pollingInterval: 1000, // too low
+    cachePollingInterval: 1000, // too low
   });
   t.true(config.eventsFlushInterval >= 30000);
   t.is(config.eventsMaxQueueSize, 50);
-  t.true(config.pollingInterval >= 60000);
+  t.true(config.cachePollingInterval >= 60000);
 });
 
 // 4. Internal fields

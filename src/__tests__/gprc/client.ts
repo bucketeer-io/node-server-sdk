@@ -59,6 +59,7 @@ test('GRPCClient should convert ServiceError to InvalidStatusError', async (t) =
     });
   } catch (error) {
     t.true(error instanceof InvalidStatusError);
-    t.is(error.code, 500);
+    const invalidStatusError = error as InvalidStatusError;
+    t.is(invalidStatusError.code, 500);
   }
 });
