@@ -20,7 +20,6 @@
     "noUnusedParameters": true, /* Report errors on unused parameters. */
     "noImplicitReturns": true, /* Report error when not all code paths in function return a value. */
     "noFallthroughCasesInSwitch": true, /* Report errors for fallthrough cases in switch statement. */
-    "skipLibCheck": true,
     "outDir": "./__lib/",
     "types": [
       "node"
@@ -32,7 +31,4 @@
   "exclude": [
     "./src/**/__tests__/*",
   ],
-  /* Module Resolution Options */
-  /* Advanced Options */
-  "pretty": true,
 }
