@@ -175,7 +175,7 @@ const defineBKTConfig = (config: Partial<BKTConfig>): BKTConfig => {
     baseConfig.eventsMaxQueueSize = DEFAULT_MAX_QUEUE_SIZE;
   }
 
-  // Validate cachPollingInterval
+  // Validate cachePollingInterval
   if (baseConfig.cachePollingInterval < MINIMUM_POLLING_INTERVAL_MILLIS) {
     baseConfig.logger?.warn?.(
       `cachePollingInterval (${baseConfig.cachePollingInterval}) is less than the minimum allowed (${MINIMUM_POLLING_INTERVAL_MILLIS}). Using default value (${DEFAULT_POLLING_INTERVAL_MILLIS}).`,
