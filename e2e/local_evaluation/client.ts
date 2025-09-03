@@ -16,7 +16,7 @@ test('Using a random string in the api key setting should not throw exception', 
     apiEndpoint: HOST,
     apiKey: 'TOKEN_RANDOM',
     featureTag: FEATURE_TAG,
-    cachePollingInterval: 1000,
+    cachePollingInterval: 15000,
     enableLocalEvaluation: true,
     logger: new DefaultLogger('error'),
   });
@@ -48,7 +48,7 @@ test('altering featureTag should not affect api request', async (t) => {
     apiEndpoint: HOST,
     apiKey: SERVER_ROLE_TOKEN,
     featureTag: FEATURE_TAG,
-    cachePollingInterval: 1000,
+    cachePollingInterval: 15000,
     enableLocalEvaluation: true,
     logger: new DefaultLogger('error'),
   });
@@ -78,7 +78,7 @@ test('Altering the api key should not affect api request', async (t) => {
     apiEndpoint: HOST,
     apiKey: SERVER_ROLE_TOKEN,
     featureTag: FEATURE_TAG,
-    cachePollingInterval: 1000,
+    cachePollingInterval: 15000,
     enableLocalEvaluation: true,
     logger: new DefaultLogger('error'),
   });
@@ -109,7 +109,7 @@ test('Using a random string in the featureTag setting should affect api request'
     apiEndpoint: HOST,
     apiKey: SERVER_ROLE_TOKEN,
     featureTag: 'RANDOM',
-    cachePollingInterval: 1000,
+    cachePollingInterval: 15000,
     enableLocalEvaluation: true,
     logger: new DefaultLogger('error'),
   });

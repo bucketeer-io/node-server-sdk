@@ -22,7 +22,7 @@ test.before(async (t) => {
     featureTag: FEATURE_TAG,
     logger: new DefaultLogger('error'),
     enableLocalEvaluation: true,
-    cachePollingInterval: 3000,
+    cachePollingInterval: 15000,
   });
   t.context = {
     bktClient: initializeBKTClient(config),

@@ -22,7 +22,7 @@ test.beforeEach(async (t) => {
     featureTag: FEATURE_TAG,
     logger: new DefaultLogger('error'),
     enableLocalEvaluation: true,
-    cachePollingInterval: 3000,
+    cachePollingInterval: 15000,
     wrapperSdkSourceId: wrapperSdkSourceId,
     wrapperSdkVersion: wrapperSdkVersion,
   });
