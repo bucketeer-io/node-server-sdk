@@ -102,5 +102,7 @@ make publish
 ### Write tests
 - Write tests in the `src/__tests__` directory. The test files should have the `.test.ts` suffix, following snake_case naming convention. Its differ from the library code which uses camelCase.
 - Use `ava` as the test runner. You can find the configuration in the [ava.config.mjs](./ava.config.mjs) file.
+- Run all tests using `make test` command.
+- Run single test using `make test-single <path-to-test-file>` command.
 
 **Note:** The publishing process is automated using [GitHub Actions](https://github.com/bucketeer-io/node-server-sdk/blob/master/.github/workflows/release.yml)https://github.com/bucketeer-io/node-server-sdk/blob/master/.github/workflows/release.yml to publish it when the released tag is created.
