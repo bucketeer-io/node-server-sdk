@@ -4,18 +4,24 @@ import { SourceId } from './sourceId';
 import { User } from './user';
 
 const GOAL_EVENT_NAME = 'type.googleapis.com/bucketeer.event.client.GoalEvent';
-const version: string = require('../../package.json').version;
 
-export function createGoalEvent(tag: string, goalId: string, user: User, value: number): Event {
+export function createGoalEvent(
+  tag: string,
+  goalId: string,
+  user: User,
+  value: number,
+  sourceId: SourceId,
+  sdkVersion: string,
+): Event {
   const goalEvent: GoalEvent = {
     tag,
     goalId,
     user,
     value,
-    sourceId: SourceId.NODE_SERVER,
+    sourceId: sourceId,
     timestamp: createTimestamp(),
     userId: user.id,
-    sdkVersion: version,
+    sdkVersion: sdkVersion,
     metadata: {},
     '@type': GOAL_EVENT_NAME,
   };
@@ -29,7 +35,7 @@ export type GoalEvent = {
   value: number;
   user?: User;
   tag: string;
-  sourceId: typeof SourceId.NODE_SERVER;
+  sourceId: SourceId;
   sdkVersion: string;
   metadata: { [key: string]: string };
   '@type': typeof GOAL_EVENT_NAME;
@@ -43,7 +49,7 @@ export function isGoalEvent(obj: any): obj is GoalEvent {
   const hasValue = typeof obj.value === 'number';
   const hasUser = obj.user === undefined || typeof obj.user === 'object';
   const hasTag = typeof obj.tag === 'string';
-  const hasSourceId = obj.sourceId === SourceId.NODE_SERVER;
+  const hasSourceId = obj.sourceId !== undefined && Object.values(SourceId).includes(obj.sourceId);
   const hasSdkVersion = typeof obj.sdkVersion === 'string';
   const hasMetadata = typeof obj.metadata === 'object' && obj.metadata !== null;
   const hasValidMetadata =

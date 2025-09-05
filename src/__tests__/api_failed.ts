@@ -5,6 +5,7 @@ import { APIClient } from '../api/client';
 import { User } from '../bootstrap';
 import path from 'path';
 import { InvalidStatusError } from '../objects/errors';
+import { SourceId } from '../objects/sourceId';
 
 const apiKey = '';
 
@@ -15,6 +16,8 @@ const test = anyTest as TestFn<{ server: https.Server }>;
 const projectRoot = path.join(__dirname, '..', '..');
 const serverKey = path.join(projectRoot, 'src', '__tests__', 'testdata', 'server.key');
 const serverCrt = path.join(projectRoot, 'src', '__tests__', 'testdata', 'server.crt');
+const defaultSourceId = SourceId.OPEN_FEATURE_NODE;
+const sdkVersion = '1.2.10';
 
 test.before((t) => {
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
@@ -51,11 +54,12 @@ test('getEvaluation: 500', async (t) => {
   let err = '';
   let code: number | undefined;
   try {
-    await client.getEvaluation('', user, '');
+    await client.getEvaluation('', user, '', defaultSourceId, sdkVersion);
   } catch (error) {
     t.true(error instanceof InvalidStatusError);
-    err = error.message;
-    code = error.code;
+    const invalidStatusError = error as InvalidStatusError;
+    err = invalidStatusError.message;
+    code = invalidStatusError.code;
   }
 
   t.is(err, 'bucketeer/api: send HTTP request failed: 500');
@@ -66,10 +70,11 @@ test('registerEvents: 500', async (t) => {
   const client = new APIClient(host, apiKey);
   let err = '';
   try {
-    await client.registerEvents([]);
+    await client.registerEvents([], defaultSourceId, sdkVersion);
   } catch (error) {
     t.true(error instanceof InvalidStatusError);
-    err = error.message;
+    const invalidStatusError = error as InvalidStatusError;
+    err = invalidStatusError.message;
   }
   t.is(err, 'bucketeer/api: send HTTP request failed: 500');
 });

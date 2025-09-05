@@ -66,6 +66,10 @@ jobs:
         run: make fmt
       - name: Lint
         run: make lint
+      - name: Check types
+        run: make type-check
+      - name: Check custom ESLint rules
+        run: make test-eslint
 
   unit-test:
     name: Unit test

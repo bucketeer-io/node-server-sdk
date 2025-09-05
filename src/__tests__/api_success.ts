@@ -7,7 +7,6 @@ import path from 'path';
 import { v4 } from 'uuid';
 import { GetEvaluationResponse, RegisterEventsResponse } from '../objects/response';
 import { BaseRequest } from '../objects/request';
-import { version } from '../objects/version';
 import { SourceId } from '../objects/sourceId';
 
 const evaluationAPI = '/get_evaluation';
@@ -21,6 +20,8 @@ const test = anyTest as TestFn<{ server: https.Server }>;
 const projectRoot = path.join(__dirname, '..', '..');
 const serverKey = path.join(projectRoot, 'src', '__tests__', 'testdata', 'server.key');
 const serverCrt = path.join(projectRoot, 'src', '__tests__', 'testdata', 'server.crt');
+const defaultSourceId = SourceId.OPEN_FEATURE_NODE;
+const sdkVersion = '3.0.1-test';
 
 const dummyEvalResponse: GetEvaluationResponse = {
   evaluation: {
@@ -60,8 +61,8 @@ test.before((t) => {
           try {
             let jsonBody = JSON.parse(body) as BaseRequest;
             // Verify the request needs to include `sdkVersion` and `sourceId`
-            t.is(jsonBody.sdkVersion, version);
-            t.is(jsonBody.sourceId, SourceId.NODE_SERVER);
+            t.is(jsonBody.sdkVersion, sdkVersion);
+            t.is(jsonBody.sourceId, defaultSourceId);
           } catch (error) {
             t.fail('Invalid JSON or data structure');
           }
@@ -97,13 +98,13 @@ test('getEvaluation: success', async (t) => {
       '': '',
     },
   };
-  const [res] = await client.getEvaluation('', user, '');
+  const [res] = await client.getEvaluation('', user, '', defaultSourceId, sdkVersion);
   t.deepEqual(res.evaluation, dummyEvalResponse.evaluation);
 });
 
 test('registerEvents', async (t) => {
   const client = new APIClient(host, apiKey);
-  const [res] = await client.registerEvents([]);
+  const [res] = await client.registerEvents([], defaultSourceId, sdkVersion);
   t.is(res.errors.key.message, dummpyRegisterEvtsResponse.errors.key.message);
   t.is(res.errors.key.retriable, dummpyRegisterEvtsResponse.errors.key.retriable);
 });

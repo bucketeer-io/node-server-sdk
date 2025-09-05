@@ -4,8 +4,9 @@ import { convertSerivceError, DefaultGRPCClient, grpcToRestStatus } from '../../
 import { ServiceError } from '@bucketeer/evaluation';
 import { grpc } from '@improbable-eng/grpc-web';
 import { InvalidStatusError } from '../../objects/errors';
+import { SourceId } from '../../objects/sourceId';
 
-test('grpcToRestStatus should return correct HTTP status for known gRPC codes', t => {
+test('grpcToRestStatus should return correct HTTP status for known gRPC codes', (t) => {
   t.is(grpcToRestStatus(0), 200); // OK
   t.is(grpcToRestStatus(1), 499); // CANCELLED
   t.is(grpcToRestStatus(2), 500); // UNKNOWN
@@ -25,12 +26,12 @@ test('grpcToRestStatus should return correct HTTP status for known gRPC codes', 
   t.is(grpcToRestStatus(16), 401); // UNAUTHENTICATED
 });
 
-test('grpcToRestStatus should return 500 for unknown gRPC codes', t => {
+test('grpcToRestStatus should return 500 for unknown gRPC codes', (t) => {
   t.is(grpcToRestStatus(999), 500); // Unknown gRPC code
   t.is(grpcToRestStatus(-1), 500); // Invalid gRPC code
 });
 
-test('convertSerivceError should convert ServiceError to InvalidStatusError', t => {
+test('convertSerivceError should convert ServiceError to InvalidStatusError', (t) => {
   const serviceError: ServiceError = {
     message: 'Test error message',
     code: 500,
@@ -44,14 +45,21 @@ test('convertSerivceError should convert ServiceError to InvalidStatusError', t 
   t.is(result.code, serviceError.code);
 });
 
-test('GRPCClient should convert ServiceError to InvalidStatusError', async t => {
+test('GRPCClient should convert ServiceError to InvalidStatusError', async (t) => {
   // there is not gprc server running on this port, error is expected
   const client = new DefaultGRPCClient('https://localhost:26948', 'apiKey');
 
   try {
-    await client.getFeatureFlags({featureFlagsId: 'featureFlagsId', requestedAt: 123, tag: 'tag'});
+    await client.getFeatureFlags({
+      featureFlagsId: 'featureFlagsId',
+      requestedAt: 123,
+      tag: 'tag',
+      sourceId: SourceId.OPEN_FEATURE_GO,
+      sdkVersion: '0.1.0',
+    });
   } catch (error) {
     t.true(error instanceof InvalidStatusError);
-    t.is(error.code, 500);
+    const invalidStatusError = error as InvalidStatusError;
+    t.is(invalidStatusError.code, 500);
   }
 });

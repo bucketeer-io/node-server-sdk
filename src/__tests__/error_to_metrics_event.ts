@@ -15,15 +15,30 @@ import {
   createServiceUnavailableErrorMetricsEvent,
 } from '../objects/status';
 import { InvalidStatusError, IllegalStateError, IllegalArgumentError } from '../objects/errors';
+import { SourceId } from '../objects/sourceId';
+
+const sdkVersion = '3.0.1-test';
 
 test('toErrorMetricsEvent returns correct event for IllegalStateError', (t) => {
   const error = new IllegalStateError('Feature not found');
   const tag = 'test-tag';
   const apiId = ApiId.GET_EVALUATION;
 
-  const expectedEvent = createInternalSdkErrorMetricsEvent(tag, apiId, 'Feature not found').event;
-  const actualEvent = toErrorMetricsEvent(error, tag, apiId)?.event;
-  
+  const expectedEvent = createInternalSdkErrorMetricsEvent(
+    tag,
+    apiId,
+    SourceId.OPEN_FEATURE_NODE,
+    sdkVersion,
+    'Feature not found',
+  ).event;
+  const actualEvent = toErrorMetricsEvent(
+    error,
+    tag,
+    apiId,
+    SourceId.OPEN_FEATURE_NODE,
+    sdkVersion,
+  )?.event;
+
   t.deepEqual(actualEvent, expectedEvent);
 });
 
@@ -32,8 +47,20 @@ test('toErrorMetricsEvent returns correct event for IllegalArgumentError', (t) =
   const tag = 'test-tag';
   const apiId = ApiId.GET_EVALUATION;
 
-  const expectedEvent = createInternalSdkErrorMetricsEvent(tag, apiId, 'Input string must be non-blank').event;
-  const actualEvent = toErrorMetricsEvent(error, tag, apiId)?.event;
+  const expectedEvent = createInternalSdkErrorMetricsEvent(
+    tag,
+    apiId,
+    SourceId.OPEN_FEATURE_NODE,
+    sdkVersion,
+    'Input string must be non-blank',
+  ).event;
+  const actualEvent = toErrorMetricsEvent(
+    error,
+    tag,
+    apiId,
+    SourceId.OPEN_FEATURE_NODE,
+    sdkVersion,
+  )?.event;
 
   t.deepEqual(actualEvent, expectedEvent);
 });
@@ -43,8 +70,20 @@ test('toErrorMetricsEvent returns correct event for InvalidStatusError with 400 
   const tag = 'test-tag';
   const apiId = ApiId.GET_EVALUATION;
 
-  const expectedEvent = createBadRequestErrorMetricsEvent(tag, apiId).event;
-  const actualEvent = toErrorMetricsEvent(error, tag, apiId)?.event;
+  const expectedEvent = createBadRequestErrorMetricsEvent(
+    tag,
+    apiId,
+    SourceId.OPEN_FEATURE_NODE,
+    sdkVersion,
+  ).event;
+
+  const actualEvent = toErrorMetricsEvent(
+    error,
+    tag,
+    apiId,
+    SourceId.OPEN_FEATURE_NODE,
+    sdkVersion,
+  )?.event;
 
   t.deepEqual(actualEvent, expectedEvent);
 });
@@ -54,7 +93,13 @@ test('skip generating error events for unauthorized error', (t) => {
   const tag = 'test-tag';
   const apiId = ApiId.GET_EVALUATION;
 
-  const actualEvent = toErrorMetricsEvent(error, tag, apiId);
+  const actualEvent = toErrorMetricsEvent(
+    error,
+    tag,
+    apiId,
+    SourceId.OPEN_FEATURE_NODE,
+    sdkVersion,
+  );
 
   t.is(actualEvent, null);
 });
@@ -64,7 +109,13 @@ test('skip generating error events for forbidden error', (t) => {
   const tag = 'test-tag';
   const apiId = ApiId.GET_EVALUATION;
 
-  const actualEvent = toErrorMetricsEvent(error, tag, apiId);
+  const actualEvent = toErrorMetricsEvent(
+    error,
+    tag,
+    apiId,
+    SourceId.OPEN_FEATURE_NODE,
+    sdkVersion,
+  );
 
   t.is(actualEvent, null);
 });
@@ -74,8 +125,19 @@ test('toErrorMetricsEvent returns correct event for InvalidStatusError with 404 
   const tag = 'test-tag';
   const apiId = ApiId.GET_EVALUATION;
 
-  const expectedEvent = createNotFoundErrorMetricsEvent(tag, apiId).event;
-  const actualEvent = toErrorMetricsEvent(error, tag, apiId)?.event;
+  const expectedEvent = createNotFoundErrorMetricsEvent(
+    tag,
+    apiId,
+    SourceId.OPEN_FEATURE_NODE,
+    sdkVersion,
+  ).event;
+  const actualEvent = toErrorMetricsEvent(
+    error,
+    tag,
+    apiId,
+    SourceId.OPEN_FEATURE_NODE,
+    sdkVersion,
+  )?.event;
 
   t.deepEqual(actualEvent, expectedEvent);
 });
@@ -85,8 +147,20 @@ test('toErrorMetricsEvent returns correct event for InvalidStatusError with 408 
   const tag = 'test-tag';
   const apiId = ApiId.GET_EVALUATION;
 
-  const expectedEvent = createTimeoutErrorMetricsEvent(tag, apiId).event;
-  const actualEvent = toErrorMetricsEvent(error, tag, apiId)?.event;
+  const expectedEvent = createTimeoutErrorMetricsEvent(
+    tag,
+    apiId,
+    SourceId.OPEN_FEATURE_NODE,
+    sdkVersion,
+  ).event;
+
+  const actualEvent = toErrorMetricsEvent(
+    error,
+    tag,
+    apiId,
+    SourceId.OPEN_FEATURE_NODE,
+    sdkVersion,
+  )?.event;
 
   t.deepEqual(actualEvent, expectedEvent);
 });
@@ -96,8 +170,19 @@ test('toErrorMetricsEvent returns correct event for InvalidStatusError with 413 
   const tag = 'test-tag';
   const apiId = ApiId.GET_EVALUATION;
 
-  const expectedEvent = createPayloadTooLargeErrorMetricsEvent(tag, apiId).event;
-  const actualEvent = toErrorMetricsEvent(error, tag, apiId)?.event;
+  const expectedEvent = createPayloadTooLargeErrorMetricsEvent(
+    tag,
+    apiId,
+    SourceId.OPEN_FEATURE_NODE,
+    sdkVersion,
+  ).event;
+  const actualEvent = toErrorMetricsEvent(
+    error,
+    tag,
+    apiId,
+    SourceId.OPEN_FEATURE_NODE,
+    sdkVersion,
+  )?.event;
 
   t.deepEqual(actualEvent, expectedEvent);
 });
@@ -107,8 +192,20 @@ test('toErrorMetricsEvent returns correct event for InvalidStatusError with 500 
   const tag = 'test-tag';
   const apiId = ApiId.GET_EVALUATION;
 
-  const expectedEvent = createInternalServerErrorMetricsEvent(tag, apiId).event;
-  const actualEvent = toErrorMetricsEvent(error, tag, apiId)?.event;
+  const expectedEvent = createInternalServerErrorMetricsEvent(
+    tag,
+    apiId,
+    SourceId.OPEN_FEATURE_NODE,
+    sdkVersion,
+  ).event;
+
+  const actualEvent = toErrorMetricsEvent(
+    error,
+    tag,
+    apiId,
+    SourceId.OPEN_FEATURE_NODE,
+    sdkVersion,
+  )?.event;
 
   t.deepEqual(actualEvent, expectedEvent);
 });
@@ -120,8 +217,20 @@ test('toErrorMetricsEvent returns correct event for InvalidStatusError with 5xx 
     const tag = 'test-tag';
     const apiId = ApiId.GET_EVALUATION;
 
-    const expectedEvent = createServiceUnavailableErrorMetricsEvent(tag, apiId).event;
-    const actualEvent = toErrorMetricsEvent(error, tag, apiId)?.event;
+    const expectedEvent = createServiceUnavailableErrorMetricsEvent(
+      tag,
+      apiId,
+      SourceId.OPEN_FEATURE_NODE,
+      sdkVersion,
+    ).event;
+
+    const actualEvent = toErrorMetricsEvent(
+      error,
+      tag,
+      apiId,
+      SourceId.OPEN_FEATURE_NODE,
+      sdkVersion,
+    )?.event;
 
     t.deepEqual(actualEvent, expectedEvent);
   });
@@ -133,8 +242,19 @@ test('toErrorMetricsEvent returns correct event for node error ECONNRESET', (t) 
   const tag = 'test-tag';
   const apiId = ApiId.GET_EVALUATION;
 
-  const expectedEvent = createTimeoutErrorMetricsEvent(tag, apiId).event;
-  const actualEvent = toErrorMetricsEvent(error, tag, apiId)?.event;
+  const expectedEvent = createTimeoutErrorMetricsEvent(
+    tag,
+    apiId,
+    SourceId.OPEN_FEATURE_NODE,
+    sdkVersion,
+  ).event;
+  const actualEvent = toErrorMetricsEvent(
+    error,
+    tag,
+    apiId,
+    SourceId.OPEN_FEATURE_NODE,
+    sdkVersion,
+  )?.event;
 
   t.deepEqual(actualEvent, expectedEvent);
 });
@@ -144,8 +264,20 @@ test('toErrorMetricsEvent returns correct event for node error ECONNREFUSED', (t
   const tag = 'test-tag';
   const apiId = ApiId.GET_EVALUATION;
 
-  const expectedEvent = createNetworkErrorMetricsEvent(tag, apiId).event;
-  const actualEvent = toErrorMetricsEvent(error, tag, apiId)?.event;
+  const expectedEvent = createNetworkErrorMetricsEvent(
+    tag,
+    apiId,
+    SourceId.OPEN_FEATURE_NODE,
+    sdkVersion,
+  ).event;
+
+  const actualEvent = toErrorMetricsEvent(
+    error,
+    tag,
+    apiId,
+    SourceId.OPEN_FEATURE_NODE,
+    sdkVersion,
+  )?.event;
 
   t.deepEqual(actualEvent, expectedEvent);
 });
@@ -155,8 +287,21 @@ test('toErrorMetricsEvent returns correct event for unknown status code', (t) =>
   const tag = 'test-tag';
   const apiId = ApiId.GET_EVALUATION;
 
-  const expectedEvent = createUnknownErrorMetricsEvent(tag, apiId, 999, 'Unknown Error').event;
-  const actualEvent = toErrorMetricsEvent(error, tag, apiId)?.event;
+  const expectedEvent = createUnknownErrorMetricsEvent(
+    tag,
+    apiId,
+    SourceId.OPEN_FEATURE_NODE,
+    sdkVersion,
+    999,
+    'Unknown Error',
+  ).event;
+  const actualEvent = toErrorMetricsEvent(
+    error,
+    tag,
+    apiId,
+    SourceId.OPEN_FEATURE_NODE,
+    sdkVersion,
+  )?.event;
 
   t.deepEqual(actualEvent, expectedEvent);
 });
@@ -169,10 +314,18 @@ test('toErrorMetricsEvent returns correct event for unknown error', (t) => {
   const expectedEvent = createUnknownErrorMetricsEvent(
     tag,
     apiId,
+    SourceId.OPEN_FEATURE_NODE,
+    sdkVersion,
     undefined,
     'Unknown error occurred',
   ).event;
-  const actualEvent = toErrorMetricsEvent(error, tag, apiId)?.event;
+  const actualEvent = toErrorMetricsEvent(
+    error,
+    tag,
+    apiId,
+    SourceId.OPEN_FEATURE_NODE,
+    sdkVersion,
+  )?.event;
 
   t.deepEqual(actualEvent, expectedEvent);
 });
@@ -182,8 +335,21 @@ test('toErrorMetricsEvent returns correct event for unknown object', (t) => {
   const tag = 'test-tag';
   const apiId = ApiId.GET_EVALUATION;
 
-  const expectedEvent = createUnknownErrorMetricsEvent(tag, apiId, undefined, String(error)).event;
-  const actualEvent = toErrorMetricsEvent(error, tag, apiId)?.event;
+  const expectedEvent = createUnknownErrorMetricsEvent(
+    tag,
+    apiId,
+    SourceId.OPEN_FEATURE_NODE,
+    sdkVersion,
+    undefined,
+    String(error),
+  ).event;
+  const actualEvent = toErrorMetricsEvent(
+    error,
+    tag,
+    apiId,
+    SourceId.OPEN_FEATURE_NODE,
+    sdkVersion,
+  )?.event;
 
   t.deepEqual(actualEvent, expectedEvent);
 });

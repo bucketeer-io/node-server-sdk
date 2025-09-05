@@ -51,6 +51,21 @@ test:
 	$(NPM_BIN_DIR)/babel src --extensions '.ts' --config-file "$(CURDIR)/babel-test.config.js" --out-dir "__test"
 	$(NPM_BIN_DIR)/ava --config ava-test.config.mjs
 
+.PHONY: test-single
+test-single:
+	rm -rf $(CURDIR)/__test
+	$(NPM_BIN_DIR)/babel src --extensions '.ts' --config-file "$(CURDIR)/babel-test.config.js" --out-dir "__test"
+	$(NPM_BIN_DIR)/ava --config ava-test.config.mjs $(filter-out $@,$(MAKECMDGOALS))
+
+.PHONY: test-eslint
+test-eslint:
+	node eslint-rules/no-spread-after-defaults.test.mjs
+
+.PHONY: type-check
+type-check:
+	$(NPM_BIN_DIR)/tsc --noEmit --project tsconfig.json
+	$(NPM_BIN_DIR)/tsc --noEmit --project tsconfig.test.json
+
 .PHONY: e2e
 e2e: copy-genfiles
 	rm -rf $(CURDIR)/__e2e

@@ -8,33 +8,36 @@ import {
 } from '../../../../cache/processor/featureFlagCacheProcessor';
 
 import { Clock } from '../../../../utils/clock';
-import { GetFeatureFlagsResponse, GetSegmentUsersResponse, createFeature } from '@bucketeer/evaluation';
+import { GetFeatureFlagsRequest, GetFeatureFlagsResponse, GetSegmentUsersResponse, createFeature } from '@bucketeer/evaluation';
 import { GRPCClient } from '../../../../grpc/client';
 import { ProcessorEventsEmitter } from '../../../../processorEventsEmitter';
+import { SourceId } from '../../../../objects/sourceId';
 
 class SpyGRPCCLient implements GRPCClient {
-  segmentUsersRes: GetSegmentUsersResponse | null;
-  featureFlags: GetFeatureFlagsResponse | null;
-  getSegmentUsersError: Error | null;
-  getFeatureFlagsError: Error | null;
+  segmentUsersRes: GetSegmentUsersResponse | null = null;
+  featureFlags: GetFeatureFlagsResponse | null = null;
+  getSegmentUsersError: Error | null = null;
+  getFeatureFlagsError: Error | null = null;
 
   getSegementUsersRequest: {
     segmentIdsList: Array<string>;
     requestedAt: number;
     version: string;
-  } | null;
+  } | null = null;
 
   getFeatureFlagsRequest: {
     tag: string;
     featureFlagsId: string;
     requestedAt: number;
     version: string;
-  } | null;
+  } | null = null;
 
   getSegmentUsers(options: {
     segmentIdsList: Array<string>;
     requestedAt: number;
     version: string;
+    sourceId: SourceId;
+    sdkVersion: string;
   }): Promise<GetSegmentUsersResponse> {
 
     this.getSegementUsersRequest = options
@@ -53,6 +56,8 @@ class SpyGRPCCLient implements GRPCClient {
     featureFlagsId: string;
     requestedAt: number;
     version: string;
+    sourceId: SourceId;
+    sdkVersion: string;
   }): Promise<GetFeatureFlagsResponse> {
 
     this.getFeatureFlagsRequest = options
@@ -74,6 +79,7 @@ test('polling cache - using InMemoryCache()', async (t) => {
   const featureCache = NewFeatureCache({ cache, ttl: 1000 });
   const eventEmitter = new ProcessorEventsEmitter();
   const featureFlag = 'nodejs';
+  const sourceId = SourceId.NODE_SERVER;
   const grpc = new SpyGRPCCLient();
 
   const featuresResponse = new GetFeatureFlagsResponse();
@@ -96,6 +102,8 @@ test('polling cache - using InMemoryCache()', async (t) => {
     eventEmitter: eventEmitter,
     featureTag: featureFlag,
     clock: clock,
+    sourceId: sourceId,
+    sdkVersion: '2.0.1',
   });
 
   processor.start();
@@ -118,5 +126,7 @@ test('polling cache - using InMemoryCache()', async (t) => {
     tag: featureFlag,
     featureFlagsId: 'featureFlagsId',
     requestedAt: 1000,
+    sourceId: sourceId,
+    sdkVersion: '2.0.1',
   });
 });

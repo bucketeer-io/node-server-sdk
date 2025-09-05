@@ -32,7 +32,7 @@ import { Clock } from '../utils/clock';
 import { NewSegmentUsersCache, SegmentUsersCache } from '../cache/segmentUsers';
 import { NewFeatureCache, FeaturesCache } from '../cache/features';
 import { ApiId } from '@bucketeer/evaluation/lib/proto/event/client/event_pb';
-import { Config, DefaultLogger } from '../index';
+import { BKTConfig, Config, DefaultLogger, defineBKTConfig } from '../index';
 import { APIClient } from '../api/client';
 import { EventStore } from '../stores/EventStore';
 import { Evaluation } from '../objects/evaluation';
@@ -41,6 +41,7 @@ import { BKTValue } from '../types';
 import { BKTClientImpl } from '../client';
 import { IllegalStateError } from '../objects/errors';
 import sinon from 'sinon';
+import { requiredInternalConfig } from '../internalConfig';
 
 const test = anyTest as TestFn<{
   sandbox: sino.SinonSandbox;
@@ -301,14 +302,16 @@ test.beforeEach((t) => {
   const segmentUsersCache = NewSegmentUsersCache({ cache: cache, ttl: SEGEMENT_USERS_CACHE_TTL });
   const featureFlagCache = NewFeatureCache({ cache: cache, ttl: FEATURE_FLAG_CACHE_TTL });
 
-  const config = {
-    host: 'api.bucketeer.io',
-    token: 'api_key_value',
-    tag: 'server',
-    logger: new DefaultLogger('error'),
-    cachePollingInterval: 1000,
-    enableLocalEvaluation: true,
-  } satisfies Config;
+  const config = requiredInternalConfig(
+    defineBKTConfig({
+      apiEndpoint: 'api.bucketeer.io',
+      apiKey: 'api_key_value',
+      featureTag: 'server',
+      logger: new DefaultLogger('error'),
+      cachePollingInterval: 1000,
+      enableLocalEvaluation: true,
+    }),
+  );
 
   const featureFlagProcessor = NewFeatureFlagProcessor({
     cache: cache,
@@ -316,8 +319,10 @@ test.beforeEach((t) => {
     pollingInterval: config.cachePollingInterval!,
     grpc: grpc,
     eventEmitter: eventEmitter,
-    featureTag: config.tag,
+    featureTag: config.featureTag,
     clock: new Clock(),
+    sourceId: config.sourceId,
+    sdkVersion: config.sdkVersion,
   });
 
   const segementUsersCacheProcessor = NewSegementUserCacheProcessor({
@@ -327,6 +332,8 @@ test.beforeEach((t) => {
     grpc: grpc,
     eventEmitter: eventEmitter,
     clock: new Clock(),
+    sourceId: config.sourceId,
+    sdkVersion: config.sdkVersion,
   });
 
   const evaluator = new LocalEvaluator({
@@ -337,7 +344,7 @@ test.beforeEach((t) => {
 
   const bktOptions = {
     cache: cache,
-    apiClient: new APIClient(config.host, config.token),
+    apiClient: new APIClient(config.apiEndpoint, config.apiKey),
     eventStore: new EventStore(),
     localEvaluator: evaluator,
     featureFlagProcessor: featureFlagProcessor,

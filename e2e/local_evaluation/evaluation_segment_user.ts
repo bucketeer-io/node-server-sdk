@@ -1,24 +1,35 @@
 import anyTest, { TestFn } from 'ava';
-import { Bucketeer, DefaultLogger, User, initialize } from '../../lib';
-import { HOST, FEATURE_TAG, TARGETED_SEGMENT_USER_ID, FEATURE_ID_BOOLEAN, FEATURE_ID_STRING, FEATURE_ID_INT, FEATURE_ID_JSON, FEATURE_ID_FLOAT, SERVER_ROLE_TOKEN } from '../constants/constants';
+import { Bucketeer, DefaultLogger, User, defineBKTConfig, initializeBKTClient } from '../../lib';
+import {
+  HOST,
+  FEATURE_TAG,
+  TARGETED_SEGMENT_USER_ID,
+  FEATURE_ID_BOOLEAN,
+  FEATURE_ID_STRING,
+  FEATURE_ID_INT,
+  FEATURE_ID_JSON,
+  FEATURE_ID_FLOAT,
+  SERVER_ROLE_TOKEN,
+} from '../constants/constants';
 import { assetEvaluationDetails } from '../utils/assert';
 
 const test = anyTest as TestFn<{ bktClient: Bucketeer; targetedSegmentUser: User }>;
 
-test.before( async (t) => {
+test.before(async (t) => {
+  const config = defineBKTConfig({
+    apiEndpoint: HOST,
+    apiKey: SERVER_ROLE_TOKEN,
+    featureTag: FEATURE_TAG,
+    logger: new DefaultLogger('error'),
+    enableLocalEvaluation: true,
+    cachePollingInterval: 15000,
+  });
   t.context = {
-    bktClient: initialize({
-      host: HOST,
-      token: SERVER_ROLE_TOKEN,
-      tag: FEATURE_TAG,
-      logger: new DefaultLogger('error'),
-      enableLocalEvaluation: true,
-      cachePollingInterval: 3000,
-    }),
+    bktClient: initializeBKTClient(config),
     targetedSegmentUser: { id: TARGETED_SEGMENT_USER_ID, data: {} },
-  };   
+  };
 
-  await new Promise(resolve => {
+  await new Promise((resolve) => {
     setTimeout(resolve, 5000);
   });
 });
@@ -42,11 +53,11 @@ test('boolVariation', async (t) => {
       variationName: 'variation 1',
       variationValue: true,
       reason: 'DEFAULT',
-    }
-  )
+    },
+  );
 });
 
-// This testcase `stringVariation` is setup for testing 
+// This testcase `stringVariation` is setup for testing
 test('stringVariation', async (t) => {
   const { bktClient, targetedSegmentUser } = t.context;
   t.is(await bktClient.stringVariation(targetedSegmentUser, FEATURE_ID_STRING, ''), 'value-3');
@@ -61,8 +72,8 @@ test('stringVariation', async (t) => {
       variationName: 'variation 3',
       variationValue: 'value-3',
       reason: 'RULE',
-    }
-  )
+    },
+  );
 });
 
 test('numberVariation', async (t) => {
@@ -79,8 +90,8 @@ test('numberVariation', async (t) => {
       variationName: 'variation 1',
       variationValue: 10,
       reason: 'DEFAULT',
-    }
-  )
+    },
+  );
 
   t.is(await bktClient.numberVariation(targetedSegmentUser, FEATURE_ID_FLOAT, 0.0), 2.1);
   assetEvaluationDetails(
@@ -94,15 +105,20 @@ test('numberVariation', async (t) => {
       variationName: 'variation 1',
       variationValue: 2.1,
       reason: 'DEFAULT',
-    }
-  )
-  
+    },
+  );
 });
 
 test('objectVariation', async (t) => {
   const { bktClient, targetedSegmentUser } = t.context;
-  t.deepEqual(await bktClient.getJsonVariation(targetedSegmentUser, FEATURE_ID_JSON, {}), { "str": "str1", "int": "int1" });
-  t.deepEqual(await bktClient.objectVariation(targetedSegmentUser, FEATURE_ID_JSON, {}), { "str": "str1", "int": "int1" });
+  t.deepEqual(await bktClient.getJsonVariation(targetedSegmentUser, FEATURE_ID_JSON, {}), {
+    str: 'str1',
+    int: 'int1',
+  });
+  t.deepEqual(await bktClient.objectVariation(targetedSegmentUser, FEATURE_ID_JSON, {}), {
+    str: 'str1',
+    int: 'int1',
+  });
   assetEvaluationDetails(
     t,
     await bktClient.objectVariationDetails(targetedSegmentUser, FEATURE_ID_JSON, {}),
@@ -114,6 +130,6 @@ test('objectVariation', async (t) => {
       variationName: 'variation 1',
       variationValue: { str: 'str1', int: 'int1' },
       reason: 'DEFAULT',
-    }
-  )
+    },
+  );
 });
