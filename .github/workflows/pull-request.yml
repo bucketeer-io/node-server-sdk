@@ -4,7 +4,6 @@ on:
   pull_request:
     branches:
       - master
-      - fix/no-spead-after-defaults-lint
     paths-ignore:
       - "**/**.md"
 
