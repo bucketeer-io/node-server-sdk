@@ -1,11 +1,5 @@
 import anyTest, { TestFn } from 'ava';
-import {
-  Bucketeer,
-  DefaultLogger,
-  User,
-  defineBKTConfig,
-  initializeBKTClient,
-} from '../../lib';
+import { Bucketeer, DefaultLogger, User, defineBKTConfig, initializeBKTClient } from '../../lib';
 import {
   HOST,
   SERVER_ROLE_TOKEN,
@@ -34,9 +28,7 @@ test.before(async (t) => {
     defaultUser: { id: 'user-1', data: {} },
   };
   // Waiting for the cache available
-  await new Promise((resolve) => {
-    setTimeout(resolve, 5000);
-  });
+  await t.context.bktClient.waitForInitialization({ timeout: 5000 });
 });
 
 test.after(async (t) => {
