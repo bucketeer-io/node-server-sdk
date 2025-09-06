@@ -10,7 +10,7 @@ import {
 } from '../constants/constants';
 import { isMetricsEvent, MetricsEvent } from '../../lib/objects/metricsEvent';
 import { BKTClientImpl } from '../../lib/client';
-import { InvalidStatusError } from '../../lib/objects/errors';
+import { ForbiddenError } from '../../lib/objects/errors';
 import { ApiId } from '../../lib/objects/apiId';
 
 const FORBIDDEN_ERROR_METRICS_EVENT_NAME =
@@ -33,9 +33,8 @@ test('Using a random string in the api key setting should not throw exception', 
   // We will check the exception below
   const error = (await t.throwsAsync(
     bktClient.waitForInitialization({ timeout: 5000 }),
-  )) as InvalidStatusError;
-  t.true(error instanceof InvalidStatusError);
-  t.is(error.code, 403);
+  ));
+  t.true(error instanceof ForbiddenError);
 
   // Even if the initialization fails, other methods should work and return the default value
   const user = { id: TARGETED_USER_ID, data: {} };
