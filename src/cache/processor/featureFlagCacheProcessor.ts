@@ -43,7 +43,7 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
   private pollingScheduleID?: NodeJS.Timeout;
   private pollingInterval: number;
   private clock: Clock;
-  private initializationPromise = new InitializationPromise();
+  initializationPromise = new InitializationPromise();
 
   featureTag: string;
   sourceId: SourceId;

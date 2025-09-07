@@ -46,7 +46,7 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
   private clock: Clock;
   private sourceId: SourceId;
   private sdkVersion: string;
-  private initializationPromise = new InitializationPromise();
+  initializationPromise = new InitializationPromise();
 
   constructor(options: SegementUsersCacheProcessorOptions) {
     this.cache = options.cache;
