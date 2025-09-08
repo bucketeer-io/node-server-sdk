@@ -128,7 +128,7 @@ test('polling cache - using InMemoryCache()', async (t) => {
   // Wait for 2 seconds before continuing the test
   await new Promise((resolve) => setTimeout(resolve, 2000));
 
-  processor.stop();
+  await processor.stop();
 
   t.deepEqual(grpc.getFeatureFlagsRequest, {
     tag: featureFlag,

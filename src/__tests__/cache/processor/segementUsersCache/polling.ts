@@ -116,7 +116,7 @@ test('polling cache', async (t) => {
 
   await new Promise((resolve) => setTimeout(resolve, 2100));
 
-  processor.stop();
+  await processor.stop();
 
   mockCache.verify();
   mockGRPCClient.verify();

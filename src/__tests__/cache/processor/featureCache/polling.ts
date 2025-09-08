@@ -127,7 +127,7 @@ test('polling cache', async (t) => {
 
   await new Promise((resolve) => setTimeout(resolve, 3000));
 
-  processor.stop();
+  await processor.stop();
   mockClock.verify();
   mockCache.verify();
   mockProcessorEventsEmitter.verify();
