@@ -3,7 +3,10 @@ import { EventStore } from './stores/EventStore';
 import { createSchedule, removeSchedule } from './schedule';
 import { GIT_REVISION } from './shared';
 import { APIClient } from './api/client';
-import { createDefaultEvaluationEvent, createEvaluationEvent } from './objects/evaluationEvent';
+import {
+  createDefaultEvaluationEvent,
+  createEvaluationEvent,
+} from './objects/evaluationEvent';
 import { createGoalEvent } from './objects/goalEvent';
 import {
   createLatencyMetricsEvent,
@@ -14,7 +17,10 @@ import { Evaluation } from './objects/evaluation';
 import { Event } from './objects/event';
 import { GetEvaluationResponse } from './objects/response';
 import { ApiId, NodeApiIds } from './objects/apiId';
-import { BKTEvaluationDetails, newDefaultBKTEvaluationDetails } from './evaluationDetails';
+import {
+  BKTEvaluationDetails,
+  newDefaultBKTEvaluationDetails,
+} from './evaluationDetails';
 import { BKTValue } from './types';
 import {
   defaultStringToTypeConverter,
@@ -63,7 +69,9 @@ export class BKTClientImpl implements Bucketeer {
     this.eventStore = options.eventStore;
     this.registerEventsScheduleID = createSchedule(() => {
       if (this.eventStore.size() > 0) {
-        this.callRegisterEvents(this.eventStore.takeout(this.eventStore.size()));
+        this.callRegisterEvents(
+          this.eventStore.takeout(this.eventStore.size()),
+        );
       }
     }, this.config.eventsFlushInterval!);
 
@@ -75,9 +83,13 @@ export class BKTClientImpl implements Bucketeer {
       this.localEvaluator = options.localEvaluator;
 
       this.initializationAsync = Promise.all(
-        [this.featureFlagProcessor.start(), this.segementUsersCacheProcessor.start()].map((p) =>
-          p.catch((e) => e),
-        ),
+        [
+          this.featureFlagProcessor.start(),
+          this.segementUsersCacheProcessor.start(),
+        ]
+        // Default handle errors here to wait for all promises to settle
+        // This will prevent unhandled promise rejection
+        .map((p) => p.catch((e) => e)),
       );
     }
 
@@ -86,9 +98,12 @@ export class BKTClientImpl implements Bucketeer {
       this.saveErrorMetricsEvent(featureTag, error, apiId);
     });
 
-    this.eventEmitter.on('pushDefaultEvaluationEvent', ({ user, featureId }) => {
-      this.saveDefaultEvaluationEvent(user, featureId);
-    });
+    this.eventEmitter.on(
+      'pushDefaultEvaluationEvent',
+      ({ user, featureId }) => {
+        this.saveDefaultEvaluationEvent(user, featureId);
+      },
+    );
 
     this.eventEmitter.on('pushLatencyMetricsEvent', ({ latency, apiId }) => {
       this.saveLatencyMetricsEvent(featureTag, latency, apiId);
@@ -107,7 +122,10 @@ export class BKTClientImpl implements Bucketeer {
     if (this.config.enableLocalEvaluation !== true) {
       return;
     }
-    if (this.featureFlagProcessor === null || this.segementUsersCacheProcessor === null) {
+    if (
+      this.featureFlagProcessor === null ||
+      this.segementUsersCacheProcessor === null
+    ) {
       throw new IllegalStateError('Cache processors are not initialized');
     }
 
@@ -120,7 +138,12 @@ export class BKTClientImpl implements Bucketeer {
     let timeoutId: NodeJS.Timeout | undefined;
     const timeoutPromise = new Promise<never>((_, reject) => {
       timeoutId = setTimeout(() => {
-        reject(new TimeoutError(timeout, `Initialization timeout after ${timeout} ms`));
+        reject(
+          new TimeoutError(
+            timeout,
+            `Initialization timeout after ${timeout} ms`,
+          ),
+        );
       }, timeout);
     }).catch((e) => e);
 
@@ -142,8 +165,13 @@ export class BKTClientImpl implements Bucketeer {
     }
   }
 
-  async stringVariation(user: User, featureId: string, defaultValue: string): Promise<string> {
-    return (await this.stringVariationDetails(user, featureId, defaultValue)).variationValue;
+  async stringVariation(
+    user: User,
+    featureId: string,
+    defaultValue: string,
+  ): Promise<string> {
+    return (await this.stringVariationDetails(user, featureId, defaultValue))
+      .variationValue;
   }
 
   async booleanVariationDetails(
@@ -151,11 +179,21 @@ export class BKTClientImpl implements Bucketeer {
     featureId: string,
     defaultValue: boolean,
   ): Promise<BKTEvaluationDetails<boolean>> {
-    return this.getVariationDetails(user, featureId, defaultValue, stringToBoolConverter);
+    return this.getVariationDetails(
+      user,
+      featureId,
+      defaultValue,
+      stringToBoolConverter,
+    );
   }
 
-  async booleanVariation(user: User, featureId: string, defaultValue: boolean): Promise<boolean> {
-    return (await this.booleanVariationDetails(user, featureId, defaultValue)).variationValue;
+  async booleanVariation(
+    user: User,
+    featureId: string,
+    defaultValue: boolean,
+  ): Promise<boolean> {
+    return (await this.booleanVariationDetails(user, featureId, defaultValue))
+      .variationValue;
   }
 
   async stringVariationDetails(
@@ -163,11 +201,21 @@ export class BKTClientImpl implements Bucketeer {
     featureId: string,
     defaultValue: string,
   ): Promise<BKTEvaluationDetails<string>> {
-    return this.getVariationDetails(user, featureId, defaultValue, defaultStringToTypeConverter);
+    return this.getVariationDetails(
+      user,
+      featureId,
+      defaultValue,
+      defaultStringToTypeConverter,
+    );
   }
 
-  async numberVariation(user: User, featureId: string, defaultValue: number): Promise<number> {
-    return (await this.numberVariationDetails(user, featureId, defaultValue)).variationValue;
+  async numberVariation(
+    user: User,
+    featureId: string,
+    defaultValue: number,
+  ): Promise<number> {
+    return (await this.numberVariationDetails(user, featureId, defaultValue))
+      .variationValue;
   }
 
   async numberVariationDetails(
@@ -175,11 +223,21 @@ export class BKTClientImpl implements Bucketeer {
     featureId: string,
     defaultValue: number,
   ): Promise<BKTEvaluationDetails<number>> {
-    return this.getVariationDetails(user, featureId, defaultValue, stringToNumberConverter);
+    return this.getVariationDetails(
+      user,
+      featureId,
+      defaultValue,
+      stringToNumberConverter,
+    );
   }
 
-  async objectVariation(user: User, featureId: string, defaultValue: BKTValue): Promise<BKTValue> {
-    return (await this.objectVariationDetails(user, featureId, defaultValue)).variationValue;
+  async objectVariation(
+    user: User,
+    featureId: string,
+    defaultValue: BKTValue,
+  ): Promise<BKTValue> {
+    return (await this.objectVariationDetails(user, featureId, defaultValue))
+      .variationValue;
   }
 
   async objectVariationDetails(
@@ -187,12 +245,19 @@ export class BKTClientImpl implements Bucketeer {
     featureId: string,
     defaultValue: BKTValue,
   ): Promise<BKTEvaluationDetails<BKTValue>> {
-    return this.getVariationDetails(user, featureId, defaultValue, stringToObjectConverter);
+    return this.getVariationDetails(
+      user,
+      featureId,
+      defaultValue,
+      stringToObjectConverter,
+    );
   }
 
   private registerEvents(): void {
     if (this.eventStore.size() >= COUNT_PER_REGISTER_EVENT) {
-      this.callRegisterEvents(this.eventStore.takeout(COUNT_PER_REGISTER_EVENT));
+      this.callRegisterEvents(
+        this.eventStore.takeout(COUNT_PER_REGISTER_EVENT),
+      );
     }
   }
 
@@ -206,7 +271,11 @@ export class BKTClientImpl implements Bucketeer {
     this.apiClient
       .registerEvents(events, this.config.sourceId, this.config.sdkVersion)
       .catch((e) => {
-        this.saveErrorMetricsEvent(this.config.featureTag, e, ApiId.REGISTER_EVENTS);
+        this.saveErrorMetricsEvent(
+          this.config.featureTag,
+          e,
+          ApiId.REGISTER_EVENTS,
+        );
         this.config.logger?.warn('register events failed', e);
       });
   }
@@ -251,16 +320,32 @@ export class BKTClientImpl implements Bucketeer {
     this.registerEvents();
   }
 
-  private saveLatencyMetricsEvent(tag: string, second: number, apiId: NodeApiIds) {
+  private saveLatencyMetricsEvent(
+    tag: string,
+    second: number,
+    apiId: NodeApiIds,
+  ) {
     this.eventStore.add(
-      createLatencyMetricsEvent(tag, second, apiId, this.config.sourceId, this.config.sdkVersion),
+      createLatencyMetricsEvent(
+        tag,
+        second,
+        apiId,
+        this.config.sourceId,
+        this.config.sdkVersion,
+      ),
     );
     this.registerEvents();
   }
 
   private saveSizeMetricsEvent(tag: string, size: number, apiId: NodeApiIds) {
     this.eventStore.add(
-      createSizeMetricsEvent(tag, size, apiId, this.config.sourceId, this.config.sdkVersion),
+      createSizeMetricsEvent(
+        tag,
+        size,
+        apiId,
+        this.config.sourceId,
+        this.config.sdkVersion,
+      ),
     );
     this.registerEvents();
   }
@@ -280,14 +365,20 @@ export class BKTClientImpl implements Bucketeer {
     }
   }
 
-  async getEvaluation(user: User, featureId: string): Promise<Evaluation | null> {
+  async getEvaluation(
+    user: User,
+    featureId: string,
+  ): Promise<Evaluation | null> {
     if (this.config.enableLocalEvaluation === true) {
       return this.getEvaluationLocally(user, featureId);
     }
     return this.getEvaluationRemotely(user, featureId);
   }
 
-  private async getEvaluationRemotely(user: User, featureId: string): Promise<Evaluation | null> {
+  private async getEvaluationRemotely(
+    user: User,
+    featureId: string,
+  ): Promise<Evaluation | null> {
     const startTime: number = Date.now();
     let res: GetEvaluationResponse;
     let size: number;
@@ -304,7 +395,10 @@ export class BKTClientImpl implements Bucketeer {
         latency: second,
         apiId: ApiId.GET_EVALUATION,
       });
-      this.eventEmitter.emit('pushSizeMetricsEvent', { size: size, apiId: ApiId.GET_EVALUATION });
+      this.eventEmitter.emit('pushSizeMetricsEvent', {
+        size: size,
+        apiId: ApiId.GET_EVALUATION,
+      });
 
       const evaluation = res?.evaluation;
       if (evaluation == null) {
@@ -312,13 +406,19 @@ export class BKTClientImpl implements Bucketeer {
       }
       return evaluation;
     } catch (error) {
-      this.eventEmitter.emit('error', { error: error, apiId: ApiId.GET_EVALUATION });
+      this.eventEmitter.emit('error', {
+        error: error,
+        apiId: ApiId.GET_EVALUATION,
+      });
     }
 
     return null;
   }
 
-  private async getEvaluationLocally(user: User, featureId: string): Promise<Evaluation | null> {
+  private async getEvaluationLocally(
+    user: User,
+    featureId: string,
+  ): Promise<Evaluation | null> {
     const startTime: number = Date.now();
     try {
       if (this.localEvaluator) {
@@ -336,7 +436,10 @@ export class BKTClientImpl implements Bucketeer {
         throw new IllegalStateError('LocalEvaluator is not initialized');
       }
     } catch (error) {
-      this.eventEmitter.emit('error', { error: error, apiId: ApiId.SDK_GET_VARIATION });
+      this.eventEmitter.emit('error', {
+        error: error,
+        apiId: ApiId.SDK_GET_VARIATION,
+      });
     }
 
     return null;
@@ -371,7 +474,10 @@ export class BKTClientImpl implements Bucketeer {
         result = typeConverter(variationValue);
       } catch (err) {
         result = null;
-        this.eventEmitter.emit('error', { error: err, apiId: ApiId.SDK_GET_VARIATION });
+        this.eventEmitter.emit('error', {
+          error: err,
+          apiId: ApiId.SDK_GET_VARIATION,
+        });
 
         this.config.logger?.error(
           `getVariationDetails failed to parse: ${variationValue} using: ${typeof typeConverter} with error: ${err}`,
@@ -381,7 +487,10 @@ export class BKTClientImpl implements Bucketeer {
 
     try {
       if (evaluation !== null && result !== null) {
-        this.eventEmitter.emit('pushEvaluationEvent', { user: user, evaluation: evaluation });
+        this.eventEmitter.emit('pushEvaluationEvent', {
+          user: user,
+          evaluation: evaluation,
+        });
         return {
           featureId: evaluation.featureId,
           featureVersion: evaluation.featureVersion,
@@ -393,27 +502,49 @@ export class BKTClientImpl implements Bucketeer {
         } satisfies BKTEvaluationDetails<T>;
       }
     } catch (error) {
-      this.eventEmitter.emit('error', { error: error, apiId: ApiId.SDK_GET_VARIATION });
-      this.config.logger?.error('getVariationDetails failed to save event', error);
+      this.eventEmitter.emit('error', {
+        error: error,
+        apiId: ApiId.SDK_GET_VARIATION,
+      });
+      this.config.logger?.error(
+        'getVariationDetails failed to save event',
+        error,
+      );
     }
 
     this.eventEmitter.emit('pushDefaultEvaluationEvent', { user, featureId });
     return newDefaultBKTEvaluationDetails(user.id, featureId, defaultValue);
   }
 
-  async getStringVariation(user: User, featureId: string, defaultValue: string): Promise<string> {
+  async getStringVariation(
+    user: User,
+    featureId: string,
+    defaultValue: string,
+  ): Promise<string> {
     return this.stringVariation(user, featureId, defaultValue);
   }
 
-  async getBoolVariation(user: User, featureId: string, defaultValue: boolean): Promise<boolean> {
+  async getBoolVariation(
+    user: User,
+    featureId: string,
+    defaultValue: boolean,
+  ): Promise<boolean> {
     return this.booleanVariation(user, featureId, defaultValue);
   }
 
-  async getNumberVariation(user: User, featureId: string, defaultValue: number): Promise<number> {
+  async getNumberVariation(
+    user: User,
+    featureId: string,
+    defaultValue: number,
+  ): Promise<number> {
     return this.numberVariation(user, featureId, defaultValue);
   }
 
-  async getJsonVariation(user: User, featureId: string, defaultValue: object): Promise<object> {
+  async getJsonVariation(
+    user: User,
+    featureId: string,
+    defaultValue: object,
+  ): Promise<object> {
     const valueStr = await this.getStringVariation(user, featureId, '');
     try {
       return JSON.parse(valueStr);

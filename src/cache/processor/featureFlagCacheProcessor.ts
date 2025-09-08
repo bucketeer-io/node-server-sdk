@@ -61,7 +61,7 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
   async start() {
     // Execute immediately
     try {
-      await this.updateCache();
+      await this.getFeatureFlags();
     } catch (e) {
       this.pushErrorMetricsEvent(e);
       throw e;
@@ -73,19 +73,26 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
   }
 
   async stop() {
-    if (this.pollingScheduleID) removeSchedule(this.pollingScheduleID);
+    if (this.pollingScheduleID) {
+      removeSchedule(this.pollingScheduleID);
+      this.pollingScheduleID = undefined;
+    };
+  }
+
+  getPollingScheduleID(): NodeJS.Timeout | undefined {
+    return this.pollingScheduleID;
   }
 
   async runUpdateCache() {
     try {
-      await this.updateCache();
+      await this.getFeatureFlags();
     } catch (error) {
       // Always log the error regardless of initialization state
       this.pushErrorMetricsEvent(error);
     }
   }
 
-  private async updateCache() {
+  private async getFeatureFlags() {
     const featureFlagsId = await this.getFeatureFlagId();
     const requestedAt = await this.getFeatureFlagRequestedAt();
     const startTime: number = this.clock.getTime();

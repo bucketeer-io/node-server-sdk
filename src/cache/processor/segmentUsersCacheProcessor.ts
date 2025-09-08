@@ -59,7 +59,7 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
   async start() {
     // Execute immediately
     try {
-      await this.updateCache();
+      await this.getSegmentUsers();
     } catch (e) {
       this.pushErrorMetricsEvent(e);
       throw e;
@@ -72,19 +72,26 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
   }
 
   async stop() {
-    if (this.pollingScheduleID) removeSchedule(this.pollingScheduleID);
+    if (this.pollingScheduleID) {
+      removeSchedule(this.pollingScheduleID);
+      this.pollingScheduleID = undefined;
+    };
+  }
+
+  getPollingScheduleID(): NodeJS.Timeout | undefined {
+    return this.pollingScheduleID;
   }
 
   async runUpdateCache() {
     try {
-      await this.updateCache();
+      await this.getSegmentUsers();
     } catch (error) {
       // Always log the error regardless of initialization state
       this.pushErrorMetricsEvent(error);
     }
   }
 
-  private async updateCache() {
+  private async getSegmentUsers() {
     const segmentIds = await this.segmentUsersCache.getIds();
     const requestedAt = await this.getSegmentUsersRequestedAt();
     const sourceId = this.sourceId;
