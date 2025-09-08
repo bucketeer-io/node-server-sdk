@@ -7,7 +7,6 @@ import { Feature } from '@bucketeer/evaluation';
 import { ApiId } from '../../objects/apiId';
 import { Clock } from '../../utils/clock';
 import { SourceId } from '../../objects/sourceId';
-import { InitializationPromise } from '../../utils/initializationPromise';
 
 interface FeatureFlagProcessor {
   start(): Promise<void>;

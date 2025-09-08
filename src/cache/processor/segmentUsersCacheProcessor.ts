@@ -1,14 +1,13 @@
-import { SegmentUsersCache } from "../segmentUsers";
-import { GRPCClient } from "../../grpc/client";
-import { ProcessorEventsEmitter } from "../../processorEventsEmitter";
-import { Cache } from "../cache";
-import { ApiId } from "../../objects/apiId";
-import { SegmentUsers } from "@bucketeer/evaluation";
-import { createSchedule, removeSchedule } from "../../schedule";
-import { Clock } from "../../utils/clock";
-import { InvalidStatusError } from "../../objects/errors";
-import { SourceId } from "../../objects/sourceId";
-import { InitializationPromise } from "../../utils/initializationPromise";
+import { SegmentUsersCache } from '../segmentUsers';
+import { GRPCClient } from '../../grpc/client';
+import { ProcessorEventsEmitter } from '../../processorEventsEmitter';
+import { Cache } from '../cache';
+import { ApiId } from '../../objects/apiId';
+import { SegmentUsers } from '@bucketeer/evaluation';
+import { createSchedule, removeSchedule } from '../../schedule';
+import { Clock } from '../../utils/clock';
+import { InvalidStatusError } from '../../objects/errors';
+import { SourceId } from '../../objects/sourceId';
 
 interface SegementUsersCacheProcessor {
   start(): Promise<void>;
@@ -26,7 +25,7 @@ type SegementUsersCacheProcessorOptions = {
   sdkVersion: string;
 };
 
-const SEGEMENT_USERS_REQUESTED_AT = "bucketeer_segment_users_requested_at";
+const SEGEMENT_USERS_REQUESTED_AT = 'bucketeer_segment_users_requested_at';
 const SEGEMENT_USERS_CACHE_TTL = 0;
 
 function NewSegementUserCacheProcessor(
@@ -156,21 +155,21 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
   }
 
   async pushLatencyMetricsEvent(latency: number) {
-    this.eventEmitter.emit("pushLatencyMetricsEvent", {
+    this.eventEmitter.emit('pushLatencyMetricsEvent', {
       latency: latency,
       apiId: ApiId.GET_SEGMENT_USERS,
     });
   }
 
   async pushErrorMetricsEvent(error: any) {
-    this.eventEmitter.emit("error", {
+    this.eventEmitter.emit('error', {
       error: error,
       apiId: ApiId.GET_SEGMENT_USERS,
     });
   }
 
   async pushSizeMetricsEvent(size: number) {
-    this.eventEmitter.emit("pushSizeMetricsEvent", {
+    this.eventEmitter.emit('pushSizeMetricsEvent', {
       size: size,
       apiId: ApiId.GET_SEGMENT_USERS,
     });
