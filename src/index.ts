@@ -194,7 +194,7 @@ export function initializeBKTClient(config: BKTConfig): Bucketeer {
   return defaultInitialize(internalConfig);
 }
 
-function defaultInitialize(resolvedConfig: InternalConfig): BKTClientImpl {
+function defaultInitialize(resolvedConfig: InternalConfig): Bucketeer {
   const apiClient = new APIClient(resolvedConfig.apiEndpoint, resolvedConfig.apiKey);
   const eventStore = new EventStore();
   const eventEmitter = new ProcessorEventsEmitter();

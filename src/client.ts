@@ -115,8 +115,6 @@ export class BKTClientImpl implements Bucketeer {
       throw new IllegalStateError('Initialization promise is not set');
     }
 
-    // Keep compatibility with older versions below ES2020, we use Promise.all with catch.
-    // Note: This code can be replaced with Promise.allSettled in the future.
     let results: any[] = [];
     const timeout = options.timeout;
     let timeoutId: NodeJS.Timeout | undefined;
