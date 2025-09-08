@@ -28,7 +28,7 @@ import { SegementUsersCacheProcessor } from './cache/processor/segmentUsersCache
 import { ProcessorEventsEmitter } from './processorEventsEmitter';
 import { NodeEvaluator } from './evaluator/evaluator';
 import { Bucketeer, BuildInfo } from '.';
-import { IllegalStateError, toBKTError } from './objects/errors';
+import { IllegalStateError, TimeoutError, toBKTError } from './objects/errors';
 import { assertGetEvaluationRequest } from './assert';
 import { InternalConfig } from './internalConfig';
 
@@ -44,6 +44,8 @@ export class BKTClientImpl implements Bucketeer {
   featureFlagProcessor: FeatureFlagProcessor | null = null;
   segementUsersCacheProcessor: SegementUsersCacheProcessor | null = null;
   localEvaluator: NodeEvaluator | null = null;
+
+  initializationAsync: Promise<any[]> | undefined;
 
   constructor(
     config: InternalConfig,
@@ -68,12 +70,15 @@ export class BKTClientImpl implements Bucketeer {
     this.eventEmitter = options.eventEmitter;
 
     if (this.config.enableLocalEvaluation === true) {
-      this.featureFlagProcessor = options.featureFlagProcessor;
-      this.segementUsersCacheProcessor = options.segementUsersCacheProcessor;
+      this.featureFlagProcessor = options.featureFlagProcessor!;
+      this.segementUsersCacheProcessor = options.segementUsersCacheProcessor!;
       this.localEvaluator = options.localEvaluator;
 
-      this.featureFlagProcessor?.start();
-      this.segementUsersCacheProcessor?.start();
+      this.initializationAsync = Promise.all(
+        [this.featureFlagProcessor.start(), this.segementUsersCacheProcessor.start()].map((p) =>
+          p.catch((e) => e),
+        ),
+      );
     }
 
     const featureTag = this.config.featureTag;
@@ -106,14 +111,30 @@ export class BKTClientImpl implements Bucketeer {
       throw new IllegalStateError('Cache processors are not initialized');
     }
 
+    if (!this.initializationAsync) {
+      throw new IllegalStateError('Initialization promise is not set');
+    }
+
     // Keep compatibility with older versions below ES2020, we use Promise.all with catch.
     // Note: This code can be replaced with Promise.allSettled in the future.
-    const results = await Promise.all(
-      [
-        this.featureFlagProcessor.waitForInitialization({ timeout: options.timeout }),
-        this.segementUsersCacheProcessor.waitForInitialization({ timeout: options.timeout }),
-      ].map((p) => p.catch((e) => e)),
-    );
+    let results: any[] = [];
+    const timeout = options.timeout;
+    let timeoutId: NodeJS.Timeout | undefined;
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      timeoutId = setTimeout(() => {
+        reject(new TimeoutError(timeout, `Initialization timeout after ${timeout} ms`));
+      }, timeout);
+    }).catch((e) => e);
+
+    try {
+      results = await Promise.race([this.initializationAsync, timeoutPromise]);
+    } catch (e) {
+      results = [e];
+    } finally {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    }
 
     for (const result of results) {
       if (result instanceof Error) {

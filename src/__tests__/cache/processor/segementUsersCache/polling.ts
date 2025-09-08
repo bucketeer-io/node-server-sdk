@@ -112,7 +112,7 @@ test('polling cache', async (t) => {
 
   const processor = NewSegementUserCacheProcessor(options);
 
-  processor.start();
+  await processor.start();
 
   await new Promise((resolve) => setTimeout(resolve, 2100));
 

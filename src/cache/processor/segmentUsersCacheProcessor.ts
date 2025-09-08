@@ -1,19 +1,18 @@
-import { SegmentUsersCache } from '../segmentUsers';
-import { GRPCClient } from '../../grpc/client';
-import { ProcessorEventsEmitter } from '../../processorEventsEmitter';
-import { Cache } from '../cache';
-import { ApiId } from '../../objects/apiId';
-import { SegmentUsers } from '@bucketeer/evaluation';
-import { createSchedule, removeSchedule } from '../../schedule';
-import { Clock } from '../../utils/clock';
-import { InvalidStatusError } from '../../objects/errors';
-import { SourceId } from '../../objects/sourceId';
-import { InitializationPromise } from '../../utils/initializationPromise';
+import { SegmentUsersCache } from "../segmentUsers";
+import { GRPCClient } from "../../grpc/client";
+import { ProcessorEventsEmitter } from "../../processorEventsEmitter";
+import { Cache } from "../cache";
+import { ApiId } from "../../objects/apiId";
+import { SegmentUsers } from "@bucketeer/evaluation";
+import { createSchedule, removeSchedule } from "../../schedule";
+import { Clock } from "../../utils/clock";
+import { InvalidStatusError } from "../../objects/errors";
+import { SourceId } from "../../objects/sourceId";
+import { InitializationPromise } from "../../utils/initializationPromise";
 
 interface SegementUsersCacheProcessor {
-  start(): void;
-  stop(): void;
-  waitForInitialization(options: { timeout: number }): Promise<void>;
+  start(): Promise<void>;
+  stop(): Promise<void>;
 }
 
 type SegementUsersCacheProcessorOptions = {
@@ -27,7 +26,7 @@ type SegementUsersCacheProcessorOptions = {
   sdkVersion: string;
 };
 
-const SEGEMENT_USERS_REQUESTED_AT = 'bucketeer_segment_users_requested_at';
+const SEGEMENT_USERS_REQUESTED_AT = "bucketeer_segment_users_requested_at";
 const SEGEMENT_USERS_CACHE_TTL = 0;
 
 function NewSegementUserCacheProcessor(
@@ -46,7 +45,6 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
   private clock: Clock;
   private sourceId: SourceId;
   private sdkVersion: string;
-  initializationPromise = new InitializationPromise();
 
   constructor(options: SegementUsersCacheProcessorOptions) {
     this.cache = options.cache;
@@ -59,36 +57,32 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
     this.sdkVersion = options.sdkVersion;
   }
 
-  start() {
+  async start() {
     // Execute immediately
-    this.runUpdateCache();
-    this.pollingScheduleID = createSchedule(() => this.runUpdateCache(), this.pollingInterval);
+    try {
+      await this.updateCache();
+    } catch (e) {
+      this.pushErrorMetricsEvent(e);
+      throw e;
+    } finally {
+      this.pollingScheduleID = createSchedule(
+        () => this.runUpdateCache(),
+        this.pollingInterval,
+      );
+    }
   }
 
-  stop() {
+  async stop() {
     if (this.pollingScheduleID) removeSchedule(this.pollingScheduleID);
   }
 
   async runUpdateCache() {
-    const isFirstTime = !this.initializationPromise.isComplete();
-    
     try {
       await this.updateCache();
-
-      if (isFirstTime) {
-        this.initializationPromise.markAsInitialized();
-      }
     } catch (error) {
-      if (isFirstTime) {
-        this.initializationPromise.markAsFailed(error);
-      }
       // Always log the error regardless of initialization state
       this.pushErrorMetricsEvent(error);
     }
-  }
-
-  async waitForInitialization(options: { timeout: number }): Promise<void> {
-    return this.initializationPromise.waitForInitialization(options.timeout);
   }
 
   private async updateCache() {
@@ -96,7 +90,7 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
     const requestedAt = await this.getSegmentUsersRequestedAt();
     const sourceId = this.sourceId;
     const sdkVersion = this.sdkVersion;
-    
+
     const startTime: number = this.clock.getTime();
 
     const resp = await this.grpc.getSegmentUsers({
@@ -113,7 +107,10 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
     this.pushSizeMetricsEvent(resp.serializeBinary().length);
 
     if (resp.getForceUpdate()) {
-      await this.deleteAllAndSaveLocalCache(resp.getRequestedAt(), resp.getSegmentUsersList());
+      await this.deleteAllAndSaveLocalCache(
+        resp.getRequestedAt(),
+        resp.getSegmentUsersList(),
+      );
     } else {
       await this.updateLocalCache(
         resp.getRequestedAt(),
@@ -123,7 +120,10 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
     }
   }
 
-  async deleteAllAndSaveLocalCache(requestedAt: number, segmentUsersList: SegmentUsers[]) {
+  async deleteAllAndSaveLocalCache(
+    requestedAt: number,
+    segmentUsersList: SegmentUsers[],
+  ) {
     await this.segmentUsersCache.deleteAll();
     await this.updateLocalCache(requestedAt, segmentUsersList, []);
   }
@@ -148,30 +148,40 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
   }
 
   putSegmentUsersRequestedAt(requestedAt: number): Promise<void> {
-    return this.cache.put(SEGEMENT_USERS_REQUESTED_AT, requestedAt, SEGEMENT_USERS_CACHE_TTL);
+    return this.cache.put(
+      SEGEMENT_USERS_REQUESTED_AT,
+      requestedAt,
+      SEGEMENT_USERS_CACHE_TTL,
+    );
   }
 
   async pushLatencyMetricsEvent(latency: number) {
-    this.eventEmitter.emit('pushLatencyMetricsEvent', {
+    this.eventEmitter.emit("pushLatencyMetricsEvent", {
       latency: latency,
       apiId: ApiId.GET_SEGMENT_USERS,
     });
   }
 
   async pushErrorMetricsEvent(error: any) {
-    this.eventEmitter.emit('error', { error: error, apiId: ApiId.GET_SEGMENT_USERS });
+    this.eventEmitter.emit("error", {
+      error: error,
+      apiId: ApiId.GET_SEGMENT_USERS,
+    });
   }
 
   async pushSizeMetricsEvent(size: number) {
-    this.eventEmitter.emit('pushSizeMetricsEvent', { size: size, apiId: ApiId.GET_SEGMENT_USERS });
+    this.eventEmitter.emit("pushSizeMetricsEvent", {
+      size: size,
+      apiId: ApiId.GET_SEGMENT_USERS,
+    });
   }
 }
 
 export {
-  SegementUsersCacheProcessor,
-  SegementUsersCacheProcessorOptions,
-  NewSegementUserCacheProcessor,
   DefaultSegementUserCacheProcessor,
+  NewSegementUserCacheProcessor,
   SEGEMENT_USERS_CACHE_TTL,
   SEGEMENT_USERS_REQUESTED_AT,
+  SegementUsersCacheProcessor,
+  SegementUsersCacheProcessorOptions,
 };

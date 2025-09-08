@@ -10,9 +10,8 @@ import { SourceId } from '../../objects/sourceId';
 import { InitializationPromise } from '../../utils/initializationPromise';
 
 interface FeatureFlagProcessor {
-  start(): void;
-  stop(): void;
-  waitForInitialization(options: { timeout: number }): Promise<void>;
+  start(): Promise<void>;
+  stop(): Promise<void>;
 }
 
 type FeatureFlagProcessorOptions = {
@@ -43,7 +42,6 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
   private pollingScheduleID?: NodeJS.Timeout;
   private pollingInterval: number;
   private clock: Clock;
-  initializationPromise = new InitializationPromise();
 
   featureTag: string;
   sourceId: SourceId;
@@ -61,38 +59,31 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
     this.sdkVersion = options.sdkVersion;
   }
 
-  start() {
+  async start() {
     // Execute immediately
-    this.runUpdateCache();
-    this.pollingScheduleID = createSchedule(() => {
-      this.runUpdateCache();
-    }, this.pollingInterval);
+    try {
+      await this.updateCache();
+    } catch (e) {
+      this.pushErrorMetricsEvent(e);
+      throw e;
+    } finally { 
+      this.pollingScheduleID = createSchedule(() => {
+        this.runUpdateCache();
+      }, this.pollingInterval);
+    }
   }
 
-  stop() {
+  async stop() {
     if (this.pollingScheduleID) removeSchedule(this.pollingScheduleID);
   }
 
   async runUpdateCache() {
-    const isFirstTime = !this.initializationPromise.isComplete();
-    
     try {
       await this.updateCache();
-
-      if (isFirstTime) {
-        this.initializationPromise.markAsInitialized();
-      }
     } catch (error) {
-      if (isFirstTime) {
-        this.initializationPromise.markAsFailed(error);
-      }
       // Always log the error regardless of initialization state
       this.pushErrorMetricsEvent(error);
     }
-  }
-
-  async waitForInitialization(options: { timeout: number }): Promise<void> {
-    return this.initializationPromise.waitForInitialization(options.timeout);
   }
 
   private async updateCache() {
