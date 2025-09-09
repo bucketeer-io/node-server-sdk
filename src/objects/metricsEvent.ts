@@ -235,26 +235,26 @@ export const toErrorMetricsEvent = (
     switch (true) {
       case statusCode >= 300 && statusCode < 400:
         return createRedirectRequestErrorMetricsEvent(tag, apiId, statusCode, sourceId, sdkVersion);
-      case statusCode == 400:
-        return createBadRequestErrorMetricsEvent(tag, apiId, sourceId, sdkVersion);
-      case statusCode == 401:
-        logger?.error('An unauthorized error occurred. Please check your API Key.');
-        return null;
-      case statusCode == 403:
-        logger?.error('An forbidden error occurred. Please check your API Key.');
-        return null;
-      case statusCode == 404:
-        return createNotFoundErrorMetricsEvent(tag, apiId, sourceId, sdkVersion);
-      case statusCode == 405:
-        return createInternalSdkErrorMetricsEvent(tag, apiId, sourceId, sdkVersion, e.message);
-      case statusCode == 408:
-        return createTimeoutErrorMetricsEvent(tag, apiId, sourceId, sdkVersion);
-      case statusCode == 413:
-        return createPayloadTooLargeErrorMetricsEvent(tag, apiId, sourceId, sdkVersion);
-      case statusCode == 499:
-        return createClientClosedRequestErrorMetricsEvent(tag, apiId, sourceId, sdkVersion);
-      case statusCode == 500:
-        return createInternalServerErrorMetricsEvent(tag, apiId, sourceId, sdkVersion);
+        case statusCode === 400:
+          return createBadRequestErrorMetricsEvent(tag, apiId, sourceId, sdkVersion);
+        case statusCode === 401:
+          logger?.error('An unauthorized error occurred. Please check your API Key.');
+          return null;
+        case statusCode === 403:
+          logger?.error('An forbidden error occurred. Please check your API Key.');
+          return null;
+        case statusCode === 404:
+          return createNotFoundErrorMetricsEvent(tag, apiId, sourceId, sdkVersion);
+        case statusCode === 405:
+          return createInternalSdkErrorMetricsEvent(tag, apiId, sourceId, sdkVersion, e.message);
+        case statusCode === 408:
+          return createTimeoutErrorMetricsEvent(tag, apiId, sourceId, sdkVersion);
+        case statusCode === 413:
+          return createPayloadTooLargeErrorMetricsEvent(tag, apiId, sourceId, sdkVersion);
+        case statusCode === 499:
+          return createClientClosedRequestErrorMetricsEvent(tag, apiId, sourceId, sdkVersion);
+        case statusCode === 500:
+          return createInternalServerErrorMetricsEvent(tag, apiId, sourceId, sdkVersion);
       case [502, 503, 504].includes(statusCode):
         return createServiceUnavailableErrorMetricsEvent(tag, apiId, sourceId, sdkVersion);
       default:

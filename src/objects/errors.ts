@@ -119,30 +119,30 @@ export function toBKTError(e: unknown, params: {
   if (e instanceof InvalidStatusError) {
     const statusCode = e.code ?? 0;
     switch (true) {
-      case statusCode >= 300 && statusCode < 400:
-        return new RedirectRequestError(statusCode, e.message);
-      case statusCode == 400:
-        return new BadRequestError(e.message);
-      case statusCode == 401:
-        return new UnauthorizedError(e.message);
-      case statusCode == 403:
-        return new ForbiddenError(e.message);
-      case statusCode == 404:
-        return new NotFoundError(e.message);
-      case statusCode == 405:
-        return new InvalidHttpMethodError(e.message);
-      case statusCode == 408:
-        return new TimeoutError(params.timeout ?? 0, e.message); // timeoutMillis unknown
-      case statusCode == 413:
-        return new PayloadTooLargeError(e.message);
-      case statusCode == 499:
-        return new ClientClosedRequestError(e.message);
-      case statusCode == 500:
-        return new InternalServerError(e.message);
-      case [502, 503, 504].includes(statusCode):
-        return new ServiceUnavailableError(e.message);
-      default:
-        return new UnknownError(e.message, statusCode);
+        case statusCode >= 300 && statusCode < 400:
+          return new RedirectRequestError(statusCode, e.message);
+        case statusCode === 400:
+          return new BadRequestError(e.message);
+        case statusCode === 401:
+          return new UnauthorizedError(e.message);
+        case statusCode === 403:
+          return new ForbiddenError(e.message);
+        case statusCode === 404:
+          return new NotFoundError(e.message);
+        case statusCode === 405:
+          return new InvalidHttpMethodError(e.message);
+        case statusCode === 408:
+          return new TimeoutError(params.timeout ?? 0, e.message); // timeoutMillis unknown
+        case statusCode === 413:
+          return new PayloadTooLargeError(e.message);
+        case statusCode === 499:
+          return new ClientClosedRequestError(e.message);
+        case statusCode === 500:
+          return new InternalServerError(e.message);
+        case [502, 503, 504].includes(statusCode):
+          return new ServiceUnavailableError(e.message);
+        default:
+          return new UnknownError(e.message, statusCode);
     }
   }
   
