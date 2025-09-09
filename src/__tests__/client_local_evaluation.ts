@@ -1,5 +1,4 @@
 import anyTest, { TestFn } from 'ava';
-import sino from 'sinon';
 import sinon from 'sinon';
 import {
   createFeature,
@@ -43,7 +42,7 @@ import { IllegalStateError } from '../objects/errors';
 import { requiredInternalConfig } from '../internalConfig';
 
 const test = anyTest as TestFn<{
-  sandbox: sino.SinonSandbox;
+  sandbox: sinon.SinonSandbox;
   evaluator: LocalEvaluator;
   cache: MockCache;
   grpc: MockGRPCClient;
@@ -74,7 +73,7 @@ const test = anyTest as TestFn<{
 }>;
 
 test.beforeEach((t) => {
-  const sandbox = sino.createSandbox();
+  const sandbox = sinon.createSandbox();
   t.context.sandbox = sandbox;
 
   const user1 = createUser('user-id-1', {});
@@ -460,7 +459,7 @@ test('boolVariation - success: boolean variation', async (t) => {
     .expects('emit')
     .once()
     .withArgs('pushLatencyMetricsEvent', {
-      latency: sino.match.any,
+      latency: sinon.match.any,
       apiId: ApiId.SDK_GET_VARIATION,
     });
 
@@ -554,7 +553,7 @@ test('booleanVariationDetails - success: boolean variation', async (t) => {
     .expects('emit')
     .once()
     .withArgs('pushLatencyMetricsEvent', {
-      latency: sino.match.any,
+      latency: sinon.match.any,
       apiId: ApiId.SDK_GET_VARIATION,
     });
 
@@ -648,7 +647,7 @@ test('numberVariation - success: number variation', async (t) => {
     .expects('emit')
     .once()
     .withArgs('pushLatencyMetricsEvent', {
-      latency: sino.match.any,
+      latency: sinon.match.any,
       apiId: ApiId.SDK_GET_VARIATION,
     });
 
@@ -692,7 +691,7 @@ test('numberVariation - success: number variation (float)', async (t) => {
     .expects('emit')
     .once()
     .withArgs('pushLatencyMetricsEvent', {
-      latency: sino.match.any,
+      latency: sinon.match.any,
       apiId: ApiId.SDK_GET_VARIATION,
     });
 
@@ -786,7 +785,7 @@ test('numberVariationDetails - success: number variation', async (t) => {
     .expects('emit')
     .once()
     .withArgs('pushLatencyMetricsEvent', {
-      latency: sino.match.any,
+      latency: sinon.match.any,
       apiId: ApiId.SDK_GET_VARIATION,
     });
 
@@ -840,7 +839,7 @@ test('numberVariationDetails - success: number variation (float)', async (t) => 
     .expects('emit')
     .once()
     .withArgs('pushLatencyMetricsEvent', {
-      latency: sino.match.any,
+      latency: sinon.match.any,
       apiId: ApiId.SDK_GET_VARIATION,
     });
 
@@ -934,7 +933,7 @@ test('stringVariation - success: string variation', async (t) => {
     .expects('emit')
     .once()
     .withArgs('pushLatencyMetricsEvent', {
-      latency: sino.match.any,
+      latency: sinon.match.any,
       apiId: ApiId.SDK_GET_VARIATION,
     });
 
@@ -1028,7 +1027,7 @@ test('stringVariationDetails - success: string variation', async (t) => {
     .expects('emit')
     .once()
     .withArgs('pushLatencyMetricsEvent', {
-      latency: sino.match.any,
+      latency: sinon.match.any,
       apiId: ApiId.SDK_GET_VARIATION,
     });
 
@@ -1122,7 +1121,7 @@ test('jsonVariation - success: json variation', async (t) => {
     .expects('emit')
     .once()
     .withArgs('pushLatencyMetricsEvent', {
-      latency: sino.match.any,
+      latency: sinon.match.any,
       apiId: ApiId.SDK_GET_VARIATION,
     });
 
@@ -1206,7 +1205,7 @@ test('objectVariation - success: json variation', async (t) => {
     .expects('emit')
     .once()
     .withArgs('pushLatencyMetricsEvent', {
-      latency: sino.match.any,
+      latency: sinon.match.any,
       apiId: ApiId.SDK_GET_VARIATION,
     });
 
@@ -1302,7 +1301,7 @@ test('objectVariationDetail - success: object variation', async (t) => {
     .expects('emit')
     .once()
     .withArgs('pushLatencyMetricsEvent', {
-      latency: sino.match.any,
+      latency: sinon.match.any,
       apiId: ApiId.SDK_GET_VARIATION,
     });
 
@@ -1396,7 +1395,7 @@ test('getEvaluation - success', async (t) => {
     .expects('emit')
     .once()
     .withArgs('pushLatencyMetricsEvent', {
-      latency: sino.match.any,
+      latency: sinon.match.any,
       apiId: ApiId.SDK_GET_VARIATION,
     });
 
