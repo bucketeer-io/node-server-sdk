@@ -1,6 +1,6 @@
 import anyTest, { TestFn } from 'ava';
 import sino from 'sinon';
-
+import sinon from 'sinon';
 import {
   createFeature,
   Feature,
@@ -32,7 +32,7 @@ import { Clock } from '../utils/clock';
 import { NewSegmentUsersCache, SegmentUsersCache } from '../cache/segmentUsers';
 import { NewFeatureCache, FeaturesCache } from '../cache/features';
 import { ApiId } from '@bucketeer/evaluation/lib/proto/event/client/event_pb';
-import { BKTConfig, Config, DefaultLogger, defineBKTConfig } from '../index';
+import { DefaultLogger, defineBKTConfig } from '../index';
 import { APIClient } from '../api/client';
 import { EventStore } from '../stores/EventStore';
 import { Evaluation } from '../objects/evaluation';
@@ -40,7 +40,6 @@ import { BKTEvaluationDetails } from '../evaluationDetails';
 import { BKTValue } from '../types';
 import { BKTClientImpl } from '../client';
 import { IllegalStateError } from '../objects/errors';
-import sinon from 'sinon';
 import { requiredInternalConfig } from '../internalConfig';
 
 const test = anyTest as TestFn<{

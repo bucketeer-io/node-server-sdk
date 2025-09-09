@@ -145,7 +145,7 @@ export class BKTClientImpl implements Bucketeer {
           ),
         );
       }, timeout);
-    }).catch((e) => e);
+    });
 
     try {
       results = await Promise.race([this.initializationAsync, timeoutPromise]);
