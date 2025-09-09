@@ -24,7 +24,7 @@ import { InternalConfig, requiredInternalConfig } from '../internalConfig';
 import { EventStore } from '../stores/EventStore';
 import { APIClient } from '../api/client';
 import { BKTClientImpl } from '../client';
-import { InvalidStatusError } from '../../__test/objects/errors';
+import { InvalidStatusError } from '../objects/errors';
 import { createNodeJSError } from './utils/native_error';
 
 const test = anyTest as TestFn<{
