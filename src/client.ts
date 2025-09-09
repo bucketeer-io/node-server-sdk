@@ -78,6 +78,13 @@ export class BKTClientImpl implements Bucketeer {
     this.eventEmitter = options.eventEmitter;
 
     if (this.config.enableLocalEvaluation === true) {
+      if (!options.featureFlagProcessor || !options.segementUsersCacheProcessor || !options.localEvaluator) {
+        // For catching early initialization errors on the development phase
+        // This should never happen in production
+        throw new IllegalStateError(
+          'Cache processors or LocalEvaluator are not provided',
+        );
+      }
       this.featureFlagProcessor = options.featureFlagProcessor!;
       this.segementUsersCacheProcessor = options.segementUsersCacheProcessor!;
       this.localEvaluator = options.localEvaluator;
@@ -87,9 +94,9 @@ export class BKTClientImpl implements Bucketeer {
           this.featureFlagProcessor.start(),
           this.segementUsersCacheProcessor.start(),
         ]
-        // Default handle errors here to wait for all promises to settle
-        // This will prevent unhandled promise rejection
-        .map((p) => p.catch((e) => e)),
+          // Default handle errors here to wait for all promises to settle
+          // This will prevent unhandled promise rejection
+          .map((p) => p.catch((e) => e)),
       );
     }
 
@@ -121,12 +128,6 @@ export class BKTClientImpl implements Bucketeer {
   async waitForInitialization(options: { timeout: number }): Promise<void> {
     if (this.config.enableLocalEvaluation !== true) {
       return;
-    }
-    if (
-      this.featureFlagProcessor === null ||
-      this.segementUsersCacheProcessor === null
-    ) {
-      throw new IllegalStateError('Cache processors are not initialized');
     }
 
     if (!this.initializationAsync) {

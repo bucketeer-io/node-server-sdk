@@ -19,11 +19,13 @@ import { Clock } from '../utils/clock';
 import { NewSegmentUsersCache, SegmentUsersCache } from '../cache/segmentUsers';
 import { FeaturesCache, NewFeatureCache } from '../cache/features';
 import { DefaultLogger, defineBKTConfig } from '../index';
-import { IllegalStateError, TimeoutError } from '../objects/errors';
+import { ForbiddenError, IllegalStateError, TimeoutError } from '../objects/errors';
 import { InternalConfig, requiredInternalConfig } from '../internalConfig';
 import { EventStore } from '../stores/EventStore';
 import { APIClient } from '../api/client';
 import { BKTClientImpl } from '../client';
+import { InvalidStatusError } from '../../__test/objects/errors';
+import { createNodeJSError } from './utils/native_error';
 
 const test = anyTest as TestFn<{
   sandbox: sinon.SinonSandbox;
@@ -243,7 +245,7 @@ test.serial('Init failed - by feature processor', async (t) => {
   // Mock feature processor to fail, segment to succeed
   sandbox
     .stub(featureFlagProcessor, 'start')
-    .callsFake(() => Promise.reject(new IllegalStateError('Feature processor failed')));
+    .callsFake(() => Promise.reject(new InvalidStatusError('Timeout', 408)));
   sandbox.stub(segementUsersCacheProcessor, 'start').callsFake(() => Promise.resolve());
 
   const sdkInstance = new BKTClientImpl(config, bktOptions);
@@ -252,8 +254,8 @@ test.serial('Init failed - by feature processor', async (t) => {
   const clearTimeoutSpy = sandbox.spy(global, 'clearTimeout');
 
   await t.throwsAsync(sdkInstance.waitForInitialization({ timeout: 100 }), {
-    instanceOf: IllegalStateError,
-    message: 'Feature processor failed',
+    instanceOf: TimeoutError,
+    message: 'Timeout',
   });
   t.true(clearTimeoutSpy.calledOnce);
 
@@ -285,7 +287,7 @@ test.serial('Init failed - by segment processor', async (t) => {
   sandbox.stub(featureFlagProcessor, 'start').callsFake(() => Promise.resolve());
   sandbox
     .stub(segementUsersCacheProcessor, 'start')
-    .callsFake(() => Promise.reject(new IllegalStateError('Segment processor failed')));
+    .callsFake(() => Promise.reject(new InvalidStatusError('Segment processor failed', 403)));
 
   const sdkInstance = new BKTClientImpl(config, bktOptions);
   t.truthy(sdkInstance.initializationAsync);
@@ -293,7 +295,7 @@ test.serial('Init failed - by segment processor', async (t) => {
   const clearTimeoutSpy = sandbox.spy(global, 'clearTimeout');
 
   await t.throwsAsync(sdkInstance.waitForInitialization({ timeout: 100 }), {
-    instanceOf: IllegalStateError,
+    instanceOf: ForbiddenError,
     message: 'Segment processor failed',
   });
   t.true(clearTimeoutSpy.calledOnce);
@@ -325,7 +327,7 @@ test.serial('Init failed - by both processors', async (t) => {
   // Mock both processors to fail
   sandbox
     .stub(featureFlagProcessor, 'start')
-    .callsFake(() => Promise.reject(new IllegalStateError('Feature processor failed')));
+    .callsFake(() => Promise.reject(createNodeJSError('Connection reset by peer', 'ECONNRESET')));
   sandbox
     .stub(segementUsersCacheProcessor, 'start')
     .callsFake(() => Promise.reject(new IllegalStateError('Segment processor failed')));
@@ -336,8 +338,8 @@ test.serial('Init failed - by both processors', async (t) => {
   const clearTimeoutSpy = sandbox.spy(global, 'clearTimeout');
 
   await t.throwsAsync(sdkInstance.waitForInitialization({ timeout: 100 }), {
-    instanceOf: IllegalStateError,
-    message: 'Feature processor failed',
+    instanceOf: TimeoutError,
+    message: 'Connection reset by peer',
   });
   t.true(clearTimeoutSpy.calledOnce);
 
@@ -349,22 +351,239 @@ test.serial('Init failed - by both processors', async (t) => {
 test.serial(
   'Init successful - Returns immediately when enableLocalEvaluation = false',
   async (t) => {
+    const {
+      sandbox,
+      featureFlagProcessor,
+      segementUsersCacheProcessor,
+      eventEmitter,
+      config,
+      cache,
+      evaluator,
+    } = t.context;
+
+    const editConfig = { ...config, enableLocalEvaluation: false };
+
+    const bktOptions = {
+      cache: cache,
+      apiClient: new APIClient(config.apiEndpoint, config.apiKey),
+      eventStore: new EventStore(),
+      localEvaluator: evaluator,
+      featureFlagProcessor: featureFlagProcessor,
+      segementUsersCacheProcessor: segementUsersCacheProcessor,
+      eventEmitter: eventEmitter,
+    };
+
+    const sdkInstance = new BKTClientImpl(editConfig, bktOptions);
+    // initializationAsync should be null as we are not initializing processors
+    t.falsy(sdkInstance.initializationAsync);
+
+    const clearTimeoutSpy = sandbox.spy(global, 'clearTimeout');
+    const setTimeoutSpy = sandbox.spy(global, 'setTimeout');
+
+    await t.notThrowsAsync(sdkInstance.waitForInitialization({ timeout: 200 }));
+
+    // clearTimeout should not be called as there is no timeout to clear
+    t.true(setTimeoutSpy.notCalled);
+    t.true(clearTimeoutSpy.notCalled);
+
+    await sdkInstance.destroy();
+
     t.pass();
   },
 );
 
-test.serial('Init fail - proccessors are null', async (t) => {
+test.serial('Client with none local evaluation should not have initializationAsync Promises', async (t) => {
+  const { eventEmitter, config, cache, evaluator } = t.context;
+  const editConfig = { ...config, enableLocalEvaluation: false };
+  const bktOptions = {
+    cache: cache,
+    apiClient: new APIClient(config.apiEndpoint, config.apiKey),
+    eventStore: new EventStore(),
+    localEvaluator: evaluator,
+    featureFlagProcessor: null,
+    segementUsersCacheProcessor: null,
+    eventEmitter: eventEmitter,
+  };
+
+  const sdkInstance = new BKTClientImpl(editConfig, bktOptions);
+  // initializationAsync should be null as we are not initializing processors
+  t.falsy(sdkInstance.initializationAsync);
+  await sdkInstance.destroy();
   t.pass();
 });
 
-test.serial('Init fail - initializationAsync are null', async (t) => {
-  t.pass();
-});
+test.serial(
+  'Init success - calling waitForInitialization mutilple times should fine',
+  async (t) => {
+    const {
+      sandbox,
+      featureFlagProcessor,
+      segementUsersCacheProcessor,
+      eventEmitter,
+      config,
+      cache,
+      evaluator,
+    } = t.context;
 
-test.serial('calling waitForInitialization should fine', async (t) => {
-  t.pass();
-});
+    const bktOptions = {
+      cache: cache,
+      apiClient: new APIClient(config.apiEndpoint, config.apiKey),
+      eventStore: new EventStore(),
+      localEvaluator: evaluator,
+      featureFlagProcessor: featureFlagProcessor,
+      segementUsersCacheProcessor: segementUsersCacheProcessor,
+      eventEmitter: eventEmitter,
+    };
+
+    // Mock both processors to resolve after a short delay
+    let featureResolve: (() => void) | undefined;
+    let segmentResolve: (() => void) | undefined;
+
+    sandbox.stub(featureFlagProcessor, 'start').callsFake(
+      () =>
+        new Promise((resolve) => {
+          featureResolve = resolve;
+        }),
+    );
+    sandbox.stub(segementUsersCacheProcessor, 'start').callsFake(
+      () =>
+        new Promise((resolve) => {
+          segmentResolve = resolve;
+        }),
+    );
+
+    const sdkInstance = new BKTClientImpl(config, bktOptions);
+    t.truthy(sdkInstance.initializationAsync);
+
+    const clearTimeoutSpy = sandbox.spy(global, 'clearTimeout');
+
+    // Resolve both processors after a short delay
+    setTimeout(() => {
+      featureResolve && featureResolve();
+      segmentResolve && segmentResolve();
+    }, 100);
+
+    await t.notThrowsAsync(sdkInstance.waitForInitialization({ timeout: 200 }));
+    // Call again should return immediately
+    await t.notThrowsAsync(sdkInstance.waitForInitialization({ timeout: 200 }));
+    await t.notThrowsAsync(sdkInstance.waitForInitialization({ timeout: 200 }));
+    t.true(clearTimeoutSpy.callCount == 3);
+
+    await sdkInstance.destroy();
+  },
+);
+
+test.serial(
+  'Init fail - calling waitForInitialization after initialized should keep throwing',
+  async (t) => {
+    const {
+      sandbox,
+      featureFlagProcessor,
+      segementUsersCacheProcessor,
+      eventEmitter,
+      config,
+      cache,
+      evaluator,
+    } = t.context;
+
+    const bktOptions = {
+      cache: cache,
+      apiClient: new APIClient(config.apiEndpoint, config.apiKey),
+      eventStore: new EventStore(),
+      localEvaluator: evaluator,
+      featureFlagProcessor: featureFlagProcessor,
+      segementUsersCacheProcessor: segementUsersCacheProcessor,
+      eventEmitter: eventEmitter,
+    };
+
+    // Mock both processors to fail
+    sandbox
+      .stub(featureFlagProcessor, 'start')
+      .callsFake(() => Promise.reject(new IllegalStateError('Feature processor failed')));
+    sandbox
+      .stub(segementUsersCacheProcessor, 'start')
+      .callsFake(() => Promise.reject(new IllegalStateError('Segment processor failed')));
+
+    const sdkInstance = new BKTClientImpl(config, bktOptions);
+    t.truthy(sdkInstance.initializationAsync);
+
+    const clearTimeoutSpy = sandbox.spy(global, 'clearTimeout');
+
+    await t.throwsAsync(sdkInstance.waitForInitialization({ timeout: 100 }), {
+      instanceOf: IllegalStateError,
+      message: 'Feature processor failed',
+    });
+
+    // Call again should keep throwing the same error
+    await t.throwsAsync(sdkInstance.waitForInitialization({ timeout: 100 }), {
+      instanceOf: IllegalStateError,
+      message: 'Feature processor failed',
+    });
+    await t.throwsAsync(sdkInstance.waitForInitialization({ timeout: 100 }), {
+      instanceOf: IllegalStateError,
+      message: 'Feature processor failed',
+    });
+
+    t.true(clearTimeoutSpy.callCount == 3);
+
+    await sdkInstance.destroy();
+  },
+);
 
 test.serial('very short/zero timeout should fine', async (t) => {
-  t.pass();
+  const {
+    sandbox,
+    featureFlagProcessor,
+    segementUsersCacheProcessor,
+    eventEmitter,
+    config,
+    cache,
+    evaluator,
+  } = t.context;
+
+  const bktOptions = {
+    cache: cache,
+    apiClient: new APIClient(config.apiEndpoint, config.apiKey),
+    eventStore: new EventStore(),
+    localEvaluator: evaluator,
+    featureFlagProcessor: featureFlagProcessor,
+    segementUsersCacheProcessor: segementUsersCacheProcessor,
+    eventEmitter: eventEmitter,
+  };
+
+  // Mock both processors to resolve after a short delay
+  let featureResolve: (() => void) | undefined;
+  let segmentResolve: (() => void) | undefined;
+
+  sandbox.stub(featureFlagProcessor, 'start').callsFake(
+    () =>
+      new Promise((resolve) => {
+        featureResolve = resolve;
+      }),
+  );
+  sandbox.stub(segementUsersCacheProcessor, 'start').callsFake(
+    () =>
+      new Promise((resolve) => {
+        segmentResolve = resolve;
+      }),
+  );
+
+  const sdkInstance = new BKTClientImpl(config, bktOptions);
+  t.truthy(sdkInstance.initializationAsync);
+
+  const clearTimeoutSpy = sandbox.spy(global, 'clearTimeout');
+
+  // Resolve both processors after a short delay
+  setTimeout(() => {
+    featureResolve && featureResolve();
+    segmentResolve && segmentResolve();
+  }, 100);
+
+  await t.throwsAsync(sdkInstance.waitForInitialization({ timeout: 0 }), {
+    instanceOf: TimeoutError,
+    message: 'Initialization timeout after 0 ms',
+  });
+  t.true(clearTimeoutSpy.calledOnce);
+
+  await sdkInstance.destroy();
 });
