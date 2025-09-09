@@ -189,15 +189,17 @@ test.serial('Init successful', async (t) => {
   let featureResolve: (() => void) | undefined;
   let segmentResolve: (() => void) | undefined;
 
-  sandbox.stub(featureFlagProcessor, 'start').callsFake(() =>
-    new Promise((resolve) => {
-      featureResolve = resolve;
-    })
+  sandbox.stub(featureFlagProcessor, 'start').callsFake(
+    () =>
+      new Promise((resolve) => {
+        featureResolve = resolve;
+      }),
   );
-  sandbox.stub(segementUsersCacheProcessor, 'start').callsFake(() =>
-    new Promise((resolve) => {
-      segmentResolve = resolve;
-    })
+  sandbox.stub(segementUsersCacheProcessor, 'start').callsFake(
+    () =>
+      new Promise((resolve) => {
+        segmentResolve = resolve;
+      }),
   );
 
   const sdkInstance = new BKTClientImpl(config, bktOptions);
@@ -239,9 +241,11 @@ test.serial('Init failed - by feature processor', async (t) => {
   };
 
   // Mock feature processor to fail, segment to succeed
-  sandbox.stub(featureFlagProcessor, 'start').callsFake(() =>
-    Promise.reject(new IllegalStateError('Feature processor failed'))
-  );
+  sandbox
+    .stub(featureFlagProcessor, 'start')
+    .callsFake(() =>
+      Promise.reject(new IllegalStateError('Feature processor failed'))
+    );
   sandbox.stub(segementUsersCacheProcessor, 'start').callsFake(() =>
     Promise.resolve()
   );
@@ -285,9 +289,11 @@ test.serial('Init failed - by segment processor', async (t) => {
   sandbox.stub(featureFlagProcessor, 'start').callsFake(() =>
     Promise.resolve()
   );
-  sandbox.stub(segementUsersCacheProcessor, 'start').callsFake(() =>
-    Promise.reject(new IllegalStateError('Segment processor failed'))
-  );
+  sandbox
+    .stub(segementUsersCacheProcessor, 'start')
+    .callsFake(() =>
+      Promise.reject(new IllegalStateError('Segment processor failed'))
+    );
 
   const sdkInstance = new BKTClientImpl(config, bktOptions);
   t.truthy(sdkInstance.initializationAsync);
@@ -325,12 +331,16 @@ test.serial('Init failed - by both processors', async (t) => {
   };
 
   // Mock both processors to fail
-  sandbox.stub(featureFlagProcessor, 'start').callsFake(() =>
-    Promise.reject(new IllegalStateError('Feature processor failed'))
-  );
-  sandbox.stub(segementUsersCacheProcessor, 'start').callsFake(() =>
-    Promise.reject(new IllegalStateError('Segment processor failed'))
-  );
+  sandbox
+    .stub(featureFlagProcessor, 'start')
+    .callsFake(() =>
+      Promise.reject(new IllegalStateError('Feature processor failed'))
+    );
+  sandbox
+    .stub(segementUsersCacheProcessor, 'start')
+    .callsFake(() =>
+      Promise.reject(new IllegalStateError('Segment processor failed'))
+    );
 
   const sdkInstance = new BKTClientImpl(config, bktOptions);
   t.truthy(sdkInstance.initializationAsync);
@@ -344,4 +354,24 @@ test.serial('Init failed - by both processors', async (t) => {
   t.true(clearTimeoutSpy.calledOnce);
 
   await sdkInstance.destroy();
+});
+
+// Edge case tests
+
+test.serial(
+  'Init successful - Returns immediately when enableLocalEvaluation = false',
+  async (t) => {
+  },
+);
+
+test.serial('Init fail - proccessors are null', async (t) => {
+});
+
+test.serial('Init fail - initializationAsync are null', async (t) => {
+});
+
+test.serial('calling waitForInitialization should fine', async (t) => {
+});
+
+test.serial('very short/zero timeout should fine', async (t) => {
 });
