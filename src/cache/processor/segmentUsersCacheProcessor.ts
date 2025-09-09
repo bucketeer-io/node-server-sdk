@@ -75,7 +75,7 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
     if (this.pollingScheduleID) {
       removeSchedule(this.pollingScheduleID);
       this.pollingScheduleID = undefined;
-    };
+    }
   }
 
   getPollingScheduleID(): NodeJS.Timeout | undefined {

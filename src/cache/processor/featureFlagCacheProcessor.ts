@@ -76,7 +76,7 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
     if (this.pollingScheduleID) {
       removeSchedule(this.pollingScheduleID);
       this.pollingScheduleID = undefined;
-    };
+    }
   }
 
   getPollingScheduleID(): NodeJS.Timeout | undefined {
