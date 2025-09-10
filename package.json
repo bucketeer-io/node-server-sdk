@@ -1,5 +1,5 @@
 {
-  "name": "bkt-node-server-sdk",
+  "name": "@bucketeer/node-server-sdk",
   "version": "0.4.1",
   "license": "Apache-2.0",
   "publishConfig": {
