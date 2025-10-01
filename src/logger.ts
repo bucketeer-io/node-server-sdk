@@ -19,7 +19,6 @@ const logLevels = [DEBUG, INFO, WARN, ERROR, NONE];
  * A default logger that writes to stderr.
  */
 export class DefaultLogger implements Logger {
-  prefix: string;
   minLevel: number;
 
   /**
@@ -36,30 +35,23 @@ export class DefaultLogger implements Logger {
         break;
       }
     }
-    this.prefix = logLevel + ': [Bucketeer] ';
+  }
+
+  private log(level: string, consoleFn: (...args: any[]) => void, ...args: any[]) {
+    if (this.minLevel > logLevels.indexOf(level)) return;
+    consoleFn(`${level}: [Bucketeer]`, ...args);
   }
 
   error(...args: any[]): void {
-    this.write(args, ERROR);
+    this.log(ERROR, console.error, ...args);
   }
   warn(...args: any[]): void {
-    this.write(args, WARN);
+    this.log(WARN, console.warn, ...args);
   }
   info(...args: any[]): void {
-    this.write(args, INFO);
+    this.log(INFO, console.info, ...args);
   }
   debug(...args: any[]): void {
-    this.write(args, DEBUG);
-  }
-
-  write(args: any[], logLevel: (typeof logLevels)[number]): void {
-    if (this.minLevel > logLevels.indexOf(logLevel)) {
-      return;
-    }
-    if (args.length === 1) {
-      return;
-    }
-    args[0] = this.prefix + args[0];
-    console.error(format(...args));
+    this.log(DEBUG, console.debug, ...args);
   }
 }
