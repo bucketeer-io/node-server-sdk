@@ -1,5 +1,3 @@
-import { format } from 'util';
-
 export interface Logger {
   error(...args: any[]): void;
   warn(...args: any[]): void;
@@ -7,13 +5,6 @@ export interface Logger {
   debug(...args: any[]): void;
 }
 
-const DEBUG = 'debug';
-const INFO = 'info';
-const WARN = 'warn';
-const ERROR = 'error';
-const NONE = 'none';
-
-const logLevels = [DEBUG, INFO, WARN, ERROR, NONE];
 type ConsoleMethod = typeof console.error;
 
 const logLevelIndices: Record<string, number> = {
