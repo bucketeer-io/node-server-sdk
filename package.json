@@ -34,7 +34,7 @@
     "@types/eslint": "^9.6.1",
     "@types/node-fetch": "2.6.13",
     "@typescript-eslint/eslint-plugin": "^8.41.0",
-    "@typescript-eslint/parser": "^8.41.0",
+    "@typescript-eslint/parser": "^8.45.0",
     "ava": "6.4.1",
     "@types/sinon": "^17.0.4",
     "sinon": "^20.0.0",
