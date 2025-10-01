@@ -391,7 +391,7 @@ export class BKTClientImpl implements Bucketeer {
     this.eventEmitter.close();
     this.featureFlagProcessor?.stop();
     this.segementUsersCacheProcessor?.stop();
-    this.config.logger?.info('destroy finished', this.registerEventsScheduleID);
+    this.config.logger?.info('destroy finished');
   }
 
   getBuildInfo(): BuildInfo {
