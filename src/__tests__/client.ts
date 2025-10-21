@@ -39,7 +39,7 @@ test.before((t) => {
 test.serial('getEvaluation: default evaluation details', async (t) => {
   const featureId = 'stringEvaluationDetails';
   t.context.server.use(
-    rest.post(evaluationAPI, (req, res, ctx) => {
+    rest.post(evaluationAPI, (_req, res, ctx) => {
       return res(ctx.status(500));
     }),
   );
@@ -92,12 +92,9 @@ test.serial('getEvaluation: stringEvaluationDetails', async (t) => {
     },
   };
   t.context.server.use(
-    rest.post<Record<string, never>, GetEvaluationRequest, GetEvaluationResponse>(
-      evaluationAPI,
-      (req, res, ctx) => {
-        return res(ctx.json(dummyEvalResponse));
-      },
-    ),
+    rest.post(evaluationAPI, (_req, res, ctx) => {
+      return res(ctx.json(dummyEvalResponse));
+    }),
   );
   const client = t.context.bktClient;
   const user = t.context.targetedUser;
@@ -147,12 +144,9 @@ test.serial('getEvaluation: boolEvaluationDetails', async (t) => {
     },
   };
   t.context.server.use(
-    rest.post<Record<string, never>, GetEvaluationRequest, GetEvaluationResponse>(
-      evaluationAPI,
-      (req, res, ctx) => {
-        return res(ctx.json(dummyEvalResponse));
-      },
-    ),
+    rest.post(evaluationAPI, (_req, res, ctx) => {
+      return res(ctx.json(dummyEvalResponse));
+    }),
   );
   const client = t.context.bktClient;
   const user = t.context.targetedUser;
@@ -207,12 +201,9 @@ test.serial('getEvaluation: numberEvaluationDetails', async (t) => {
     },
   };
   t.context.server.use(
-    rest.post<Record<string, never>, GetEvaluationRequest, GetEvaluationResponse>(
-      evaluationAPI,
-      (req, res, ctx) => {
-        return res(ctx.json(dummyEvalResponse));
-      },
-    ),
+    rest.post(evaluationAPI, (_req, res, ctx) => {
+      return res(ctx.json(dummyEvalResponse));
+    }),
   );
   const client = t.context.bktClient;
   const user = t.context.targetedUser;
@@ -267,12 +258,9 @@ test.serial('getEvaluation: objectEvaluationDetails', async (t) => {
     },
   };
   t.context.server.use(
-    rest.post<Record<string, never>, GetEvaluationRequest, GetEvaluationResponse>(
-      evaluationAPI,
-      (req, res, ctx) => {
-        return res(ctx.json(dummyEvalResponse));
-      },
-    ),
+    rest.post(evaluationAPI, (_req, res, ctx) => {
+      return res(ctx.json(dummyEvalResponse));
+    }),
   );
   const client = t.context.bktClient;
   const user = t.context.targetedUser;
