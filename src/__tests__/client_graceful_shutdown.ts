@@ -14,7 +14,7 @@ const createTestConfig = (): InternalConfig => ({
   apiKey: 'test-api-key',
   apiEndpoint: 'https://test-endpoint.example.com',
   featureTag: 'test-tag',
-  eventsFlushInterval: 30000,
+  eventsFlushInterval: 10000,
   eventsMaxQueueSize: 50,
   appVersion: '1.0.0',
   logger: new DefaultLogger(),
@@ -297,4 +297,3 @@ test('destroy() should flush events with correct order', async (t) => {
   // Note: We can't easily check the exact order without inspecting event internals
   // but we can verify the count is correct
 });
-

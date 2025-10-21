@@ -78,7 +78,7 @@ interface BKTConfig {
   featureTag: string;
   /**
    * Interval for flushing events to the server. Specify in milliseconds.
-   * Default: 30 seconds
+   * Default: 10 seconds
    */
   eventsFlushInterval: number;
   /**
@@ -135,10 +135,10 @@ interface BKTConfig {
   wrapperSdkSourceId?: number;
 }
 
-// MINIMUM_FLUSH_INTERVAL_MILLIS and DEFAULT_FLUSH_INTERVAL_MILLIS are currently set to the same value (30 seconds).
+// MINIMUM_FLUSH_INTERVAL_MILLIS and DEFAULT_FLUSH_INTERVAL_MILLIS are currently set to the same value (10 seconds).
 // They are defined separately in case their values need to diverge in the future.
-const MINIMUM_FLUSH_INTERVAL_MILLIS = 30_000; // 30 seconds
-const DEFAULT_FLUSH_INTERVAL_MILLIS = 30_000; // 30 seconds
+const MINIMUM_FLUSH_INTERVAL_MILLIS = 10_000; // 10 seconds
+const DEFAULT_FLUSH_INTERVAL_MILLIS = 10_000; // 10 seconds
 const DEFAULT_MAX_QUEUE_SIZE = 50;
 const MINIMUM_POLLING_INTERVAL_MILLIS = 60_000; // 60 seconds
 const DEFAULT_POLLING_INTERVAL_MILLIS = 60_000; // 60 seconds

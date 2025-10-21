@@ -4,7 +4,7 @@ import { DefaultLogger } from '../logger';
 import { SourceId } from '../objects/sourceId';
 import { nodeSDKVersion } from '../objects/version';
 
-test('should convert Config to BKTConfig with defaults', t => {
+test('should convert Config to BKTConfig with defaults', (t) => {
   const config = {
     host: 'https://api.example.com',
     token: 'test-token',
@@ -16,7 +16,7 @@ test('should convert Config to BKTConfig with defaults', t => {
   t.is(bktConfig.apiKey, 'test-token');
   t.is(bktConfig.apiEndpoint, 'https://api.example.com');
   t.is(bktConfig.featureTag, 'test-tag');
-  t.is(bktConfig.eventsFlushInterval, 30000); // Default value
+  t.is(bktConfig.eventsFlushInterval, 10000); // Default value
   t.is(bktConfig.eventsMaxQueueSize, 50); // Default value
   t.is(bktConfig.cachePollingInterval, 60000); // Default value
   t.is(bktConfig.appVersion, '1.0.0'); // Default value
@@ -25,7 +25,7 @@ test('should convert Config to BKTConfig with defaults', t => {
   t.is(bktConfig.cachePollingInterval, 60000); // Default value
 });
 
-test('should override defaults with provided values', t => {
+test('should override defaults with provided values', (t) => {
   const logger = new DefaultLogger();
   const config = {
     host: 'https://api.example.com',
@@ -50,7 +50,7 @@ test('should override defaults with provided values', t => {
   t.is(bktConfig.cachePollingInterval, 120000); // Overridden value
 });
 
-test('should include sourceId and sdkVersion in the converted config', t => {
+test('should include sourceId and sdkVersion in the converted config', (t) => {
   const config = {
     host: 'https://api.example.com',
     token: 'test-token',
