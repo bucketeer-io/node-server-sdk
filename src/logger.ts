@@ -1,5 +1,3 @@
-import { format } from 'util';
-
 export interface Logger {
   error(...args: any[]): void;
   warn(...args: any[]): void;
@@ -7,19 +5,20 @@ export interface Logger {
   debug(...args: any[]): void;
 }
 
-const DEBUG = 'debug';
-const INFO = 'info';
-const WARN = 'warn';
-const ERROR = 'error';
-const NONE = 'none';
+type ConsoleMethod = typeof console.error;
 
-const logLevels = [DEBUG, INFO, WARN, ERROR, NONE];
+const logLevelIndices: Record<string, number> = {
+  debug: 0,
+  info: 1,
+  warn: 2,
+  error: 3,
+  none: 4,
+};
 
 /**
  * A default logger that writes to stderr.
  */
 export class DefaultLogger implements Logger {
-  prefix: string;
   minLevel: number;
 
   /**
@@ -30,36 +29,26 @@ export class DefaultLogger implements Logger {
    */
   constructor(logLevel?: string) {
     this.minLevel = 1;
-    for (let i = 0; i < logLevels.length; i++) {
-      if (logLevels[i] === logLevel) {
-        this.minLevel = i;
-        break;
-      }
+    if (logLevel && logLevel in logLevelIndices) {
+      this.minLevel = logLevelIndices[logLevel];
     }
-    this.prefix = logLevel + ': [Bucketeer] ';
+  }
+
+  private log(level: string, consoleFn: ConsoleMethod, ...args: any[]) {
+    if (this.minLevel > logLevelIndices[level]) return;
+    consoleFn(`${level}: [Bucketeer]`, ...args);
   }
 
   error(...args: any[]): void {
-    this.write(args, ERROR);
+    this.log('error', console.error, ...args);
   }
   warn(...args: any[]): void {
-    this.write(args, WARN);
+    this.log('warn', console.warn, ...args);
   }
   info(...args: any[]): void {
-    this.write(args, INFO);
+    this.log('info', console.info, ...args);
   }
   debug(...args: any[]): void {
-    this.write(args, DEBUG);
-  }
-
-  write(args: any[], logLevel: (typeof logLevels)[number]): void {
-    if (this.minLevel > logLevels.indexOf(logLevel)) {
-      return;
-    }
-    if (args.length === 1) {
-      return;
-    }
-    args[0] = this.prefix + args[0];
-    console.error(format(...args));
+    this.log('debug', console.debug, ...args);
   }
 }
