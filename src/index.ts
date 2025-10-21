@@ -3,7 +3,7 @@ import { EventStore } from './stores/EventStore';
 import { APIClient } from './api/client';
 import { BKTConfig, Config, defaultConfig, defineBKTConfig, convertConfigToBKTConfig } from './config';
 import { BKTEvaluationDetails } from './evaluationDetails';
-import { BKTValue } from './types';
+import { BKTValue, BKTJsonArray, BKTJsonObject, BKTJsonPrimitive } from './types';
 import { InMemoryCache } from './cache/inMemoryCache';
 import { NewFeatureCache } from './cache/features';
 import {
@@ -28,11 +28,15 @@ export interface BuildInfo {
   readonly GIT_REVISION: string;
 }
 
-export { Config, BKTConfig, defineBKTConfig } from './config';
+export { Config, defaultConfig, BKTConfig, defineBKTConfig };
+
+export { BKTValue, BKTJsonPrimitive, BKTJsonObject, BKTJsonArray };
+
+export { BKTEvaluationDetails }
 
 export { Logger, DefaultLogger } from './logger';
 
-export { User } from './objects/user';
+export { User };
 
 export interface Bucketeer {
   /**
