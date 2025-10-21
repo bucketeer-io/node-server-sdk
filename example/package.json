@@ -3,10 +3,11 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@bucketeer/node-server-sdk": "^0.1.1",
-    "express": "4.17.1"
+    "express": "^4.21.2"
   },
   "devDependencies": {
-    "@types/express": "4.17.7",
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.15.35",
     "typescript": "^5.5.4",
     "webpack": "4.44.2",
     "webpack-cli": "3.3.10"
