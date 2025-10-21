@@ -14,7 +14,7 @@ const createTestConfig = (): InternalConfig => ({
   apiKey: 'test-api-key',
   apiEndpoint: 'https://test-endpoint.example.com',
   featureTag: 'test-tag',
-  eventsFlushInterval: 30000,
+  eventsFlushInterval: 10000,
   eventsMaxQueueSize: 50,
   appVersion: '1.0.0',
   logger: new DefaultLogger(),

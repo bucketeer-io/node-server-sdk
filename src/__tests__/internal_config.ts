@@ -15,7 +15,7 @@ const baseConfig: Partial<BKTConfig> = {
   apiEndpoint: 'https://api.test.com',
   featureTag: 'test-tag',
   appVersion: '1.0.0',
-  eventsFlushInterval: 30000,
+  eventsFlushInterval: 10000,
   eventsMaxQueueSize: 50,
   cachePollingInterval: 600000,
 };
