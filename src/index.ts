@@ -135,8 +135,22 @@ export interface Bucketeer {
    * destroy finalizes Bucketeer instance.
    * It sends all event in memory and stop workers.
    * The application should call destroy before the application stops, otherwise remaining events can be lost.
+   *
+   * @returns Promise that resolves when all events are flushed and resources are cleaned up
+   *
+   * @example
+   * ```typescript
+   * const client = initializeBKTClient(config);
+   *
+   * // Graceful shutdown on SIGTERM
+   * process.on('SIGTERM', async () => {
+   *   console.log('SIGTERM received, shutting down gracefully...');
+   *   await client.destroy();
+   *   console.log('Shutdown complete');
+   *   process.exit(0);
+   * });
    */
-  destroy(): void;
+  destroy(): Promise<void>;
   /**
    * getBuildInfo returns the SDK's build information.
    * @returns The SDK's build information.

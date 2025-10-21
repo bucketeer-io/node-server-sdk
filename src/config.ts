@@ -78,11 +78,12 @@ interface BKTConfig {
   featureTag: string;
   /**
    * Interval for flushing events to the server. Specify in milliseconds.
-   * Default: 60 seconds
+   * Default: 30 seconds
    */
   eventsFlushInterval: number;
   /**
-   * Maximum number of events to be queued before flushing.
+   * Maximum number of events to batch per request.
+   * Events are automatically sent when the queue reaches this size.
    * Default: 50
    */
   eventsMaxQueueSize: number;
