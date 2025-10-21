@@ -11,7 +11,7 @@
     "@types/node": "^22.15.35",
     "@types/uuid": "^10.0.0",
     "uuid": "^11.1.0",
-    "@bucketeer/evaluation": "0.0.4",
+    "@bucketeer/evaluation": "0.0.5",
     "@improbable-eng/grpc-web": "^0.15.0",
     "@improbable-eng/grpc-web-node-http-transport": "^0.15.0",
     "google-protobuf": "^3.21.4"
