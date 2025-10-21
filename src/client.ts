@@ -240,7 +240,8 @@ export class BKTClientImpl implements Bucketeer {
 
     const totalBatches = Math.ceil(totalEvents / this.config.eventsMaxQueueSize);
     this.config.logger?.info(
-      `[EventFlusher] Starting to flush ${totalEvents} events in ${totalBatches} batch(es) of ${this.config.eventsMaxQueueSize}...`,
+      `[EventFlusher] Starting to flush ${totalEvents} events in ${totalBatches} batch(es) ` +
+        `of ${this.config.eventsMaxQueueSize}...`,
     );
 
     let flushedCount = 0;
@@ -261,13 +262,15 @@ export class BKTClientImpl implements Bucketeer {
         );
         flushedCount += eventsToFlush.length;
         this.config.logger?.debug(
-          `[EventFlusher] Flushed batch ${batchNumber}/${totalBatches}: ${eventsToFlush.length} events (${flushedCount}/${totalEvents} total)`,
+          `[EventFlusher] Flushed batch ${batchNumber}/${totalBatches}: ` +
+            `${eventsToFlush.length} events (${flushedCount}/${totalEvents} total)`,
         );
       } catch (e) {
         failedCount += eventsToFlush.length;
         this.saveErrorMetricsEvent(this.config.featureTag, e, ApiId.REGISTER_EVENTS);
         this.config.logger?.warn(
-          `[EventFlusher] Failed to flush batch ${batchNumber}/${totalBatches}: ${eventsToFlush.length} events`,
+          `[EventFlusher] Failed to flush batch ${batchNumber}/${totalBatches}: ` +
+            `${eventsToFlush.length} events`,
           e,
         );
         // Continue flushing remaining batches even if one fails
@@ -276,7 +279,8 @@ export class BKTClientImpl implements Bucketeer {
 
     if (failedCount > 0) {
       this.config.logger?.warn(
-        `[EventFlusher] Shutdown flush completed: ${flushedCount} succeeded, ${failedCount} failed out of ${totalEvents} total`,
+        `[EventFlusher] Shutdown flush completed: ${flushedCount} succeeded, ` +
+          `${failedCount} failed out of ${totalEvents} total`,
       );
     } else {
       this.config.logger?.info(
@@ -410,7 +414,8 @@ export class BKTClientImpl implements Bucketeer {
         let evaluation = await this.localEvaluator.evaluate(user, featureId);
 
         const second = (Date.now() - startTime) / 1000;
-        // don't log size of the local evaluation because it will log from the feature flag processor
+        // don't log size of the local evaluation because it will log from
+        // the feature flag processor
         this.eventEmitter.emit('pushLatencyMetricsEvent', {
           latency: second,
           apiId: ApiId.SDK_GET_VARIATION,
@@ -465,7 +470,8 @@ export class BKTClientImpl implements Bucketeer {
         });
 
         this.config.logger?.error(
-          `getVariationDetails failed to parse: ${variationValue} using: ${typeof typeConverter} with error: ${err}`,
+          `getVariationDetails failed to parse: ${variationValue} using: ${typeof typeConverter} ` +
+            `with error: ${err}`,
         );
       }
     }
