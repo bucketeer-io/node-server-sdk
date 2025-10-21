@@ -18,7 +18,7 @@ import { MockCache } from '../../../mocks/cache';
 import { MockGRPCClient } from '../../../mocks/gprc';
 import { SourceId } from '../../../../objects/sourceId';
 
-test('polling cache', async () => {
+test('polling cache', async (t) => {
 
   const clock = new Clock();
   const mockClock = sino.mock(clock);
@@ -123,13 +123,14 @@ test('polling cache', async () => {
     sdkVersion: '2.3.1',
   });
 
-  processor.start();
+  await processor.start();
 
   await new Promise((resolve) => setTimeout(resolve, 3000));
 
-  processor.stop();
+  await processor.stop();
   mockClock.verify();
   mockCache.verify();
   mockProcessorEventsEmitter.verify();
   mockGRPCClient.verify();
+  t.pass();
 });

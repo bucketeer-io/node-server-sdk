@@ -10,8 +10,8 @@ import { InvalidStatusError } from '../../objects/errors';
 import { SourceId } from '../../objects/sourceId';
 
 interface SegementUsersCacheProcessor {
-  start(): void;
-  stop(): void;
+  start(): Promise<void>;
+  stop(): Promise<void>;
 }
 
 type SegementUsersCacheProcessorOptions = {
@@ -56,30 +56,47 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
     this.sdkVersion = options.sdkVersion;
   }
 
-  start() {
+  async start() {
     // Execute immediately
-    this.runUpdateCache();
-    this.pollingScheduleID = createSchedule(() => this.runUpdateCache(), this.pollingInterval);
+    try {
+      await this.getSegmentUsers();
+    } catch (e) {
+      this.pushErrorMetricsEvent(e);
+      throw e;
+    } finally {
+      this.pollingScheduleID = createSchedule(
+        () => this.runUpdateCache(),
+        this.pollingInterval,
+      );
+    }
   }
 
-  stop() {
-    if (this.pollingScheduleID) removeSchedule(this.pollingScheduleID);
+  async stop() {
+    if (this.pollingScheduleID) {
+      removeSchedule(this.pollingScheduleID);
+      this.pollingScheduleID = undefined;
+    }
+  }
+
+  getPollingScheduleID(): NodeJS.Timeout | undefined {
+    return this.pollingScheduleID;
   }
 
   async runUpdateCache() {
     try {
-      await this.updateCache();
+      await this.getSegmentUsers();
     } catch (error) {
+      // Always log the error regardless of initialization state
       this.pushErrorMetricsEvent(error);
     }
   }
 
-  private async updateCache() {
+  private async getSegmentUsers() {
     const segmentIds = await this.segmentUsersCache.getIds();
     const requestedAt = await this.getSegmentUsersRequestedAt();
     const sourceId = this.sourceId;
     const sdkVersion = this.sdkVersion;
-    
+
     const startTime: number = this.clock.getTime();
 
     const resp = await this.grpc.getSegmentUsers({
@@ -96,7 +113,10 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
     this.pushSizeMetricsEvent(resp.serializeBinary().length);
 
     if (resp.getForceUpdate()) {
-      await this.deleteAllAndSaveLocalCache(resp.getRequestedAt(), resp.getSegmentUsersList());
+      await this.deleteAllAndSaveLocalCache(
+        resp.getRequestedAt(),
+        resp.getSegmentUsersList(),
+      );
     } else {
       await this.updateLocalCache(
         resp.getRequestedAt(),
@@ -106,7 +126,10 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
     }
   }
 
-  async deleteAllAndSaveLocalCache(requestedAt: number, segmentUsersList: SegmentUsers[]) {
+  async deleteAllAndSaveLocalCache(
+    requestedAt: number,
+    segmentUsersList: SegmentUsers[],
+  ) {
     await this.segmentUsersCache.deleteAll();
     await this.updateLocalCache(requestedAt, segmentUsersList, []);
   }
@@ -131,7 +154,11 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
   }
 
   putSegmentUsersRequestedAt(requestedAt: number): Promise<void> {
-    return this.cache.put(SEGEMENT_USERS_REQUESTED_AT, requestedAt, SEGEMENT_USERS_CACHE_TTL);
+    return this.cache.put(
+      SEGEMENT_USERS_REQUESTED_AT,
+      requestedAt,
+      SEGEMENT_USERS_CACHE_TTL,
+    );
   }
 
   async pushLatencyMetricsEvent(latency: number) {
@@ -142,19 +169,25 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
   }
 
   async pushErrorMetricsEvent(error: any) {
-    this.eventEmitter.emit('error', { error: error, apiId: ApiId.GET_SEGMENT_USERS });
+    this.eventEmitter.emit('error', {
+      error: error,
+      apiId: ApiId.GET_SEGMENT_USERS,
+    });
   }
 
   async pushSizeMetricsEvent(size: number) {
-    this.eventEmitter.emit('pushSizeMetricsEvent', { size: size, apiId: ApiId.GET_SEGMENT_USERS });
+    this.eventEmitter.emit('pushSizeMetricsEvent', {
+      size: size,
+      apiId: ApiId.GET_SEGMENT_USERS,
+    });
   }
 }
 
 export {
-  SegementUsersCacheProcessor,
-  SegementUsersCacheProcessorOptions,
-  NewSegementUserCacheProcessor,
   DefaultSegementUserCacheProcessor,
+  NewSegementUserCacheProcessor,
   SEGEMENT_USERS_CACHE_TTL,
   SEGEMENT_USERS_REQUESTED_AT,
+  SegementUsersCacheProcessor,
+  SegementUsersCacheProcessorOptions,
 };

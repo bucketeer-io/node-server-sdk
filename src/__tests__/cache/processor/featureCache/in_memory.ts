@@ -106,12 +106,7 @@ test('polling cache - using InMemoryCache()', async (t) => {
     sdkVersion: '2.0.1',
   });
 
-  processor.start();
-
-  // Wait for 2 seconds before continuing the test
-  await new Promise((resolve) => setTimeout(resolve, 2000));
-
-  processor.stop();
+  await processor.start();
 
   t.deepEqual(await featureCache.get('feature1'), feature1);
   t.deepEqual(await featureCache.get('feature2'), feature2);
@@ -121,6 +116,19 @@ test('polling cache - using InMemoryCache()', async (t) => {
 
   const requestedAt = await cache.get(FEATURE_FLAG_REQUESTED_AT);
   t.true(requestedAt == 1000);
+
+  t.deepEqual(grpc.getFeatureFlagsRequest, {
+    tag: featureFlag,
+    featureFlagsId: '',
+    requestedAt: 0,
+    sourceId: sourceId,
+    sdkVersion: '2.0.1',
+  });
+
+  // Wait for 2 seconds before continuing the test
+  await new Promise((resolve) => setTimeout(resolve, 2000));
+
+  await processor.stop();
 
   t.deepEqual(grpc.getFeatureFlagsRequest, {
     tag: featureFlag,

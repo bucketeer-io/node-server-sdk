@@ -142,6 +142,38 @@ export interface Bucketeer {
    * @returns The SDK's build information.
    */
   getBuildInfo(): BuildInfo;
+
+  /**
+   * waitForInitialization waits for the SDK to complete its initial cache synchronization.
+   * This method ensures that feature flag and segment user data are loaded from the server
+   * before proceeding with evaluations. It's recommended to call this method after SDK
+   * initialization but before performing feature flag evaluations to ensure consistent results.
+   * 
+   * @param options Configuration options for waiting
+   * @param options.timeout Maximum time to wait for initialization in milliseconds
+   * @returns Promise that resolves when initialization completes successfully
+   * @throws Error if initialization fails or times out (timeout doesn't indicate failure, 
+   *         just that initialization is taking longer than expected)
+   * 
+   * @example
+   * ```typescript
+   * const client = initializeBKTClient(config);
+   * 
+   * try {
+   *   // Wait up to 5 seconds for initialization
+   *   await client.waitForInitialization({ timeout: 5000 });
+   *   console.log('SDK is ready for feature flag evaluations');
+   * } catch (error) {
+   *   if (error.message.includes('timeout')) {
+   *     console.warn('SDK initialization is taking longer than expected, but may still succeed');
+   *     // SDK can still be used, but initial cache sync is not yet complete
+   *   } else {
+   *     console.error('SDK initialization failed:', error.message);
+   *   }
+   * }
+   * ```
+   */
+  waitForInitialization(options: { timeout: number }): Promise<void>
 }
 
 /**

@@ -16,6 +16,7 @@ import {
 } from '../objects/status';
 import { InvalidStatusError, IllegalStateError, IllegalArgumentError } from '../objects/errors';
 import { SourceId } from '../objects/sourceId';
+import { createNodeJSError } from './utils/native_error';
 
 const sdkVersion = '3.0.1-test';
 
@@ -353,17 +354,3 @@ test('toErrorMetricsEvent returns correct event for unknown object', (t) => {
 
   t.deepEqual(actualEvent, expectedEvent);
 });
-
-class CustomError extends Error {
-  code: string;
-
-  constructor(message: string, code: string) {
-    super(message);
-    this.name = 'CustomError';
-    this.code = code;
-  }
-}
-
-function createNodeJSError(message: string, code: string): CustomError {
-  return new CustomError(message, code);
-}

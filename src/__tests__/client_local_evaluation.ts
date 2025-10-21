@@ -1,6 +1,5 @@
 import anyTest, { TestFn } from 'ava';
-import sino from 'sinon';
-
+import sinon from 'sinon';
 import {
   createFeature,
   Feature,
@@ -32,7 +31,7 @@ import { Clock } from '../utils/clock';
 import { NewSegmentUsersCache, SegmentUsersCache } from '../cache/segmentUsers';
 import { NewFeatureCache, FeaturesCache } from '../cache/features';
 import { ApiId } from '@bucketeer/evaluation/lib/proto/event/client/event_pb';
-import { BKTConfig, Config, DefaultLogger, defineBKTConfig } from '../index';
+import { DefaultLogger, defineBKTConfig } from '../index';
 import { APIClient } from '../api/client';
 import { EventStore } from '../stores/EventStore';
 import { Evaluation } from '../objects/evaluation';
@@ -40,11 +39,10 @@ import { BKTEvaluationDetails } from '../evaluationDetails';
 import { BKTValue } from '../types';
 import { BKTClientImpl } from '../client';
 import { IllegalStateError } from '../objects/errors';
-import sinon from 'sinon';
 import { requiredInternalConfig } from '../internalConfig';
 
 const test = anyTest as TestFn<{
-  sandbox: sino.SinonSandbox;
+  sandbox: sinon.SinonSandbox;
   evaluator: LocalEvaluator;
   cache: MockCache;
   grpc: MockGRPCClient;
@@ -75,7 +73,7 @@ const test = anyTest as TestFn<{
 }>;
 
 test.beforeEach((t) => {
-  const sandbox = sino.createSandbox();
+  const sandbox = sinon.createSandbox();
   t.context.sandbox = sandbox;
 
   const user1 = createUser('user-id-1', {});
@@ -461,7 +459,7 @@ test('boolVariation - success: boolean variation', async (t) => {
     .expects('emit')
     .once()
     .withArgs('pushLatencyMetricsEvent', {
-      latency: sino.match.any,
+      latency: sinon.match.any,
       apiId: ApiId.SDK_GET_VARIATION,
     });
 
@@ -555,7 +553,7 @@ test('booleanVariationDetails - success: boolean variation', async (t) => {
     .expects('emit')
     .once()
     .withArgs('pushLatencyMetricsEvent', {
-      latency: sino.match.any,
+      latency: sinon.match.any,
       apiId: ApiId.SDK_GET_VARIATION,
     });
 
@@ -649,7 +647,7 @@ test('numberVariation - success: number variation', async (t) => {
     .expects('emit')
     .once()
     .withArgs('pushLatencyMetricsEvent', {
-      latency: sino.match.any,
+      latency: sinon.match.any,
       apiId: ApiId.SDK_GET_VARIATION,
     });
 
@@ -693,7 +691,7 @@ test('numberVariation - success: number variation (float)', async (t) => {
     .expects('emit')
     .once()
     .withArgs('pushLatencyMetricsEvent', {
-      latency: sino.match.any,
+      latency: sinon.match.any,
       apiId: ApiId.SDK_GET_VARIATION,
     });
 
@@ -787,7 +785,7 @@ test('numberVariationDetails - success: number variation', async (t) => {
     .expects('emit')
     .once()
     .withArgs('pushLatencyMetricsEvent', {
-      latency: sino.match.any,
+      latency: sinon.match.any,
       apiId: ApiId.SDK_GET_VARIATION,
     });
 
@@ -841,7 +839,7 @@ test('numberVariationDetails - success: number variation (float)', async (t) => 
     .expects('emit')
     .once()
     .withArgs('pushLatencyMetricsEvent', {
-      latency: sino.match.any,
+      latency: sinon.match.any,
       apiId: ApiId.SDK_GET_VARIATION,
     });
 
@@ -935,7 +933,7 @@ test('stringVariation - success: string variation', async (t) => {
     .expects('emit')
     .once()
     .withArgs('pushLatencyMetricsEvent', {
-      latency: sino.match.any,
+      latency: sinon.match.any,
       apiId: ApiId.SDK_GET_VARIATION,
     });
 
@@ -1029,7 +1027,7 @@ test('stringVariationDetails - success: string variation', async (t) => {
     .expects('emit')
     .once()
     .withArgs('pushLatencyMetricsEvent', {
-      latency: sino.match.any,
+      latency: sinon.match.any,
       apiId: ApiId.SDK_GET_VARIATION,
     });
 
@@ -1123,7 +1121,7 @@ test('jsonVariation - success: json variation', async (t) => {
     .expects('emit')
     .once()
     .withArgs('pushLatencyMetricsEvent', {
-      latency: sino.match.any,
+      latency: sinon.match.any,
       apiId: ApiId.SDK_GET_VARIATION,
     });
 
@@ -1207,7 +1205,7 @@ test('objectVariation - success: json variation', async (t) => {
     .expects('emit')
     .once()
     .withArgs('pushLatencyMetricsEvent', {
-      latency: sino.match.any,
+      latency: sinon.match.any,
       apiId: ApiId.SDK_GET_VARIATION,
     });
 
@@ -1303,7 +1301,7 @@ test('objectVariationDetail - success: object variation', async (t) => {
     .expects('emit')
     .once()
     .withArgs('pushLatencyMetricsEvent', {
-      latency: sino.match.any,
+      latency: sinon.match.any,
       apiId: ApiId.SDK_GET_VARIATION,
     });
 
@@ -1397,7 +1395,7 @@ test('getEvaluation - success', async (t) => {
     .expects('emit')
     .once()
     .withArgs('pushLatencyMetricsEvent', {
-      latency: sino.match.any,
+      latency: sinon.match.any,
       apiId: ApiId.SDK_GET_VARIATION,
     });
 

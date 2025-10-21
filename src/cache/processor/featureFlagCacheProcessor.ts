@@ -9,8 +9,8 @@ import { Clock } from '../../utils/clock';
 import { SourceId } from '../../objects/sourceId';
 
 interface FeatureFlagProcessor {
-  start(): void;
-  stop(): void;
+  start(): Promise<void>;
+  stop(): Promise<void>;
 }
 
 type FeatureFlagProcessorOptions = {
@@ -41,6 +41,7 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
   private pollingScheduleID?: NodeJS.Timeout;
   private pollingInterval: number;
   private clock: Clock;
+
   featureTag: string;
   sourceId: SourceId;
   sdkVersion: string;
@@ -57,27 +58,41 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
     this.sdkVersion = options.sdkVersion;
   }
 
-  start() {
+  async start() {
     // Execute immediately
-    this.runUpdateCache();
-    this.pollingScheduleID = createSchedule(() => {
-      this.runUpdateCache();
-    }, this.pollingInterval);
+    try {
+      await this.getFeatureFlags();
+    } catch (e) {
+      this.pushErrorMetricsEvent(e);
+      throw e;
+    } finally {
+      this.pollingScheduleID = createSchedule(() => {
+        this.runUpdateCache();
+      }, this.pollingInterval);
+    }
   }
 
-  stop() {
-    if (this.pollingScheduleID) removeSchedule(this.pollingScheduleID);
+  async stop() {
+    if (this.pollingScheduleID) {
+      removeSchedule(this.pollingScheduleID);
+      this.pollingScheduleID = undefined;
+    }
+  }
+
+  getPollingScheduleID(): NodeJS.Timeout | undefined {
+    return this.pollingScheduleID;
   }
 
   async runUpdateCache() {
     try {
-      await this.updateCache();
+      await this.getFeatureFlags();
     } catch (error) {
+      // Always log the error regardless of initialization state
       this.pushErrorMetricsEvent(error);
     }
   }
 
-  private async updateCache() {
+  private async getFeatureFlags() {
     const featureFlagsId = await this.getFeatureFlagId();
     const requestedAt = await this.getFeatureFlagRequestedAt();
     const startTime: number = this.clock.getTime();
