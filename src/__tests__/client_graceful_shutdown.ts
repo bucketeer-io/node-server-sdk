@@ -72,7 +72,7 @@ test('destroy() should flush all remaining events', async (t) => {
 
 test('destroy() should stop the scheduled flush', async (t) => {
   let flushCount = 0;
-  const mockAPIClient = createMockAPIClient(async (events) => {
+  const mockAPIClient = createMockAPIClient(async (_events) => {
     flushCount++;
     return [{}, 0];
   });
@@ -124,7 +124,7 @@ test('destroy() should stop the scheduled flush', async (t) => {
 
 test('destroy() should handle empty event store', async (t) => {
   let flushCalled = false;
-  const mockAPIClient = createMockAPIClient(async (events) => {
+  const mockAPIClient = createMockAPIClient(async (_events) => {
     flushCalled = true;
     return [{}, 0];
   });
@@ -152,7 +152,7 @@ test('destroy() should handle empty event store', async (t) => {
 });
 
 test('destroy() should handle API errors gracefully', async (t) => {
-  const mockAPIClient = createMockAPIClient(async (events) => {
+  const mockAPIClient = createMockAPIClient(async (_events) => {
     throw new Error('Network error');
   });
 
@@ -231,7 +231,7 @@ test('destroy() should stop processors when local evaluation is enabled', async 
 
 test('destroy() should be idempotent', async (t) => {
   let flushCount = 0;
-  const mockAPIClient = createMockAPIClient(async (events) => {
+  const mockAPIClient = createMockAPIClient(async (_events) => {
     flushCount++;
     return [{}, 0];
   });
