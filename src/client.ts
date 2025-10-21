@@ -44,6 +44,12 @@ export class BKTClientImpl implements Bucketeer {
   localEvaluator: NodeEvaluator | null = null;
 
   initializationAsync: Promise<any[]> | undefined;
+
+  /**
+   * Indicates whether the client is in the process of shutting down.
+   * This flag is used to prevent infinite loops during error metric event saves,
+   * especially when errors occur while saving events during shutdown.
+   */
   private isShuttingDown = false;
 
   constructor(
@@ -232,15 +238,18 @@ export class BKTClientImpl implements Bucketeer {
       return;
     }
 
+    const totalBatches = Math.ceil(totalEvents / this.config.eventsMaxQueueSize);
     this.config.logger?.info(
-      `[EventFlusher] Starting to flush ${totalEvents} events in batches of ${this.config.eventsMaxQueueSize}...`,
+      `[EventFlusher] Starting to flush ${totalEvents} events in ${totalBatches} batch(es) of ${this.config.eventsMaxQueueSize}...`,
     );
 
     let flushedCount = 0;
     let failedCount = 0;
+    let batchNumber = 0;
 
     // Flush events in batches to avoid exceeding gRPC message size limits
     while (this.eventStore.size() > 0) {
+      batchNumber++;
       const batchSize = Math.min(this.config.eventsMaxQueueSize, this.eventStore.size());
       const eventsToFlush = this.eventStore.takeout(batchSize);
 
@@ -252,13 +261,13 @@ export class BKTClientImpl implements Bucketeer {
         );
         flushedCount += eventsToFlush.length;
         this.config.logger?.debug(
-          `[EventFlusher] Flushed batch of ${eventsToFlush.length} events (${flushedCount}/${totalEvents})`,
+          `[EventFlusher] Flushed batch ${batchNumber}/${totalBatches}: ${eventsToFlush.length} events (${flushedCount}/${totalEvents} total)`,
         );
       } catch (e) {
         failedCount += eventsToFlush.length;
         this.saveErrorMetricsEvent(this.config.featureTag, e, ApiId.REGISTER_EVENTS);
         this.config.logger?.warn(
-          `[EventFlusher] Failed to flush batch of ${eventsToFlush.length} events`,
+          `[EventFlusher] Failed to flush batch ${batchNumber}/${totalBatches}: ${eventsToFlush.length} events`,
           e,
         );
         // Continue flushing remaining batches even if one fails
