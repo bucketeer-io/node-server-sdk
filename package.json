@@ -27,7 +27,7 @@
     "@bazel/rollup": "5.8.1",
     "@bazel/terser": "5.8.1",
     "@bazel/typescript": "5.8.1",
-    "@eslint/js": "^9.36.0",
+    "@eslint/js": "^9.39.0",
     "@rollup/plugin-commonjs": "^28.0.8",
     "@rollup/plugin-node-resolve": "^16.0.3",
     "@rollup/plugin-replace": "^6.0.2",
