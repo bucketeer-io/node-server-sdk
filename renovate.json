@@ -6,7 +6,7 @@
   "schedule": ["* 10 1 * *"],
   "platformAutomerge": true,
   "semanticCommits": "enabled",
-  "commitMessagePrefix": "build(deps):",
+  "commitMessagePrefix": "build(dev-deps):",
   "commitMessageAction": "bump",
   "commitMessageSuffix": "",
   "major": {
@@ -56,8 +56,18 @@
       "enabled": false
     },
     {
-      "description": "Runtime dependencies - only allow patch updates",
-      "matchPackageNames": ["uuid", "@types/uuid"],
+      "description": "Runtime dependencies - group patch updates only",
+      "groupName": "runtime-dependencies",
+      "groupSlug": "runtime-deps",
+      "commitMessagePrefix": "build(deps):",
+      "commitMessageTopic": "runtime-dependencies group",
+      "matchDepTypes": ["dependencies"],
+      "matchUpdateTypes": ["patch"],
+      "automerge": true
+    },
+    {
+      "description": "Runtime dependencies - block minor and major updates",
+      "matchDepTypes": ["dependencies"],
       "matchUpdateTypes": ["minor", "major"],
       "enabled": false
     },
@@ -84,32 +94,49 @@
       "automerge": true
     },
     {
-      "description": "Build dependencies - group patch updates (auto-mergeable)",
-      "groupName": "build-patch",
-      "groupSlug": "build-patch",
-      "commitMessageTopic": "build-patch group",
+      "description": "Dev dependencies - group patch updates (auto-mergeable)",
+      "groupName": "dev-patch",
+      "groupSlug": "dev-patch",
+      "commitMessagePrefix": "build(dev-deps):",
+      "commitMessageTopic": "dev-patch group",
       "matchDatasources": ["npm", "node-version"],
       "matchDepTypes": ["devDependencies", "packageManager"],
-      "excludePackageNames": ["ava", "@ava/babel", "@ava/typescript", "sinon", "@types/sinon", "msw"],
+      "excludePackageNames": [
+        "ava",
+        "@ava/babel",
+        "@ava/typescript",
+        "sinon",
+        "@types/sinon",
+        "msw"
+      ],
       "matchUpdateTypes": ["patch"],
       "automerge": true
     },
     {
-      "description": "Build dependencies - group minor updates (requires review)",
-      "groupName": "build-minor",
-      "groupSlug": "build-minor",
-      "commitMessageTopic": "build-minor group",
+      "description": "Dev dependencies - group minor updates (requires review)",
+      "groupName": "dev-minor",
+      "groupSlug": "dev-minor",
+      "commitMessagePrefix": "build(dev-deps):",
+      "commitMessageTopic": "dev-minor group",
       "matchDatasources": ["npm", "node-version"],
       "matchDepTypes": ["devDependencies", "packageManager"],
-      "excludePackageNames": ["ava", "@ava/babel", "@ava/typescript", "sinon", "@types/sinon", "msw"],
+      "excludePackageNames": [
+        "ava",
+        "@ava/babel",
+        "@ava/typescript",
+        "sinon",
+        "@types/sinon",
+        "msw"
+      ],
       "matchUpdateTypes": ["minor"],
       "automerge": true
     },
     {
-      "description": "Build dependencies - group major updates (REQUIRES REVIEW)",
-      "groupName": "build-major",
-      "groupSlug": "build-major",
-      "commitMessageTopic": "build-major group",
+      "description": "Dev dependencies - group major updates (REQUIRES REVIEW)",
+      "groupName": "dev-major",
+      "groupSlug": "dev-major",
+      "commitMessagePrefix": "build(dev-deps):",
+      "commitMessageTopic": "dev-major group",
       "matchDatasources": ["npm", "node-version"],
       "matchDepTypes": ["devDependencies", "packageManager"],
       "excludePackageNames": [
@@ -130,4 +157,3 @@
     }
   ]
 }
-
