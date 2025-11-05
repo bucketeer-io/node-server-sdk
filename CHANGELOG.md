@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.4.3](https://github.com/bucketeer-io/node-server-sdk/compare/v0.4.2...v0.4.3) (2025-11-04)
+
+
+### Build System
+
+* **deps-dev:** bump @eslint/js from 9.36.0 to 9.39.1 ([#155](https://github.com/bucketeer-io/node-server-sdk/issues/155)) ([fe3b819](https://github.com/bucketeer-io/node-server-sdk/commit/fe3b819efb04ed4aa231084f83af5c5bb46580d8))
+* **deps-dev:** bump the build-patch group with 2 updates ([#153](https://github.com/bucketeer-io/node-server-sdk/issues/153)) ([8c81838](https://github.com/bucketeer-io/node-server-sdk/commit/8c81838aaf6f68f99d79b140d876a1acf89af79a))
+* **deps-dev:** bump the build-patch group with 3 updates ([#146](https://github.com/bucketeer-io/node-server-sdk/issues/146)) ([a887380](https://github.com/bucketeer-io/node-server-sdk/commit/a887380586ab002681162bd35e9477cb681d46d6))
+
 ## [0.4.2](https://github.com/bucketeer-io/node-server-sdk/compare/v0.4.1...v0.4.2) (2025-10-21)
 
 
