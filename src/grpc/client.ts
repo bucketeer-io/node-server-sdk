@@ -12,40 +12,40 @@ import { SourceId } from '../objects/sourceId';
 import { InvalidStatusError } from '../objects/errors';
 
 interface GRPCClient {
-  getSegmentUsers(
-    options: {
-      segmentIdsList: Array<string>,
-      requestedAt: number,
-      sourceId: SourceId,
-      sdkVersion: string,
-    }
-  ): Promise<GetSegmentUsersResponse>
+  getSegmentUsers(options: {
+    segmentIdsList: Array<string>;
+    requestedAt: number;
+    sourceId: SourceId;
+    sdkVersion: string;
+  }): Promise<GetSegmentUsersResponse>;
 
-  getFeatureFlags(
-    options: {
-      tag: string,
-      featureFlagsId: string,
-      requestedAt: number,
-      sourceId: SourceId,
-      sdkVersion: string,
-    }
-  ): Promise<GetFeatureFlagsResponse>
+  getFeatureFlags(options: {
+    tag: string;
+    featureFlagsId: string;
+    requestedAt: number;
+    sourceId: SourceId;
+    sdkVersion: string;
+  }): Promise<GetFeatureFlagsResponse>;
 }
 
-const scheme = 'https://';
 class DefaultGRPCClient {
   private readonly apiKey: string;
   private client: GatewayClient;
 
-  constructor(host: string, apiKey: string) {
+  constructor(apiEndpoint: string, apiKey: string, scheme: string = 'https') {
     this.apiKey = apiKey;
-    let serviceHost = host;
-    if (!host.includes(scheme)) {
-      serviceHost = `${scheme}${host}`;
+
+    // Validate scheme
+    if (scheme !== 'http' && scheme !== 'https') {
+      throw new Error(`Invalid scheme: ${scheme}. Must be http or https`);
     }
+
+    // Build the full service URL: scheme://endpoint
+    const serviceHost = `${scheme}://${apiEndpoint}`;
+
     this.client = new GatewayClient(serviceHost, {
       transport: NodeHttpTransport(),
-    })
+    });
   }
 
   getMetadata() {
@@ -54,14 +54,12 @@ class DefaultGRPCClient {
     return metadata;
   }
 
-  getSegmentUsers(
-    options: {
-      segmentIdsList: Array<string>,
-      requestedAt: number,
-      sourceId: SourceId,
-      sdkVersion: string,
-    }
-  ): Promise<GetSegmentUsersResponse> {
+  getSegmentUsers(options: {
+    segmentIdsList: Array<string>;
+    requestedAt: number;
+    sourceId: SourceId;
+    sdkVersion: string;
+  }): Promise<GetSegmentUsersResponse> {
     const req = new GetSegmentUsersRequest();
     req.setSegmentIdsList(options.segmentIdsList);
     req.setRequestedAt(options.requestedAt);
@@ -83,15 +81,13 @@ class DefaultGRPCClient {
     });
   }
 
-  getFeatureFlags(
-    options: {
-      tag: string,
-      featureFlagsId: string,
-      requestedAt: number,
-      sourceId: SourceId,
-      sdkVersion: string,
-    }
-  ): Promise<GetFeatureFlagsResponse> {
+  getFeatureFlags(options: {
+    tag: string;
+    featureFlagsId: string;
+    requestedAt: number;
+    sourceId: SourceId;
+    sdkVersion: string;
+  }): Promise<GetFeatureFlagsResponse> {
     const req = new GetFeatureFlagsRequest();
     req.setTag(options.tag);
     req.setFeatureFlagsId(options.featureFlagsId);
@@ -138,7 +134,7 @@ function grpcToRestStatus(grpcCode: number): number {
     13: 500, // INTERNAL
     14: 503, // UNAVAILABLE
     15: 500, // DATA_LOSS
-    16: 401  // UNAUTHENTICATED
+    16: 401, // UNAUTHENTICATED
   };
 
   return grpcToRestMap[grpcCode] || 500; // Default to 500 if gRPC code is unrecognized

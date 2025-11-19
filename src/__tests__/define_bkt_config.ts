@@ -194,3 +194,116 @@ test('should handle very large queue size', t => {
   });
   t.is(config.eventsMaxQueueSize, 999999); // Should keep large valid values
 });
+
+// 7. URL scheme validation tests
+test('should accept apiEndpoint with https scheme and extract it', t => {
+  const config = defineBKTConfig({
+    apiKey: 'key',
+    apiEndpoint: 'https://api.example.com',
+    appVersion: '1.2.3',
+  });
+  t.is(config.apiEndpoint, 'api.example.com'); // scheme extracted
+  t.is(config.scheme, 'https'); // scheme stored separately
+});
+
+test('should accept apiEndpoint with http scheme and extract it', t => {
+  const config = defineBKTConfig({
+    apiKey: 'key',
+    apiEndpoint: 'http://localhost:9000',
+    appVersion: '1.2.3',
+  });
+  t.is(config.apiEndpoint, 'localhost:9000'); // scheme extracted
+  t.is(config.scheme, 'http'); // scheme stored separately
+});
+
+test('should use bare hostname with default https scheme', t => {
+  const config = defineBKTConfig({
+    apiKey: 'key',
+    apiEndpoint: 'api.example.com',
+    appVersion: '1.2.3',
+  });
+  t.is(config.apiEndpoint, 'api.example.com');
+  t.is(config.scheme, 'https'); // default scheme
+});
+
+test('should use explicit scheme config when no scheme in apiEndpoint', t => {
+  const config = defineBKTConfig({
+    apiKey: 'key',
+    apiEndpoint: 'localhost:9000',
+    appVersion: '1.2.3',
+    scheme: 'http',
+  });
+  t.is(config.apiEndpoint, 'localhost:9000');
+  t.is(config.scheme, 'http'); // explicit scheme used
+});
+
+test('should override explicit scheme when apiEndpoint contains scheme', t => {
+  const config = defineBKTConfig({
+    apiKey: 'key',
+    apiEndpoint: 'http://localhost:9000',
+    appVersion: '1.2.3',
+    scheme: 'https', // This should be ignored
+  });
+  t.is(config.apiEndpoint, 'localhost:9000');
+  t.is(config.scheme, 'http'); // scheme from apiEndpoint takes precedence
+});
+
+test('should accept apiEndpoint with port', t => {
+  const config = defineBKTConfig({
+    apiKey: 'key',
+    apiEndpoint: 'https://api.example.com:8443',
+    appVersion: '1.2.3',
+  });
+  t.is(config.apiEndpoint, 'api.example.com:8443'); // port preserved for non-default port
+  t.is(config.scheme, 'https');
+});
+
+test('should accept apiEndpoint with default port (port omitted)', t => {
+  const config = defineBKTConfig({
+    apiKey: 'key',
+    apiEndpoint: 'https://api.example.com:443',
+    appVersion: '1.2.3',
+  });
+  t.is(config.apiEndpoint, 'api.example.com'); // default port omitted
+  t.is(config.scheme, 'https');
+});
+
+test('should reject apiEndpoint with invalid scheme (ftp)', t => {
+  const error = t.throws(() => defineBKTConfig({
+    apiKey: 'key',
+    apiEndpoint: 'ftp://api.example.com',
+    appVersion: '1.2.3',
+  }), { instanceOf: IllegalArgumentError });
+  t.true(error.message.includes('Invalid scheme'));
+  t.true(error.message.includes('ftp:'));
+});
+
+test('should reject apiEndpoint with invalid scheme (ws)', t => {
+  const error = t.throws(() => defineBKTConfig({
+    apiKey: 'key',
+    apiEndpoint: 'ws://api.example.com',
+    appVersion: '1.2.3',
+  }), { instanceOf: IllegalArgumentError });
+  t.true(error.message.includes('Invalid scheme'));
+  t.true(error.message.includes('ws:'));
+});
+
+test('should reject invalid explicit scheme config', t => {
+  const error = t.throws(() => defineBKTConfig({
+    apiKey: 'key',
+    apiEndpoint: 'api.example.com',
+    appVersion: '1.2.3',
+    scheme: 'ftp',
+  }), { instanceOf: IllegalArgumentError });
+  t.true(error.message.includes('Invalid scheme'));
+  t.true(error.message.includes('ftp'));
+});
+
+test('should reject malformed URL in apiEndpoint', t => {
+  const error = t.throws(() => defineBKTConfig({
+    apiKey: 'key',
+    apiEndpoint: 'ht!tp://invalid url',
+    appVersion: '1.2.3',
+  }), { instanceOf: IllegalArgumentError });
+  t.true(error.message.includes('Invalid apiEndpoint URL'));
+});

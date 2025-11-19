@@ -21,7 +21,7 @@ Please follow our contribution guide [here](https://docs.bucketeer.io/contributi
 Before building the example, please follow the following steps.
 
 - Ensure that you have the `yarn` installed.
-- Configure the `host` and the `token` info in the [index.ts](https://github.com/bucketeer-io/node-server-sdk/blob/master/example/src/index.ts#L15-L19).
+- Configure the `apiEndpoint` (with URL scheme like `https://`) and the `apiKey` info in the [index.ts](https://github.com/bucketeer-io/node-server-sdk/blob/master/example/src/index.ts#L15-L19).
 - Move to the example directory `cd example`.
 - Install dependencies `make init`.
 
@@ -85,7 +85,7 @@ make test
 
 #### Run e2e tests
 
-Configure the `host` and the `token` info in the [ava-e2e.config.mjs](./ava-e2e.config.mjs), then run the following command.
+Configure the `apiEndpoint` (with URL scheme) and the `apiKey` info in the [ava-e2e.config.mjs](./ava-e2e.config.mjs), then run the following command.
 
 ```bash
 make e2e

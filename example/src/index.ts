@@ -14,9 +14,10 @@ const PORT = 3000;
  *  Initialize bucketeer.
  */
 const config = defineBKTConfig({
-  apiEndpoint: '<API_ENDPOINT>', // e.g. api-media.bucketeer.jp
+  apiEndpoint: '<API_ENDPOINT>', // e.g. https://api-media.bucketeer.jp or api-media.bucketeer.jp
   apiKey: '<TOKEN>',
   featureTag: 'node',
+  // scheme: 'http', // Optional: explicitly set scheme for local development (defaults to 'https')
 });
 const bucketeer = initializeBKTClient(config);
 
