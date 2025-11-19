@@ -9,7 +9,7 @@ import {
 import { grpc } from '@improbable-eng/grpc-web';
 import { NodeHttpTransport } from '@improbable-eng/grpc-web-node-http-transport';
 import { SourceId } from '../objects/sourceId';
-import { InvalidStatusError } from '../objects/errors';
+import { InvalidStatusError, IllegalArgumentError } from '../objects/errors';
 
 interface GRPCClient {
   getSegmentUsers(options: {
@@ -37,7 +37,7 @@ class DefaultGRPCClient {
 
     // Validate scheme
     if (scheme !== 'http' && scheme !== 'https') {
-      throw new Error(`Invalid scheme: ${scheme}. Must be http or https`);
+      throw new IllegalArgumentError(`Invalid scheme: ${scheme}. Must be http or https`);
     }
 
     // Build the full service URL: scheme://endpoint

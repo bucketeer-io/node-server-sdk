@@ -3,7 +3,7 @@ import test from 'ava';
 import { convertSerivceError, DefaultGRPCClient, grpcToRestStatus } from '../../grpc/client';
 import { ServiceError } from '@bucketeer/evaluation';
 import { grpc } from '@improbable-eng/grpc-web';
-import { InvalidStatusError } from '../../objects/errors';
+import { InvalidStatusError, IllegalArgumentError } from '../../objects/errors';
 import { SourceId } from '../../objects/sourceId';
 
 test('grpcToRestStatus should return correct HTTP status for known gRPC codes', (t) => {
@@ -85,7 +85,7 @@ test('DefaultGRPCClient should default to https scheme when not provided', (t) =
 test('DefaultGRPCClient should reject invalid scheme', (t) => {
   const error = t.throws(() => {
     new DefaultGRPCClient('api.example.com', 'apiKey', 'ftp');
-  });
+  }, { instanceOf: IllegalArgumentError });
   t.true(error.message.includes('Invalid scheme'));
   t.true(error.message.includes('ftp'));
 });
