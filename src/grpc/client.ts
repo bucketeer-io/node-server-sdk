@@ -40,8 +40,20 @@ class DefaultGRPCClient {
       throw new IllegalArgumentError(`Invalid scheme: ${scheme}. Must be http or https`);
     }
 
+    // Ensure apiEndpoint doesn't contain a scheme
+    // If it does, extract just the hostname (defensive check)
+    let cleanEndpoint = apiEndpoint;
+    if (apiEndpoint.includes('://')) {
+      try {
+        const url = new URL(apiEndpoint);
+        cleanEndpoint = url.host;
+      } catch (error) {
+        throw new IllegalArgumentError(`Invalid apiEndpoint: ${apiEndpoint}`);
+      }
+    }
+
     // Build the full service URL: scheme://endpoint
-    const serviceHost = `${scheme}://${apiEndpoint}`;
+    const serviceHost = `${scheme}://${cleanEndpoint}`;
 
     this.client = new GatewayClient(serviceHost, {
       transport: NodeHttpTransport(),

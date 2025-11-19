@@ -83,9 +83,12 @@ test('DefaultGRPCClient should default to https scheme when not provided', (t) =
 });
 
 test('DefaultGRPCClient should reject invalid scheme', (t) => {
-  const error = t.throws(() => {
-    new DefaultGRPCClient('api.example.com', 'apiKey', 'ftp');
-  }, { instanceOf: IllegalArgumentError });
+  const error = t.throws(
+    () => {
+      new DefaultGRPCClient('api.example.com', 'apiKey', 'ftp');
+    },
+    { instanceOf: IllegalArgumentError },
+  );
   t.true(error.message.includes('Invalid scheme'));
   t.true(error.message.includes('ftp'));
 });
@@ -103,4 +106,31 @@ test('DefaultGRPCClient should work with bare hostname', (t) => {
   t.notThrows(() => {
     new DefaultGRPCClient('api.example.com', 'apiKey', 'https');
   });
+});
+
+test('DefaultGRPCClient should strip scheme from apiEndpoint if present (defensive check)', (t) => {
+  // Even if apiEndpoint contains scheme, it should be stripped
+  t.notThrows(() => {
+    new DefaultGRPCClient('https://api.example.com', 'apiKey', 'http');
+  });
+
+  t.notThrows(() => {
+    new DefaultGRPCClient('http://localhost:9000', 'apiKey', 'https');
+  });
+});
+
+test('DefaultGRPCClient should handle apiEndpoint with scheme and port correctly', (t) => {
+  t.notThrows(() => {
+    new DefaultGRPCClient('https://api.example.com:8443', 'apiKey', 'http');
+  });
+});
+
+test('DefaultGRPCClient should reject malformed URL in apiEndpoint', (t) => {
+  const error = t.throws(
+    () => {
+      new DefaultGRPCClient('ht!tp://invalid url', 'apiKey', 'https');
+    },
+    { instanceOf: IllegalArgumentError },
+  );
+  t.true(error.message.includes('Invalid apiEndpoint'));
 });
