@@ -1,8 +1,9 @@
 import test from 'ava';
 import { initializeBKTClient, defineBKTConfig, DefaultLogger, initialize } from '../lib';
 import {
-  HOST,
-  TOKEN,
+  API_ENDPOINT,
+  SCHEME,
+  CLIENT_API_KEY,
   FEATURE_TAG,
   TARGETED_USER_ID,
   FEATURE_ID_BOOLEAN,
@@ -20,7 +21,8 @@ const NOT_FOUND_ERROR_METRICS_EVENT_NAME =
 //Note: There is a different compared to other SDK clients.
 test('Using a random string in the api key setting should not throw exception', async (t) => {
   const config = defineBKTConfig({
-    apiEndpoint: HOST,
+    apiEndpoint: API_ENDPOINT,
+  SCHEME,
     apiKey: 'TOKEN_RANDOM',
     featureTag: FEATURE_TAG,
     logger: new DefaultLogger('error'),
@@ -53,8 +55,9 @@ test('Using a random string in the api key setting should not throw exception', 
 
 test('altering featureTag should not affect api request', async (t) => {
   const config = defineBKTConfig({
-    apiEndpoint: HOST,
-    apiKey: TOKEN,
+    apiEndpoint: API_ENDPOINT,
+  SCHEME,
+    apiKey: CLIENT_API_KEY,
     featureTag: FEATURE_TAG,
     logger: new DefaultLogger('error'),
   });
@@ -76,8 +79,9 @@ test('altering featureTag should not affect api request', async (t) => {
 
 test('Altering the api key should not affect api request', async (t) => {
   const config = defineBKTConfig({
-    apiEndpoint: HOST,
-    apiKey: TOKEN,
+    apiEndpoint: API_ENDPOINT,
+  SCHEME,
+    apiKey: CLIENT_API_KEY,
     featureTag: FEATURE_TAG,
     logger: new DefaultLogger('error'),
   });
@@ -100,8 +104,9 @@ test('Altering the api key should not affect api request', async (t) => {
 //Note: There is a different compared to other SDK clients. Because node.js is using REST API v1
 test('Using a random string in the featureTag setting should affect api request', async (t) => {
   const config = defineBKTConfig({
-    apiEndpoint: HOST,
-    apiKey: TOKEN,
+    apiEndpoint: API_ENDPOINT,
+  SCHEME,
+    apiKey: CLIENT_API_KEY,
     featureTag: 'RANDOM',
     logger: new DefaultLogger('error'),
   });
@@ -132,8 +137,8 @@ test('Using a random string in the featureTag setting should affect api request'
 
 test('The deprecated function for initializing the client should still work.', async (t) => {
   const config: Config = {
-    host: HOST,
-    token: TOKEN,
+    host: `${SCHEME}://${API_ENDPOINT}`, // Construct full URL for deprecated config
+    token: CLIENT_API_KEY,
     tag: FEATURE_TAG,
     logger: new DefaultLogger('error'),
   };

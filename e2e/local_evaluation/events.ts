@@ -1,8 +1,9 @@
 import anyTest, { TestFn } from 'ava';
 import { Bucketeer, DefaultLogger, User, initializeBKTClient, defineBKTConfig } from '../../lib';
 import {
-  HOST,
-  TOKEN,
+  API_ENDPOINT,
+  SCHEME,
+  CLIENT_API_KEY,
   FEATURE_TAG,
   TARGETED_USER_ID,
   FEATURE_ID_BOOLEAN,
@@ -12,7 +13,7 @@ import {
   FEATURE_ID_FLOAT,
   GOAL_ID,
   GOAL_VALUE,
-  SERVER_ROLE_TOKEN,
+  SERVER_API_KEY,
 } from '../constants/constants';
 import { BKTClientImpl } from '../../lib/client';
 import { isGoalEvent } from '../../lib/objects/goalEvent';
@@ -25,8 +26,9 @@ const test = anyTest as TestFn<{ bktClient: Bucketeer; targetedUser: User }>;
 
 test.beforeEach(async (t) => {
   const config = defineBKTConfig({
-    apiEndpoint: HOST,
-    apiKey: SERVER_ROLE_TOKEN,
+    apiEndpoint: API_ENDPOINT,
+  SCHEME,
+    apiKey: SERVER_API_KEY,
     featureTag: FEATURE_TAG,
     logger: new DefaultLogger('error'),
     enableLocalEvaluation: true,

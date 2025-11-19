@@ -4,11 +4,13 @@ on:
   workflow_dispatch:
   workflow_call:
     secrets:
-      E2E_HOST:
+      E2E_API_ENDPOINT:
         required: true
-      E2E_TOKEN:
+      E2E_SCHEME:
+        required: false # Optional, defaults to 'https'
+      E2E_CLIENT_API_KEY:
         required: true
-      E2E_SERVER_ROLE_TOKEN:
+      E2E_SERVER_API_KEY:
         required: true
       NPM_TOKEN:
         required: true
@@ -45,5 +47,17 @@ jobs:
         run: make build
       - name: e2e test
         run: |
-          sed -i -e "s|<HOST>|${{ secrets.E2E_HOST }}|" -e "s|<TOKEN>|${{ secrets.E2E_TOKEN }}|" -e "s|<SERVER_ROLE_TOKEN>|${{ secrets.E2E_SERVER_ROLE_TOKEN }}|" ava-e2e.config.mjs
+          API_ENDPOINT="${{ secrets.E2E_API_ENDPOINT }}"
+          SCHEME="${{ secrets.E2E_SCHEME }}"
+          if [ -z "$SCHEME" ]; then
+            SCHEME="https"
+          fi
+          CLIENT_API_KEY="${{ secrets.E2E_CLIENT_API_KEY }}"
+          SERVER_API_KEY="${{ secrets.E2E_SERVER_API_KEY }}"
+
+          sed -i -e "s|<API_ENDPOINT>|${API_ENDPOINT}|" \
+            -e "s|<SCHEME>|${SCHEME}|" \
+            -e "s|<CLIENT_API_KEY>|${CLIENT_API_KEY}|" \
+            -e "s|<SERVER_API_KEY>|${SERVER_API_KEY}|" \
+            ava-e2e.config.mjs
           make e2e
