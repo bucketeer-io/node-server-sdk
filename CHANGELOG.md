@@ -4,7 +4,7 @@
 
 ### Features
 
-- add yaml flag type support (#2217)[https://github.com/bucketeer-io/bucketeer/pull/2217]
+- add yaml flag type support [#2217](https://github.com/bucketeer-io/bucketeer/pull/2217)
 
 ### Build System
 
