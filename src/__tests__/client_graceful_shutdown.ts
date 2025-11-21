@@ -400,11 +400,9 @@ test('destroy() should not save error metrics during shutdown', async (t) => {
     await client.destroy();
   });
 
-  // Event store should be cleared (the error event was removed but not added back)
+  // Event store should be cleared (the original event was removed, and no error metrics
+  // events were added during shutdown due to isShuttingDown flag)
   t.is(eventStore.size(), 0);
-
-  // Count should not increase (no error metrics events added during shutdown)
-  t.true(eventStore.size() === 0);
 });
 
 test('destroy() should handle processor stop errors gracefully', async (t) => {
