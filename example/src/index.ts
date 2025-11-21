@@ -5,10 +5,10 @@ import express from 'express';
 // NOTE: If you want to use SDK published on npm,
 // replace the line below with the following.
 // import { initialize } from '@bucketeer/node-server-sdk';
-import { initialize, initializeBKTClient } from '../../lib';
-import { defineBKTConfig } from '../../lib/config';
+import { initializeBKTClient, defineBKTConfig } from '../../lib';
 
 const PORT = 3000;
+const SHUTDOWN_TIMEOUT = 30000;
 
 /**
  *  Initialize bucketeer.
@@ -84,16 +84,41 @@ app.post('/', (req, res) => {
 });
 
 const server = app.listen(PORT, () => {
-  console.log(`App listening on port ${PORT}.`);
+  console.log(`App listening on port ${PORT}`);
 });
-process.on('SIGINT', () => {
+
+/**
+ * Graceful shutdown handler
+ * This ensures all events are flushed before the process exits
+ */
+const gracefulShutdown = async (signal: string) => {
+  console.log(`\n${signal} received, starting graceful shutdown...`);
   server.close(async () => {
-    /**
-     *  Use to destroy bucketeer sdk.
-     *  User must call destory() in an arbitrary point.
-     */
-    await bucketeer.destroy();
-    console.log('Process terminated.');
-    return;
+    console.log('HTTP server closed');
+    try {
+      /**
+       * IMPORTANT: Always call destroy() before your application exits
+       * This flushes all remaining events to the server and stops background workers
+       */
+      await bucketeer.destroy();
+      console.log('Bucketeer SDK shutdown complete');
+      console.log('Graceful shutdown completed');
+      process.exit(0);
+    } catch (error) {
+      console.error('Error during shutdown:', error);
+      process.exit(1);
+    }
   });
-});
+
+  // Force exit if graceful shutdown takes too long (30 seconds)
+  setTimeout(() => {
+    console.error('Graceful shutdown timeout, forcing exit');
+    process.exit(1);
+  }, SHUTDOWN_TIMEOUT);
+};
+
+// Handle SIGTERM (Docker, Kubernetes, systemd)
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+
+// Handle SIGINT (Ctrl+C)
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));

@@ -125,6 +125,6 @@ for (const testCase of testCases) {
   });
 }
 
-test.afterEach.always((t) => {
-  t.context.bktClient.destroy();
+test.afterEach.always(async (t) => {
+  await t.context.bktClient.destroy();
 });

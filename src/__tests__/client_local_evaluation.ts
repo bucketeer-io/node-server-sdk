@@ -380,9 +380,9 @@ test.beforeEach((t) => {
   };
 });
 
-test.afterEach((t) => {
+test.afterEach(async (t) => {
   t.context.sandbox.restore();
-  t.context.sdkInstance.destroy();
+  await t.context.sdkInstance.destroy();
 });
 
 test('boolVariation - err: internal error', async (t) => {
@@ -1410,13 +1410,28 @@ test('sdk destroy - success', async (t) => {
   const { sdkInstance, eventEmitter, featureFlagProcessor, segementUsersCacheProcessor } =
     t.context;
   const eventProcessorMock = t.context.sandbox.mock(eventEmitter);
-  eventProcessorMock.expects('close').once().resolves();
+  eventProcessorMock.expects('close').once();
 
   const featureFlagProcessorCacheMock = t.context.sandbox.mock(featureFlagProcessor);
-  featureFlagProcessorCacheMock.expects('stop').once().resolves();
+  const featureFlagProcessorStop = featureFlagProcessor.stop.bind(featureFlagProcessor);
+  featureFlagProcessorCacheMock
+    .expects('stop')
+    .once()
+    .callsFake(async () => {
+      // Call the real stop method to clean up timers
+      await featureFlagProcessorStop();
+    });
 
   const segmentUsersCacheProcessorMock = t.context.sandbox.mock(segementUsersCacheProcessor);
-  segmentUsersCacheProcessorMock.expects('stop').once().resolves();
+  const segmentUsersCacheProcessorStop =
+    segementUsersCacheProcessor.stop.bind(segementUsersCacheProcessor);
+  segmentUsersCacheProcessorMock
+    .expects('stop')
+    .once()
+    .callsFake(async () => {
+      // Call the real stop method to clean up timers
+      await segmentUsersCacheProcessorStop();
+    });
 
   await sdkInstance.destroy();
   eventProcessorMock.verify();

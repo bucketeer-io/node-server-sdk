@@ -12,6 +12,6 @@
     "preserveConstEnums": true,
     "esModuleInterop": true,
     "outDir": "__build",
-    "skipLibCheck": true,
-  },
+    "skipLibCheck": true
+  }
 }

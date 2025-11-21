@@ -1,4 +1,4 @@
-import { http, HttpResponse } from 'msw';
+import { rest } from 'msw';
 import { SetupServer } from 'msw/node';
 import anyTest, { TestFn } from 'ava';
 import { Bucketeer, initialize, initializeBKTClient } from '..';
@@ -39,8 +39,8 @@ test.before((t) => {
 test.serial('getEvaluation: default evaluation details', async (t) => {
   const featureId = 'stringEvaluationDetails';
   t.context.server.use(
-    http.post(evaluationAPI, () => {
-      return HttpResponse.error();
+    rest.post(evaluationAPI, (_req, res, ctx) => {
+      return res(ctx.status(500));
     }),
   );
   const client = t.context.bktClient;
@@ -92,12 +92,9 @@ test.serial('getEvaluation: stringEvaluationDetails', async (t) => {
     },
   };
   t.context.server.use(
-    http.post<Record<string, never>, GetEvaluationRequest, GetEvaluationResponse>(
-      evaluationAPI,
-      () => {
-        return HttpResponse.json(dummyEvalResponse);
-      },
-    ),
+    rest.post(evaluationAPI, (_req, res, ctx) => {
+      return res(ctx.json(dummyEvalResponse));
+    }),
   );
   const client = t.context.bktClient;
   const user = t.context.targetedUser;
@@ -147,12 +144,9 @@ test.serial('getEvaluation: boolEvaluationDetails', async (t) => {
     },
   };
   t.context.server.use(
-    http.post<Record<string, never>, GetEvaluationRequest, GetEvaluationResponse>(
-      evaluationAPI,
-      () => {
-        return HttpResponse.json(dummyEvalResponse);
-      },
-    ),
+    rest.post(evaluationAPI, (_req, res, ctx) => {
+      return res(ctx.json(dummyEvalResponse));
+    }),
   );
   const client = t.context.bktClient;
   const user = t.context.targetedUser;
@@ -207,12 +201,9 @@ test.serial('getEvaluation: numberEvaluationDetails', async (t) => {
     },
   };
   t.context.server.use(
-    http.post<Record<string, never>, GetEvaluationRequest, GetEvaluationResponse>(
-      evaluationAPI,
-      () => {
-        return HttpResponse.json(dummyEvalResponse);
-      },
-    ),
+    rest.post(evaluationAPI, (_req, res, ctx) => {
+      return res(ctx.json(dummyEvalResponse));
+    }),
   );
   const client = t.context.bktClient;
   const user = t.context.targetedUser;
@@ -267,12 +258,9 @@ test.serial('getEvaluation: objectEvaluationDetails', async (t) => {
     },
   };
   t.context.server.use(
-    http.post<Record<string, never>, GetEvaluationRequest, GetEvaluationResponse>(
-      evaluationAPI,
-      () => {
-        return HttpResponse.json(dummyEvalResponse);
-      },
-    ),
+    rest.post(evaluationAPI, (_req, res, ctx) => {
+      return res(ctx.json(dummyEvalResponse));
+    }),
   );
   const client = t.context.bktClient;
   const user = t.context.targetedUser;
@@ -322,7 +310,7 @@ test.afterEach.always((t) => {
   t.context.server.resetHandlers();
 });
 
-test.after.always((t) => {
+test.after.always(async (t) => {
   t.context.server.close();
-  t.context.bktClient.destroy();
+  await t.context.bktClient.destroy();
 });
