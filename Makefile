@@ -65,6 +65,8 @@ test-eslint:
 type-check:
 	$(NPM_BIN_DIR)/tsc --noEmit --project tsconfig.json
 	$(NPM_BIN_DIR)/tsc --noEmit --project tsconfig.test.json
+	$(NPM_BIN_DIR)/tsc --noEmit --project e2e/tsconfig.json
+	$(NPM_BIN_DIR)/tsc --noEmit --project example/tsconfig.json
 
 .PHONY: e2e
 e2e: copy-genfiles
