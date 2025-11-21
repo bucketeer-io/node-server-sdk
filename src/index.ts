@@ -203,7 +203,11 @@ function defaultInitialize(resolvedConfig: InternalConfig): Bucketeer {
   let segementUsersCacheProcessor: SegementUsersCacheProcessor | null = null;
   let localEvaluator: LocalEvaluator | null = null;
   if (resolvedConfig.enableLocalEvaluation === true) {
-    const grpcClient = new DefaultGRPCClient(resolvedConfig.apiEndpoint, resolvedConfig.apiKey);
+    const grpcClient = new DefaultGRPCClient(
+      resolvedConfig.apiEndpoint,
+      resolvedConfig.apiKey,
+      resolvedConfig.scheme
+    );
     const cache = new InMemoryCache();
     const featureFlagCache = NewFeatureCache({ cache: cache, ttl: FEATURE_FLAG_CACHE_TTL });
     const clock = new Clock();

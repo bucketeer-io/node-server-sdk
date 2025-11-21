@@ -1,8 +1,9 @@
 import anyTest, { TestFn } from 'ava';
 import { Bucketeer, DefaultLogger, User, initializeBKTClient, defineBKTConfig } from '../lib';
 import {
-  HOST,
-  TOKEN,
+  API_ENDPOINT,
+  SCHEME,
+  CLIENT_API_KEY,
   FEATURE_TAG,
   TARGETED_USER_ID,
   GOAL_ID,
@@ -17,8 +18,9 @@ const wrapperSdkVersion = '1.0.1';
 
 test.beforeEach((t) => {
   const config = defineBKTConfig({
-    apiEndpoint: HOST,
-    apiKey: TOKEN,
+    apiEndpoint: API_ENDPOINT,
+  SCHEME,
+    apiKey: CLIENT_API_KEY,
     featureTag: FEATURE_TAG,
     logger: new DefaultLogger('error'),
     wrapperSdkSourceId: wrapperSdkSourceId,

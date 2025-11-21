@@ -1,10 +1,11 @@
 import anyTest, { TestFn } from 'ava';
 import { Bucketeer, DefaultLogger, User, initializeBKTClient, defineBKTConfig } from '../../lib';
 import {
-  HOST,
+  API_ENDPOINT,
+  SCHEME,
   FEATURE_TAG,
   TARGETED_USER_ID,
-  SERVER_ROLE_TOKEN,
+  SERVER_API_KEY,
   GOAL_ID,
   GOAL_VALUE,
 } from '../constants/constants';
@@ -17,8 +18,9 @@ const wrapperSdkVersion = '1.0.1';
 
 test.beforeEach(async (t) => {
   const config = defineBKTConfig({
-    apiEndpoint: HOST,
-    apiKey: SERVER_ROLE_TOKEN,
+    apiEndpoint: API_ENDPOINT,
+  SCHEME,
+    apiKey: SERVER_API_KEY,
     featureTag: FEATURE_TAG,
     logger: new DefaultLogger('error'),
     enableLocalEvaluation: true,

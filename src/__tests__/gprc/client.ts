@@ -3,7 +3,7 @@ import test from 'ava';
 import { convertSerivceError, DefaultGRPCClient, grpcToRestStatus } from '../../grpc/client';
 import { ServiceError } from '@bucketeer/evaluation';
 import { grpc } from '@improbable-eng/grpc-web';
-import { InvalidStatusError } from '../../objects/errors';
+import { InvalidStatusError, IllegalArgumentError } from '../../objects/errors';
 import { SourceId } from '../../objects/sourceId';
 
 test('grpcToRestStatus should return correct HTTP status for known gRPC codes', (t) => {
@@ -47,7 +47,7 @@ test('convertSerivceError should convert ServiceError to InvalidStatusError', (t
 
 test('GRPCClient should convert ServiceError to InvalidStatusError', async (t) => {
   // there is not gprc server running on this port, error is expected
-  const client = new DefaultGRPCClient('https://localhost:26948', 'apiKey');
+  const client = new DefaultGRPCClient('localhost:26948', 'apiKey', 'https');
 
   try {
     await client.getFeatureFlags({
@@ -62,4 +62,75 @@ test('GRPCClient should convert ServiceError to InvalidStatusError', async (t) =
     const invalidStatusError = error as InvalidStatusError;
     t.is(invalidStatusError.code, 500);
   }
+});
+
+test('DefaultGRPCClient should accept apiEndpoint with https scheme', (t) => {
+  t.notThrows(() => {
+    new DefaultGRPCClient('api.example.com', 'apiKey', 'https');
+  });
+});
+
+test('DefaultGRPCClient should accept apiEndpoint with http scheme', (t) => {
+  t.notThrows(() => {
+    new DefaultGRPCClient('localhost:9000', 'apiKey', 'http');
+  });
+});
+
+test('DefaultGRPCClient should default to https scheme when not provided', (t) => {
+  t.notThrows(() => {
+    new DefaultGRPCClient('api.example.com', 'apiKey');
+  });
+});
+
+test('DefaultGRPCClient should reject invalid scheme', (t) => {
+  const error = t.throws(
+    () => {
+      new DefaultGRPCClient('api.example.com', 'apiKey', 'ftp');
+    },
+    { instanceOf: IllegalArgumentError },
+  );
+  t.true(error.message.includes('Invalid scheme'));
+  t.true(error.message.includes('ftp'));
+});
+
+test('DefaultGRPCClient should accept apiEndpoint with port', (t) => {
+  t.notThrows(() => {
+    new DefaultGRPCClient('api.example.com:443', 'apiKey', 'https');
+  });
+  t.notThrows(() => {
+    new DefaultGRPCClient('localhost:9000', 'apiKey', 'http');
+  });
+});
+
+test('DefaultGRPCClient should work with bare hostname', (t) => {
+  t.notThrows(() => {
+    new DefaultGRPCClient('api.example.com', 'apiKey', 'https');
+  });
+});
+
+test('DefaultGRPCClient should strip scheme from apiEndpoint if present (defensive check)', (t) => {
+  // Even if apiEndpoint contains scheme, it should be stripped
+  t.notThrows(() => {
+    new DefaultGRPCClient('https://api.example.com', 'apiKey', 'http');
+  });
+
+  t.notThrows(() => {
+    new DefaultGRPCClient('http://localhost:9000', 'apiKey', 'https');
+  });
+});
+
+test('DefaultGRPCClient should handle apiEndpoint with scheme and port correctly', (t) => {
+  t.notThrows(() => {
+    new DefaultGRPCClient('https://api.example.com:8443', 'apiKey', 'http');
+  });
+});
+
+test('DefaultGRPCClient should reject malformed URL in apiEndpoint', (t) => {
+  const error = t.throws(
+    () => {
+      new DefaultGRPCClient('ht!tp://invalid url', 'apiKey', 'https');
+    },
+    { instanceOf: IllegalArgumentError },
+  );
+  t.true(error.message.includes('Invalid apiEndpoint'));
 });

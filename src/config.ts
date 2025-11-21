@@ -62,6 +62,13 @@ interface BKTConfig {
   /**
    * API endpoint to use for the SDK.
    * This is the base URL for all API requests.
+   *
+   * Supported formats:
+   * - Full URL with scheme: 'https://api.example.com' or 'http://localhost:9000'
+   *   (scheme will be extracted and used, overriding the `scheme` config if provided)
+   * - Bare hostname: 'api.example.com' (will use the `scheme` config, defaults to https)
+   *
+   * Note: Only http and https schemes are supported.
    */
   apiEndpoint: string;
   /**
@@ -79,7 +86,7 @@ interface BKTConfig {
    * Default: 50
    */
   eventsMaxQueueSize: number;
-  
+
   /**
    * Optional property. Application version.
    * If not provided, '1.0.0' will be used as default.
@@ -102,6 +109,15 @@ interface BKTConfig {
    * Sets the polling interval for cache updating. Default: 1 min - specify in milliseconds.
    */
   cachePollingInterval: number;
+
+  /**
+   * Optional property. Scheme to use for API requests. (Default: 'https')
+   * This is useful for local development when you want to use 'http' instead of 'https'.
+   *
+   * Note: If the apiEndpoint includes a scheme (e.g., 'https://api.example.com'),
+   * the scheme from apiEndpoint will take precedence over this setting.
+   */
+  scheme?: string;
 
   // Use wrapperSdkVersion to set the SDK version explicitly.
   // IMPORTANT: This option is intended for internal use only.
@@ -137,6 +153,7 @@ const defineBKTConfig = (config: Partial<BKTConfig>): BKTConfig => {
     logger: config.logger ?? new DefaultLogger(),
     enableLocalEvaluation: config.enableLocalEvaluation ?? false,
     cachePollingInterval: config.cachePollingInterval ?? DEFAULT_POLLING_INTERVAL_MILLIS,
+    scheme: config.scheme ?? 'https',
   };
 
   // Advanced properties: only included when explicitly set (not undefined)
@@ -155,6 +172,34 @@ const defineBKTConfig = (config: Partial<BKTConfig>): BKTConfig => {
   if (!baseConfig.apiEndpoint) {
     throw new IllegalArgumentError('apiEndpoint is required');
   }
+
+  // Validate apiEndpoint format and extract scheme if present
+  // If apiEndpoint contains a scheme, extract it and override the scheme config
+  if (baseConfig.apiEndpoint.includes('://')) {
+    try {
+      const url = new URL(baseConfig.apiEndpoint);
+      if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+        throw new IllegalArgumentError(
+          `Invalid scheme in apiEndpoint: ${url.protocol}. Must be http or https`,
+        );
+      }
+      // Extract scheme from URL (remove trailing ':')
+      baseConfig.scheme = url.protocol.slice(0, -1);
+      // Update apiEndpoint to be just hostname and port (without scheme)
+      baseConfig.apiEndpoint = url.host;
+    } catch (error) {
+      if (error instanceof IllegalArgumentError) {
+        throw error;
+      }
+      throw new IllegalArgumentError(`Invalid apiEndpoint URL: ${baseConfig.apiEndpoint}`);
+    }
+  }
+
+  // Validate scheme
+  if (baseConfig.scheme !== 'http' && baseConfig.scheme !== 'https') {
+    throw new IllegalArgumentError(`Invalid scheme: ${baseConfig.scheme}. Must be http or https`);
+  }
+
   if (!baseConfig.appVersion) {
     throw new IllegalArgumentError('appVersion is required');
   }

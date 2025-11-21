@@ -1,12 +1,13 @@
 import test from 'ava';
 import { DefaultLogger, initializeBKTClient, defineBKTConfig } from '../../lib';
 import {
-  HOST,
-  TOKEN,
+  API_ENDPOINT,
+  SCHEME,
+  CLIENT_API_KEY,
   FEATURE_TAG,
   TARGETED_USER_ID,
   FEATURE_ID_BOOLEAN,
-  SERVER_ROLE_TOKEN,
+  SERVER_API_KEY,
 } from '../constants/constants';
 import { isMetricsEvent, MetricsEvent } from '../../lib/objects/metricsEvent';
 import { BKTClientImpl } from '../../lib/client';
@@ -20,7 +21,8 @@ const NOT_FOUND_ERROR_METRICS_EVENT_NAME =
 
 test('Using a random string in the api key setting should not throw exception', async (t) => {
   const config = defineBKTConfig({
-    apiEndpoint: HOST,
+    apiEndpoint: API_ENDPOINT,
+  SCHEME,
     apiKey: 'TOKEN_RANDOM',
     featureTag: FEATURE_TAG,
     cachePollingInterval: 15000,
@@ -64,8 +66,9 @@ test('Using a random string in the api key setting should not throw exception', 
 
 test('altering featureTag should not affect api request', async (t) => {
   const config = defineBKTConfig({
-    apiEndpoint: HOST,
-    apiKey: SERVER_ROLE_TOKEN,
+    apiEndpoint: API_ENDPOINT,
+  SCHEME,
+    apiKey: SERVER_API_KEY,
     featureTag: FEATURE_TAG,
     cachePollingInterval: 15000,
     enableLocalEvaluation: true,
@@ -92,8 +95,9 @@ test('altering featureTag should not affect api request', async (t) => {
 
 test('Altering the api key should not affect api request', async (t) => {
   const config = defineBKTConfig({
-    apiEndpoint: HOST,
-    apiKey: SERVER_ROLE_TOKEN,
+    apiEndpoint: API_ENDPOINT,
+  SCHEME,
+    apiKey: SERVER_API_KEY,
     featureTag: FEATURE_TAG,
     cachePollingInterval: 15000,
     enableLocalEvaluation: true,
@@ -123,8 +127,9 @@ test('Altering the api key should not affect api request', async (t) => {
 // So the behavior of this test is same with other SDK clients
 test('Using a random string in the featureTag setting should not affect api request', async (t) => {
   const config = defineBKTConfig({
-    apiEndpoint: HOST,
-    apiKey: SERVER_ROLE_TOKEN,
+    apiEndpoint: API_ENDPOINT,
+  SCHEME,
+    apiKey: SERVER_API_KEY,
     featureTag: 'RANDOM',
     cachePollingInterval: 15000,
     enableLocalEvaluation: true,
