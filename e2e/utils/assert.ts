@@ -1,6 +1,6 @@
-import { ExecutionContext } from "ava";
-import { BKTValue } from "../../src/types";
-import { BKTEvaluationDetails } from "../../lib/evaluationDetails";
+import { ExecutionContext } from 'ava';
+import { BKTValue } from '../../src/types';
+import { BKTEvaluationDetails } from '../../lib/evaluationDetails';
 
 function assetEvaluationDetails(
   t: ExecutionContext<unknown>,

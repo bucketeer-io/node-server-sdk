@@ -5,13 +5,13 @@ import customRules from './eslint-rules/no-spread-after-defaults.mjs';
 
 export default [
   {
-    files: ['src/**/*.ts', 'src/__tests__/**/*.ts', 'test/**/*.ts', '__tests/**/*.ts', 'example/**/*.ts'],
+    files: ['src/**/*.ts', 'src/__tests__/**/*.ts', 'test/**/*.ts', '__tests/**/*.ts', 'example/**/*.ts', 'e2e/**/*.ts'],
     ignores: ['**/*.d.ts'],
     languageOptions: {
       parser: tsParser,
       parserOptions: {
         sourceType: 'module',
-        project: [`tsconfig.json`, `tsconfig.test.json`, `example/tsconfig.json`],
+        project: [`tsconfig.json`, `tsconfig.test.json`, `example/tsconfig.json`, `e2e/tsconfig.json`],
       },
       globals: {
         node: true,

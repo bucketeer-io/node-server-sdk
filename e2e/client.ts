@@ -22,7 +22,7 @@ const NOT_FOUND_ERROR_METRICS_EVENT_NAME =
 test('Using a random string in the api key setting should not throw exception', async (t) => {
   const config = defineBKTConfig({
     apiEndpoint: API_ENDPOINT,
-  SCHEME,
+    scheme: SCHEME,
     apiKey: 'TOKEN_RANDOM',
     featureTag: FEATURE_TAG,
     logger: new DefaultLogger('error'),
@@ -56,7 +56,7 @@ test('Using a random string in the api key setting should not throw exception', 
 test('altering featureTag should not affect api request', async (t) => {
   const config = defineBKTConfig({
     apiEndpoint: API_ENDPOINT,
-  SCHEME,
+    scheme: SCHEME,
     apiKey: CLIENT_API_KEY,
     featureTag: FEATURE_TAG,
     logger: new DefaultLogger('error'),
@@ -80,7 +80,7 @@ test('altering featureTag should not affect api request', async (t) => {
 test('Altering the api key should not affect api request', async (t) => {
   const config = defineBKTConfig({
     apiEndpoint: API_ENDPOINT,
-  SCHEME,
+    scheme: SCHEME,
     apiKey: CLIENT_API_KEY,
     featureTag: FEATURE_TAG,
     logger: new DefaultLogger('error'),
@@ -105,7 +105,7 @@ test('Altering the api key should not affect api request', async (t) => {
 test('Using a random string in the featureTag setting should affect api request', async (t) => {
   const config = defineBKTConfig({
     apiEndpoint: API_ENDPOINT,
-  SCHEME,
+    scheme: SCHEME,
     apiKey: CLIENT_API_KEY,
     featureTag: 'RANDOM',
     logger: new DefaultLogger('error'),

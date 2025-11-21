@@ -18,7 +18,7 @@ const test = anyTest as TestFn<{ bktClient: Bucketeer; defaultUser: User }>;
 test.beforeEach((t) => {
   const config = defineBKTConfig({
     apiEndpoint: API_ENDPOINT,
-  SCHEME,
+    scheme: SCHEME,
     apiKey: CLIENT_API_KEY,
     featureTag: FEATURE_TAG,
     logger: new DefaultLogger('error'),
