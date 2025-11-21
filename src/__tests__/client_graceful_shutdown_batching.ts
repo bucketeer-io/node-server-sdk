@@ -8,6 +8,7 @@ import { SourceId } from '../objects/sourceId';
 import { DefaultLogger } from '../logger';
 import { Event, createEvent } from '../objects/event';
 import { createGoalEvent } from '../objects/goalEvent';
+import { Bucketeer } from '../index';
 
 // Helper to create a basic internal config
 const createTestConfig = (): InternalConfig => ({
@@ -45,7 +46,7 @@ test('destroy() should flush events in batches to avoid gRPC size limit', async 
   const config = createTestConfig();
   config.eventsMaxQueueSize = 100; // Set batch size to 100
 
-  const client = new BKTClientImpl(config, {
+  const client: Bucketeer = new BKTClientImpl(config, {
     apiClient: mockAPIClient,
     eventStore: eventStore,
     localEvaluator: null,
@@ -96,7 +97,7 @@ test('destroy() should handle large event queues (10k events)', async (t) => {
   const config = createTestConfig();
   config.eventsMaxQueueSize = 100; // Set batch size to 100
 
-  const client = new BKTClientImpl(config, {
+  const client: Bucketeer = new BKTClientImpl(config, {
     apiClient: mockAPIClient,
     eventStore: eventStore,
     localEvaluator: null,
@@ -153,7 +154,7 @@ test('destroy() should continue flushing even if one batch fails', async (t) => 
   const config = createTestConfig();
   config.eventsMaxQueueSize = 100; // Set batch size to 100
 
-  const client = new BKTClientImpl(config, {
+  const client: Bucketeer = new BKTClientImpl(config, {
     apiClient: mockAPIClient,
     eventStore: eventStore,
     localEvaluator: null,
@@ -195,7 +196,7 @@ test('scheduled flush should also batch events', async (t) => {
   config.eventsFlushInterval = 100; // 100ms for fast testing
   config.eventsMaxQueueSize = 100; // Set batch size to 100
 
-  const client = new BKTClientImpl(config, {
+  const client: Bucketeer = new BKTClientImpl(config, {
     apiClient: mockAPIClient,
     eventStore: eventStore,
     localEvaluator: null,
@@ -239,7 +240,7 @@ test('batching should respect exact eventsMaxQueueSize limit', async (t) => {
   const config = createTestConfig();
   config.eventsMaxQueueSize = 100; // Set batch size to 100
 
-  const client = new BKTClientImpl(config, {
+  const client: Bucketeer = new BKTClientImpl(config, {
     apiClient: mockAPIClient,
     eventStore: eventStore,
     localEvaluator: null,

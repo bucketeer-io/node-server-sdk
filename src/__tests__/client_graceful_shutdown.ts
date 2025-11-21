@@ -8,6 +8,7 @@ import { SourceId } from '../objects/sourceId';
 import { DefaultLogger } from '../logger';
 import { Event, createEvent } from '../objects/event';
 import { createGoalEvent } from '../objects/goalEvent';
+import { Bucketeer } from '../index';
 
 // Helper to create a basic internal config
 const createTestConfig = (): InternalConfig => ({
@@ -44,7 +45,7 @@ test('destroy() should flush all remaining events', async (t) => {
   const eventEmitter = new ProcessorEventsEmitter();
   const config = createTestConfig();
 
-  const client = new BKTClientImpl(config, {
+  const client: Bucketeer = new BKTClientImpl(config, {
     apiClient: mockAPIClient,
     eventStore: eventStore,
     localEvaluator: null,
@@ -82,7 +83,7 @@ test('destroy() should stop the scheduled flush', async (t) => {
   const config = createTestConfig();
   config.eventsFlushInterval = 100; // 100ms for fast testing
 
-  const client = new BKTClientImpl(config, {
+  const client: Bucketeer = new BKTClientImpl(config, {
     apiClient: mockAPIClient,
     eventStore: eventStore,
     localEvaluator: null,
@@ -133,7 +134,7 @@ test('destroy() should handle empty event store', async (t) => {
   const eventEmitter = new ProcessorEventsEmitter();
   const config = createTestConfig();
 
-  const client = new BKTClientImpl(config, {
+  const client: Bucketeer = new BKTClientImpl(config, {
     apiClient: mockAPIClient,
     eventStore: eventStore,
     localEvaluator: null,
@@ -160,7 +161,7 @@ test('destroy() should handle API errors gracefully', async (t) => {
   const eventEmitter = new ProcessorEventsEmitter();
   const config = createTestConfig();
 
-  const client = new BKTClientImpl(config, {
+  const client: Bucketeer = new BKTClientImpl(config, {
     apiClient: mockAPIClient,
     eventStore: eventStore,
     localEvaluator: null,
@@ -212,7 +213,7 @@ test('destroy() should stop processors when local evaluation is enabled', async 
     evaluate: () => Promise.resolve(null),
   };
 
-  const client = new BKTClientImpl(config, {
+  const client: Bucketeer = new BKTClientImpl(config, {
     apiClient: mockAPIClient,
     eventStore: eventStore,
     localEvaluator: mockLocalEvaluator as any,
@@ -240,7 +241,7 @@ test('destroy() should be idempotent', async (t) => {
   const eventEmitter = new ProcessorEventsEmitter();
   const config = createTestConfig();
 
-  const client = new BKTClientImpl(config, {
+  const client: Bucketeer = new BKTClientImpl(config, {
     apiClient: mockAPIClient,
     eventStore: eventStore,
     localEvaluator: null,
@@ -275,7 +276,7 @@ test('destroy() should flush events with correct order', async (t) => {
   const eventEmitter = new ProcessorEventsEmitter();
   const config = createTestConfig();
 
-  const client = new BKTClientImpl(config, {
+  const client: Bucketeer = new BKTClientImpl(config, {
     apiClient: mockAPIClient,
     eventStore: eventStore,
     localEvaluator: null,
@@ -309,7 +310,7 @@ test('destroy() should timeout if shutdown takes too long', async (t) => {
   const eventEmitter = new ProcessorEventsEmitter();
   const config = createTestConfig();
 
-  const client = new BKTClientImpl(config, {
+  const client: Bucketeer = new BKTClientImpl(config, {
     apiClient: mockAPIClient,
     eventStore: eventStore,
     localEvaluator: null,
@@ -346,7 +347,7 @@ test('destroy() should succeed with sufficient timeout', async (t) => {
   const eventEmitter = new ProcessorEventsEmitter();
   const config = createTestConfig();
 
-  const client = new BKTClientImpl(config, {
+  const client: Bucketeer = new BKTClientImpl(config, {
     apiClient: mockAPIClient,
     eventStore: eventStore,
     localEvaluator: null,
@@ -380,7 +381,7 @@ test('destroy() should not save error metrics during shutdown', async (t) => {
   const eventEmitter = new ProcessorEventsEmitter();
   const config = createTestConfig();
 
-  const client = new BKTClientImpl(config, {
+  const client: Bucketeer = new BKTClientImpl(config, {
     apiClient: mockAPIClient,
     eventStore: eventStore,
     localEvaluator: null,
@@ -426,7 +427,7 @@ test('destroy() should handle processor stop errors gracefully', async (t) => {
     evaluate: () => Promise.resolve(null),
   };
 
-  const client = new BKTClientImpl(config, {
+  const client: Bucketeer = new BKTClientImpl(config, {
     apiClient: mockAPIClient,
     eventStore: eventStore,
     localEvaluator: mockLocalEvaluator as any,

@@ -1,7 +1,13 @@
 import { User } from './objects/user';
 import { EventStore } from './stores/EventStore';
 import { APIClient } from './api/client';
-import { BKTConfig, Config, defaultConfig, defineBKTConfig, convertConfigToBKTConfig } from './config';
+import {
+  BKTConfig,
+  Config,
+  defaultConfig,
+  defineBKTConfig,
+  convertConfigToBKTConfig,
+} from './config';
 import { BKTEvaluationDetails } from './evaluationDetails';
 import { BKTValue, BKTJsonArray, BKTJsonObject, BKTJsonPrimitive } from './types';
 import { InMemoryCache } from './cache/inMemoryCache';
@@ -32,7 +38,7 @@ export { Config, defaultConfig, BKTConfig, defineBKTConfig };
 
 export { BKTValue, BKTJsonPrimitive, BKTJsonObject, BKTJsonArray };
 
-export { BKTEvaluationDetails }
+export { BKTEvaluationDetails };
 
 export { Logger, DefaultLogger } from './logger';
 
@@ -136,11 +142,22 @@ export interface Bucketeer {
    * It sends all event in memory and stop workers.
    * The application should call destroy before the application stops, otherwise remaining events can be lost.
    *
+   * @param options Optional configuration for shutdown behavior
+   * @param options.timeout Maximum time in milliseconds to wait for shutdown to complete.
+   *                         Default is 30000ms (30 seconds). For high-traffic applications
+   *                         with large event queues, consider increasing this value.
    * @returns Promise that resolves when all events are flushed and resources are cleaned up
+   * @throws {TimeoutError} If shutdown doesn't complete within the specified timeout
    *
    * @example
    * ```typescript
    * const client = initializeBKTClient(config);
+   *
+   * // Basic usage with default timeout (30 seconds)
+   * await client.destroy();
+   *
+   * // Custom timeout for high-traffic applications
+   * await client.destroy({ timeout: 60000 }); // 60 seconds
    *
    * // Graceful shutdown on SIGTERM
    * process.on('SIGTERM', async () => {
@@ -149,8 +166,9 @@ export interface Bucketeer {
    *   console.log('Shutdown complete');
    *   process.exit(0);
    * });
+   * ```
    */
-  destroy(): Promise<void>;
+  destroy(options?: { timeout?: number }): Promise<void>;
   /**
    * getBuildInfo returns the SDK's build information.
    * @returns The SDK's build information.
@@ -162,17 +180,17 @@ export interface Bucketeer {
    * This method ensures that feature flag and segment user data are loaded from the server
    * before proceeding with evaluations. It's recommended to call this method after SDK
    * initialization but before performing feature flag evaluations to ensure consistent results.
-   * 
+   *
    * @param options Configuration options for waiting
    * @param options.timeout Maximum time to wait for initialization in milliseconds
    * @returns Promise that resolves when initialization completes successfully
-   * @throws Error if initialization fails or times out (timeout doesn't indicate failure, 
+   * @throws Error if initialization fails or times out (timeout doesn't indicate failure,
    *         just that initialization is taking longer than expected)
-   * 
+   *
    * @example
    * ```typescript
    * const client = initializeBKTClient(config);
-   * 
+   *
    * try {
    *   // Wait up to 5 seconds for initialization
    *   await client.waitForInitialization({ timeout: 5000 });
@@ -187,7 +205,7 @@ export interface Bucketeer {
    * }
    * ```
    */
-  waitForInitialization(options: { timeout: number }): Promise<void>
+  waitForInitialization(options: { timeout: number }): Promise<void>;
 }
 
 /**
@@ -204,7 +222,7 @@ export function initialize(config: Config): Bucketeer {
 }
 
 export function initializeBKTClient(config: BKTConfig): Bucketeer {
-  const internalConfig = requiredInternalConfig(config); 
+  const internalConfig = requiredInternalConfig(config);
   return defaultInitialize(internalConfig);
 }
 
@@ -212,7 +230,7 @@ function defaultInitialize(resolvedConfig: InternalConfig): Bucketeer {
   const apiClient = new APIClient(resolvedConfig.apiEndpoint, resolvedConfig.apiKey);
   const eventStore = new EventStore();
   const eventEmitter = new ProcessorEventsEmitter();
-  
+
   let featureFlagProcessor: FeatureFlagProcessor | null = null;
   let segementUsersCacheProcessor: SegementUsersCacheProcessor | null = null;
   let localEvaluator: LocalEvaluator | null = null;
@@ -220,7 +238,7 @@ function defaultInitialize(resolvedConfig: InternalConfig): Bucketeer {
     const grpcClient = new DefaultGRPCClient(
       resolvedConfig.apiEndpoint,
       resolvedConfig.apiKey,
-      resolvedConfig.scheme
+      resolvedConfig.scheme,
     );
     const cache = new InMemoryCache();
     const featureFlagCache = NewFeatureCache({ cache: cache, ttl: FEATURE_FLAG_CACHE_TTL });
