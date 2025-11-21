@@ -1413,24 +1413,25 @@ test('sdk destroy - success', async (t) => {
   eventProcessorMock.expects('close').once();
 
   const featureFlagProcessorCacheMock = t.context.sandbox.mock(featureFlagProcessor);
-  featureFlagProcessorCacheMock.expects('stop').once().callsFake(async () => {
-    // Call the real stop method to clean up timers
-    if (featureFlagProcessor.pollingScheduleID) {
-      const { removeSchedule } = await import('../schedule');
-      removeSchedule(featureFlagProcessor.pollingScheduleID);
-      featureFlagProcessor.pollingScheduleID = undefined;
-    }
-  });
+  const featureFlagProcessorStop = featureFlagProcessor.stop.bind(featureFlagProcessor);
+  featureFlagProcessorCacheMock
+    .expects('stop')
+    .once()
+    .callsFake(async () => {
+      // Call the real stop method to clean up timers
+      await featureFlagProcessorStop();
+    });
 
   const segmentUsersCacheProcessorMock = t.context.sandbox.mock(segementUsersCacheProcessor);
-  segmentUsersCacheProcessorMock.expects('stop').once().callsFake(async () => {
-    // Call the real stop method to clean up timers
-    if (segementUsersCacheProcessor.pollingScheduleID) {
-      const { removeSchedule } = await import('../schedule');
-      removeSchedule(segementUsersCacheProcessor.pollingScheduleID);
-      segementUsersCacheProcessor.pollingScheduleID = undefined;
-    }
-  });
+  const segmentUsersCacheProcessorStop =
+    segementUsersCacheProcessor.stop.bind(segementUsersCacheProcessor);
+  segmentUsersCacheProcessorMock
+    .expects('stop')
+    .once()
+    .callsFake(async () => {
+      // Call the real stop method to clean up timers
+      await segmentUsersCacheProcessorStop();
+    });
 
   await sdkInstance.destroy();
   eventProcessorMock.verify();
