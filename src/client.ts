@@ -32,6 +32,10 @@ import { IllegalStateError, TimeoutError, toBKTError } from './objects/errors';
 import { assertGetEvaluationRequest } from './assert';
 import { InternalConfig } from './internalConfig';
 
+// Default timeout for graceful shutdown in milliseconds (30 seconds)
+// For high-traffic applications with large event queues, consider increasing this value
+const DEFAULT_DESTROY_TIMEOUT_MILLIS = 30000;
+
 export class BKTClientImpl implements Bucketeer {
   apiClient: APIClient;
   eventStore: EventStore;
@@ -51,6 +55,12 @@ export class BKTClientImpl implements Bucketeer {
    * especially when errors occur while saving events during shutdown.
    */
   private isShuttingDown = false;
+
+  /**
+   * Indicates whether the client has been destroyed.
+   * Used to ensure destroy() is idempotent.
+   */
+  private isDestroyed = false;
 
   constructor(
     config: InternalConfig,
@@ -210,12 +220,6 @@ export class BKTClientImpl implements Bucketeer {
     }
   }
 
-  private registerAllEvents(): void {
-    if (this.eventStore.size() > 0) {
-      this.callRegisterEvents(this.eventStore.getAll());
-    }
-  }
-
   private callRegisterEvents(events: Array<Event>): void {
     this.apiClient
       .registerEvents(events, this.config.sourceId, this.config.sdkVersion)
@@ -230,6 +234,12 @@ export class BKTClientImpl implements Bucketeer {
    * This method waits for the events to be sent before resolving.
    * Events are sent in batches of eventsMaxQueueSize to avoid
    * exceeding gRPC message size limits (default 2MB).
+   *
+   * Note: During shutdown, if a batch fails to send, those events are lost.
+   * This is by design to prevent infinite loops when the server is down or
+   * returning errors. For normal operation (non-shutdown), events are retried
+   * via the scheduled flush mechanism.
+   *
    * @returns Promise that resolves when all events are flushed
    */
   private async flushAllEvents(): Promise<void> {
@@ -240,8 +250,8 @@ export class BKTClientImpl implements Bucketeer {
 
     const totalBatches = Math.ceil(totalEvents / this.config.eventsMaxQueueSize);
     this.config.logger?.info(
-      `[EventFlusher] Starting to flush ${totalEvents} events in ${totalBatches} batch(es) ` +
-        `of ${this.config.eventsMaxQueueSize}...`,
+      `[EventFlusher] Starting to flush ${totalEvents} events in ` +
+        `${totalBatches} batch(es) of ${this.config.eventsMaxQueueSize}...`,
     );
 
     let flushedCount = 0;
@@ -470,8 +480,8 @@ export class BKTClientImpl implements Bucketeer {
         });
 
         this.config.logger?.error(
-          `getVariationDetails failed to parse: ${variationValue} using: ${typeof typeConverter} ` +
-            `with error: ${err}`,
+          `getVariationDetails failed to parse: ${variationValue} using: ` +
+            `${typeof typeConverter} with error: ${err}`,
         );
       }
     }
@@ -540,9 +550,51 @@ export class BKTClientImpl implements Bucketeer {
    *
    * This method should be called before your application exits to ensure
    * no events are lost.
+   *
+   * @param options Optional configuration for shutdown behavior
+   * @param options.timeout Maximum time in milliseconds to wait for shutdown to complete.
+   *                         Default is 30000ms (30 seconds). For high-traffic applications
+   *                         with large event queues, consider increasing this value.
+   * @throws {TimeoutError} If shutdown doesn't complete within the specified timeout
    */
-  async destroy(): Promise<void> {
+  async destroy(options?: { timeout?: number }): Promise<void> {
+    if (this.isDestroyed) {
+      this.config.logger?.debug('[Client] Already destroyed, skipping...');
+      return;
+    }
+
+    this.isDestroyed = true;
     this.isShuttingDown = true;
+
+    const timeout = options?.timeout ?? DEFAULT_DESTROY_TIMEOUT_MILLIS;
+    let timeoutId: NodeJS.Timeout | undefined;
+
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      timeoutId = setTimeout(() => {
+        reject(new TimeoutError(timeout, `Shutdown timeout after ${timeout}ms`));
+      }, timeout);
+    });
+
+    const destroyPromise = this._doDestroy();
+
+    try {
+      await Promise.race([destroyPromise, timeoutPromise]);
+    } catch (error) {
+      this.config.logger?.error('[Client] Shutdown failed or timed out', error);
+      throw error;
+    } finally {
+      // Always clear the timeout to prevent hanging
+      if (timeoutId !== undefined) {
+        clearTimeout(timeoutId);
+      }
+    }
+  }
+
+  /**
+   * Internal implementation of destroy logic.
+   * Separated to allow timeout wrapping.
+   */
+  private async _doDestroy(): Promise<void> {
     this.config.logger?.info('[Client] Starting graceful shutdown...');
 
     // Stop the scheduled flush to prevent new flush attempts

@@ -380,9 +380,9 @@ test.beforeEach((t) => {
   };
 });
 
-test.afterEach((t) => {
+test.afterEach(async (t) => {
   t.context.sandbox.restore();
-  t.context.sdkInstance.destroy();
+  await t.context.sdkInstance.destroy();
 });
 
 test('boolVariation - err: internal error', async (t) => {
@@ -1410,13 +1410,27 @@ test('sdk destroy - success', async (t) => {
   const { sdkInstance, eventEmitter, featureFlagProcessor, segementUsersCacheProcessor } =
     t.context;
   const eventProcessorMock = t.context.sandbox.mock(eventEmitter);
-  eventProcessorMock.expects('close').once().resolves();
+  eventProcessorMock.expects('close').once();
 
   const featureFlagProcessorCacheMock = t.context.sandbox.mock(featureFlagProcessor);
-  featureFlagProcessorCacheMock.expects('stop').once().resolves();
+  featureFlagProcessorCacheMock.expects('stop').once().callsFake(async () => {
+    // Call the real stop method to clean up timers
+    if (featureFlagProcessor.pollingScheduleID) {
+      const { removeSchedule } = await import('../schedule');
+      removeSchedule(featureFlagProcessor.pollingScheduleID);
+      featureFlagProcessor.pollingScheduleID = undefined;
+    }
+  });
 
   const segmentUsersCacheProcessorMock = t.context.sandbox.mock(segementUsersCacheProcessor);
-  segmentUsersCacheProcessorMock.expects('stop').once().resolves();
+  segmentUsersCacheProcessorMock.expects('stop').once().callsFake(async () => {
+    // Call the real stop method to clean up timers
+    if (segementUsersCacheProcessor.pollingScheduleID) {
+      const { removeSchedule } = await import('../schedule');
+      removeSchedule(segementUsersCacheProcessor.pollingScheduleID);
+      segementUsersCacheProcessor.pollingScheduleID = undefined;
+    }
+  });
 
   await sdkInstance.destroy();
   eventProcessorMock.verify();

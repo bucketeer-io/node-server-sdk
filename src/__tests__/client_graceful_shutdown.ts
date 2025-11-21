@@ -253,15 +253,15 @@ test('destroy() should be idempotent', async (t) => {
   const user = { id: 'test-user', data: {} };
   client.track(user, 'goal-1', 10);
 
-  // Call destroy multiple times
+  // Call destroy first time
   await client.destroy();
-  const firstFlushCount = flushCount;
+  t.is(flushCount, 1, 'Should flush once on first destroy');
 
+  // Call destroy multiple times - should not flush again
   await client.destroy();
   await client.destroy();
 
-  // Verify flush was only called once (or maybe not at all on subsequent calls)
-  t.true(flushCount === firstFlushCount || flushCount === firstFlushCount);
+  t.is(flushCount, 1, 'Should not flush again on subsequent destroys');
 });
 
 test('destroy() should flush events with correct order', async (t) => {
@@ -296,4 +296,152 @@ test('destroy() should flush events with correct order', async (t) => {
   t.is(flushedEvents.length, 3);
   // Note: We can't easily check the exact order without inspecting event internals
   // but we can verify the count is correct
+});
+
+test('destroy() should timeout if shutdown takes too long', async (t) => {
+  const mockAPIClient = createMockAPIClient(async (_events) => {
+    // Simulate slow API call that takes 2 seconds
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+    return [{}, 0];
+  });
+
+  const eventStore = new EventStore();
+  const eventEmitter = new ProcessorEventsEmitter();
+  const config = createTestConfig();
+
+  const client = new BKTClientImpl(config, {
+    apiClient: mockAPIClient,
+    eventStore: eventStore,
+    localEvaluator: null,
+    featureFlagProcessor: null,
+    segementUsersCacheProcessor: null,
+    eventEmitter: eventEmitter,
+  });
+
+  // Add an event
+  const user = { id: 'test-user', data: {} };
+  client.track(user, 'goal-1', 10);
+
+  // Try to destroy with 100ms timeout - should timeout
+  const error = await t.throwsAsync(
+    async () => {
+      await client.destroy({ timeout: 100 });
+    },
+    { instanceOf: Error },
+  );
+
+  t.true(error?.message.includes('Shutdown timeout'));
+});
+
+test('destroy() should succeed with sufficient timeout', async (t) => {
+  let flushedEvents: Event[] = [];
+  const mockAPIClient = createMockAPIClient(async (events) => {
+    // Simulate moderate API delay
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    flushedEvents.push(...events);
+    return [{}, 0];
+  });
+
+  const eventStore = new EventStore();
+  const eventEmitter = new ProcessorEventsEmitter();
+  const config = createTestConfig();
+
+  const client = new BKTClientImpl(config, {
+    apiClient: mockAPIClient,
+    eventStore: eventStore,
+    localEvaluator: null,
+    featureFlagProcessor: null,
+    segementUsersCacheProcessor: null,
+    eventEmitter: eventEmitter,
+  });
+
+  // Add events
+  const user = { id: 'test-user', data: {} };
+  client.track(user, 'goal-1', 10);
+  client.track(user, 'goal-2', 20);
+
+  // Destroy with sufficient timeout
+  await t.notThrowsAsync(async () => {
+    await client.destroy({ timeout: 5000 });
+  });
+
+  // Verify events were flushed
+  t.is(flushedEvents.length, 2);
+  t.is(eventStore.size(), 0);
+});
+
+test('destroy() should not save error metrics during shutdown', async (t) => {
+  let errorMetricsEventCount = 0;
+  const mockAPIClient = createMockAPIClient(async (_events) => {
+    throw new Error('Network error');
+  });
+
+  const eventStore = new EventStore();
+  const eventEmitter = new ProcessorEventsEmitter();
+  const config = createTestConfig();
+
+  const client = new BKTClientImpl(config, {
+    apiClient: mockAPIClient,
+    eventStore: eventStore,
+    localEvaluator: null,
+    featureFlagProcessor: null,
+    segementUsersCacheProcessor: null,
+    eventEmitter: eventEmitter,
+  });
+
+  // Add an event
+  const user = { id: 'test-user', data: {} };
+  client.track(user, 'goal-1', 10);
+
+  const initialEventCount = eventStore.size();
+
+  // Destroy should not throw and should not add error metric events
+  await t.notThrowsAsync(async () => {
+    await client.destroy();
+  });
+
+  // Event store should be cleared (the error event was removed but not added back)
+  t.is(eventStore.size(), 0);
+
+  // Count should not increase (no error metrics events added during shutdown)
+  t.true(eventStore.size() === 0);
+});
+
+test('destroy() should handle processor stop errors gracefully', async (t) => {
+  const mockAPIClient = createMockAPIClient();
+  const eventStore = new EventStore();
+  const eventEmitter = new ProcessorEventsEmitter();
+  const config = createTestConfig();
+  config.enableLocalEvaluation = true;
+
+  const mockFeatureFlagProcessor = {
+    start: () => Promise.resolve(),
+    stop: () => Promise.reject(new Error('Processor stop failed')),
+  };
+
+  const mockSegmentProcessor = {
+    start: () => Promise.resolve(),
+    stop: () => Promise.resolve(),
+  };
+
+  const mockLocalEvaluator = {
+    evaluate: () => Promise.resolve(null),
+  };
+
+  const client = new BKTClientImpl(config, {
+    apiClient: mockAPIClient,
+    eventStore: eventStore,
+    localEvaluator: mockLocalEvaluator as any,
+    featureFlagProcessor: mockFeatureFlagProcessor as any,
+    segementUsersCacheProcessor: mockSegmentProcessor as any,
+    eventEmitter: eventEmitter,
+  });
+
+  // Destroy should propagate the error
+  await t.throwsAsync(
+    async () => {
+      await client.destroy();
+    },
+    { message: 'Processor stop failed' },
+  );
 });

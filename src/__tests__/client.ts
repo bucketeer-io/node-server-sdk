@@ -310,7 +310,7 @@ test.afterEach.always((t) => {
   t.context.server.resetHandlers();
 });
 
-test.after.always((t) => {
+test.after.always(async (t) => {
   t.context.server.close();
-  t.context.bktClient.destroy();
+  await t.context.bktClient.destroy();
 });
