@@ -47,7 +47,7 @@
     "replace": "1.2.2",
     "rollup": "^4.50.2",
     "semver": "7.7.3",
-    "terser": "5.43.1",
+    "terser": "5.44.1",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.41.0",
     "uglify-es": "3.3.9",
