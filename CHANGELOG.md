@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.5](https://github.com/bucketeer-io/node-server-sdk/compare/v0.4.4...v0.4.5) (2025-12-02)
+
+
+### Build System
+
+* **dev-deps:** bump dev-patch ([#167](https://github.com/bucketeer-io/node-server-sdk/issues/167)) ([2eda309](https://github.com/bucketeer-io/node-server-sdk/commit/2eda309e09aa86e728a63e8f310925c939e78821))
+
 ## [0.4.4](https://github.com/bucketeer-io/node-server-sdk/compare/v0.4.3...v0.4.4) (2025-11-21)
 
 
