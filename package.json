@@ -9,7 +9,7 @@
   "types": "lib/index.d.ts",
   "dependencies": {
     "uuid": "^11.1.0",
-    "@bucketeer/evaluation": "0.0.6",
+    "@bucketeer/evaluation": "0.0.7",
     "@improbable-eng/grpc-web": "^0.15.0",
     "@improbable-eng/grpc-web-node-http-transport": "^0.15.0",
     "google-protobuf": "^3.21.4"
