@@ -1096,10 +1096,10 @@
   dependencies:
     google-protobuf "^3.6.1"
 
-"@bucketeer/evaluation@0.0.6":
-  version "0.0.6"
-  resolved "https://registry.yarnpkg.com/@bucketeer/evaluation/-/evaluation-0.0.6.tgz#28a2a3271f0a256661450eb8b0227147519495bf"
-  integrity sha512-Ve7e81Lz6INrpa8dxhEzaUz3fXN5jQGQE1K4Vj88l+NarNst/ksmvEiqYkhrH1tHjszd7TxCir9tTTGg8VLWqQ==
+"@bucketeer/evaluation@0.0.7":
+  version "0.0.7"
+  resolved "https://registry.yarnpkg.com/@bucketeer/evaluation/-/evaluation-0.0.7.tgz#40cc0a9c55dad5e340d3730ffa3efd4022bb44ca"
+  integrity sha512-S18IoJ0Dg9lKUDjqX5M55CupmWAXD62Pyhl0ACTjHuH4PrPl44fgL1BGaIuPhirJsG/LdWRuTP03Jkwmq5X/GA==
   dependencies:
     "@improbable-eng/grpc-web" "^0.15.0"
     "@types/fnv-plus" "^1.3.2"
