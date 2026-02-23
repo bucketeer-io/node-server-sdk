@@ -16,3 +16,14 @@ export type GetEvaluationRequest = BaseRequest & {
   user?: User;
   featureId: string;
 };
+
+export type GetFeatureFlagsRequest = BaseRequest & {
+  tag: string;
+  featureFlagsId: string;
+  requestedAt: number;
+};
+
+export type GetSegmentUsersRequest = BaseRequest & {
+  segmentIds: string[];
+  requestedAt: number;
+};
