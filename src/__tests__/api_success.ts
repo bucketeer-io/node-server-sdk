@@ -5,12 +5,19 @@ import { APIClient } from '../api/client';
 import { User } from '../bootstrap';
 import path from 'path';
 import { v4 } from 'uuid';
-import { GetEvaluationResponse, RegisterEventsResponse } from '../objects/response';
+import {
+  GetEvaluationResponse,
+  GetFeatureFlagsResponse,
+  GetSegmentUsersResponse,
+  RegisterEventsResponse,
+} from '../objects/response';
 import { BaseRequest } from '../objects/request';
 import { SourceId } from '../objects/sourceId';
 
 const evaluationAPI = '/get_evaluation';
 const eventsAPI = '/register_events';
+const featureFlagsAPI = '/get_feature_flags';
+const segmentUsersAPI = '/get_segment_users';
 const apiKey = '';
 
 const port = 9990;
@@ -41,6 +48,23 @@ const dummyEvalResponse: GetEvaluationResponse = {
 const dummpyRegisterEvtsResponse: RegisterEventsResponse = {
   errors: { key: { message: 'Invalid message type', retriable: false } },
 };
+
+const dummyFeatureFlagsResponse: GetFeatureFlagsResponse = {
+  featureFlagsId: 'feature_flags_id',
+  features: [],
+  archivedFeatureFlagIds: [],
+  requestedAt: '12345',
+  forceUpdate: false,
+};
+
+const dummySegmentUsersResponse: GetSegmentUsersResponse = {
+  segmentUsers: [],
+  deletedSegmentIds: [],
+  requestedAt: '12345',
+  forceUpdate: false,
+};
+
+
 
 test.before((t) => {
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
@@ -75,6 +99,14 @@ test.before((t) => {
               res.setHeader('Content-Type', 'application/json');
               res.end(JSON.stringify(dummpyRegisterEvtsResponse));
               break;
+            case featureFlagsAPI:
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify(dummyFeatureFlagsResponse));
+              break;
+            case segmentUsersAPI:
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify(dummySegmentUsersResponse));
+              break;
             default:
               res.writeHead(400);
               res.end();
@@ -100,6 +132,18 @@ test('getEvaluation: success', async (t) => {
   };
   const [res] = await client.getEvaluation('', user, '', defaultSourceId, sdkVersion);
   t.deepEqual(res.evaluation, dummyEvalResponse.evaluation);
+});
+
+test('getFeatureFlags: success', async (t) => {
+  const client = new APIClient(host, apiKey);
+  const [res] = await client.getFeatureFlags('', '', 0, defaultSourceId, sdkVersion);
+  t.deepEqual(res, dummyFeatureFlagsResponse);
+});
+
+test('getSegmentUsers: success', async (t) => {
+  const client = new APIClient(host, apiKey);
+  const [res] = await client.getSegmentUsers([], 0, defaultSourceId, sdkVersion);
+  t.deepEqual(res, dummySegmentUsersResponse);
 });
 
 test('registerEvents', async (t) => {

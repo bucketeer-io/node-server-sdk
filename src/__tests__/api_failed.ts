@@ -66,6 +66,40 @@ test('getEvaluation: 500', async (t) => {
   t.is(code, 500);
 });
 
+test('getFeatureFlags: 500', async (t) => {
+  const client = new APIClient(host, apiKey);
+  let err = '';
+  let code: number | undefined;
+  try {
+    await client.getFeatureFlags('', '', 0, defaultSourceId, sdkVersion);
+  } catch (error) {
+    t.true(error instanceof InvalidStatusError);
+    const invalidStatusError = error as InvalidStatusError;
+    err = invalidStatusError.message;
+    code = invalidStatusError.code;
+  }
+
+  t.is(err, 'bucketeer/api: send HTTP request failed: 500');
+  t.is(code, 500);
+});
+
+test('getSegmentUsers: 500', async (t) => {
+  const client = new APIClient(host, apiKey);
+  let err = '';
+  let code: number | undefined;
+  try {
+    await client.getSegmentUsers([], 0, defaultSourceId, sdkVersion);
+  } catch (error) {
+    t.true(error instanceof InvalidStatusError);
+    const invalidStatusError = error as InvalidStatusError;
+    err = invalidStatusError.message;
+    code = invalidStatusError.code;
+  }
+
+  t.is(err, 'bucketeer/api: send HTTP request failed: 500');
+  t.is(code, 500);
+});
+
 test('registerEvents: 500', async (t) => {
   const client = new APIClient(host, apiKey);
   let err = '';
