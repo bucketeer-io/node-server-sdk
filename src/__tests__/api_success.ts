@@ -51,20 +51,103 @@ const dummpyRegisterEvtsResponse: RegisterEventsResponse = {
 
 const dummyFeatureFlagsResponse: GetFeatureFlagsResponse = {
   featureFlagsId: 'feature_flags_id',
-  features: [],
-  archivedFeatureFlagIds: [],
+  features: [
+    {
+      id: 'feature_id_1',
+      name: 'feature_name_1',
+      description: 'feature_description_1',
+      enabled: true,
+      deleted: false,
+      ttl: 3600,
+      version: 1,
+      createdAt: '1690000000',
+      updatedAt: '1690000000',
+      variations: [
+        {
+          id: 'var_id_1',
+          value: 'var_value_1',
+          name: 'var_name_1',
+          description: 'var_desc_1',
+        },
+      ],
+      targets: [
+        {
+          variation: 'var_id_1',
+          users: ['user_id_1'],
+        },
+      ],
+      rules: [
+        {
+          id: 'rule_id_1',
+          strategy: {
+            type: 'FIXED',
+            fixedStrategy: {
+              variation: 'var_id_1',
+            },
+          },
+          clauses: [
+            {
+              id: 'clause_id_1',
+              attribute: 'attr_1',
+              operator: 'EQUALS',
+              values: ['val_1'],
+            },
+          ],
+        },
+      ],
+      defaultStrategy: {
+        type: 'FIXED',
+        fixedStrategy: {
+          variation: 'var_id_1',
+        },
+      },
+      offVariation: 'var_id_1',
+      tags: ['tag_1'],
+      lastUsedInfo: {
+        featureId: 'feature_id_1',
+        version: 1,
+        lastUsedAt: '1690000000',
+        createdAt: '1690000000',
+        clientOldestVersion: '1.0.0',
+        clientLatestVersion: '1.0.0',
+      },
+      maintainer: 'maintainer_1',
+      variationType: 'STRING',
+      archived: false,
+      prerequisites: [
+        {
+          featureId: 'pre_feature_id_1',
+          variationId: 'pre_var_id_1',
+        },
+      ],
+      samplingSeed: 'seed_1',
+    },
+  ],
+  archivedFeatureFlagIds: ['archived_id_1'],
   requestedAt: '12345',
   forceUpdate: false,
 };
 
 const dummySegmentUsersResponse: GetSegmentUsersResponse = {
-  segmentUsers: [],
-  deletedSegmentIds: [],
+  segmentUsers: [
+    {
+      segmentId: 'segment_id_1',
+      users: [
+        {
+          id: 'seg_user_id_1',
+          segmentId: 'segment_id_1',
+          userId: 'user_id_1',
+          state: 'INCLUDED',
+          deleted: false,
+        },
+      ],
+      updatedAt: '1690000000',
+    },
+  ],
+  deletedSegmentIds: ['deleted_segment_id_1'],
   requestedAt: '12345',
   forceUpdate: false,
 };
-
-
 
 test.before((t) => {
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
