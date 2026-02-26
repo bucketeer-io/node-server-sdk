@@ -153,7 +153,7 @@ test.serial('start fail', async (t) => {
     .expects('getFeatureFlags')
     .once()
     .withArgs(featureTag, '', 0, options.sourceId, options.sdkVersion)
-    .throws(error);
+    .rejects(error);
   mockProcessorEventsEmitter
     .expects('emit')
     .once()
