@@ -25,7 +25,7 @@ import {
   NewFeatureFlagProcessor,
 } from '../cache/processor/featureFlagCacheProcessor';
 import { MockCache } from './mocks/cache';
-import { MockGRPCClient } from './mocks/gprc';
+
 import { ProcessorEventsEmitter } from '../processorEventsEmitter';
 import { Clock } from '../utils/clock';
 import { NewSegmentUsersCache, SegmentUsersCache } from '../cache/segmentUsers';
@@ -33,6 +33,7 @@ import { NewFeatureCache, FeaturesCache } from '../cache/features';
 import { ApiId } from '@bucketeer/evaluation/lib/proto/event/client/event_pb';
 import { DefaultLogger, defineBKTConfig } from '../index';
 import { APIClient } from '../api/client';
+import { MockAPIClient } from './mocks/api';
 import { EventStore } from '../stores/EventStore';
 import { Evaluation } from '../objects/evaluation';
 import { BKTEvaluationDetails } from '../evaluationDetails';
@@ -45,7 +46,6 @@ const test = anyTest as TestFn<{
   sandbox: sinon.SinonSandbox;
   evaluator: LocalEvaluator;
   cache: MockCache;
-  grpc: MockGRPCClient;
   eventEmitter: ProcessorEventsEmitter;
   clock: Clock;
   segmentUsersCache: SegmentUsersCache;
@@ -294,7 +294,6 @@ test.beforeEach((t) => {
 
   const tag = 'server';
   const cache = new MockCache();
-  const grpc = new MockGRPCClient();
   const eventEmitter = new ProcessorEventsEmitter();
   const clock = new Clock();
   const segmentUsersCache = NewSegmentUsersCache({ cache: cache, ttl: SEGEMENT_USERS_CACHE_TTL });
@@ -311,11 +310,13 @@ test.beforeEach((t) => {
     }),
   );
 
+  const apiClient = new MockAPIClient();
+
   const featureFlagProcessor = NewFeatureFlagProcessor({
     cache: cache,
     featureFlagCache: featureFlagCache,
     pollingInterval: config.cachePollingInterval!,
-    grpc: grpc,
+    apiClient: apiClient,
     eventEmitter: eventEmitter,
     featureTag: config.featureTag,
     clock: new Clock(),
@@ -327,7 +328,7 @@ test.beforeEach((t) => {
     cache: cache,
     segmentUsersCache: segmentUsersCache,
     pollingInterval: config.cachePollingInterval!,
-    grpc: grpc,
+    apiClient: apiClient,
     eventEmitter: eventEmitter,
     clock: new Clock(),
     sourceId: config.sourceId,
@@ -368,7 +369,6 @@ test.beforeEach((t) => {
     },
     evaluator: evaluator,
     cache: cache,
-    grpc: grpc,
     eventEmitter: eventEmitter,
     clock: clock,
     segmentUsersCache: segmentUsersCache,
