@@ -76,12 +76,35 @@ By housing these new `...WithOptions` functions cleanly inside a dedicated `node
 - **Implement inside `node-server-sdk`**
 - Instantiate the `FeatureLastUsedInfo` protobuf dependency natively.
 
-## 4. Testing Plan for Converter Logic
-It is vital to have comprehensive test coverage for this specific Node SDK converter logic because its robustness determines the safety of `local_evaluation`.
+## 4. Testing Plan for Converter Logic (TDD Approach)
+Since we are employing Test-Driven Development (TDD), we will first establish a comprehensive test suite in `node-server-sdk` before implementing the converter logic.
 
-- **File**: `src/__tests__/evaluator/converter.ts`
-- **Scope**: Write test cases mapping mocked `Feature` objects and `SegmentUsers` JSON data through `createFeatureWithOptions` and `createSegmentUsers`. 
-- **Validation**: Assert that `.toObject()` on the returned protobuf classes matches exact expected properties (including deep fields like multivariable `rolloutStrategy` paths and `lastUsedInfo`).
+**Test File:** `src/__tests__/evaluator/converter.ts`
+
+### Test Suite 1: `createFeatureWithOptions`
+We will validate that complete Node SDK `Feature` objects successfully mount to the `@bucketeer/evaluation` Protobuf `Feature`.
+
+1. **TestCase: Full Feature Object Conversion**
+   - **Input:** A mocked Node SDK `Feature` object complete with a `defaultStrategy` containing a complex `fixedStrategy` and `rolloutStrategy` (weights), complex multi-clause `rules`, prerequisites, and deep objects like `FeatureLastUsedInfo`.
+   - **Assertion:** The resulting protobuf `.toObject()` must equal the initial input properties identically.
+2. **TestCase: Missing Optional Dependencies**
+   - **Input:** A mocked Node SDK `Feature` with only the raw mandatory fields (`id`, `name`, `version`, `variationType`). No `rules`, empty `targets`, no `defaultStrategy`, no `lastUsedInfo`.
+   - **Assertion:** Ensure no undefined panics occur and that Protobuf fallback lists (`[]`) are correctly initialized.
+3. **TestCase: Complex Rule Parsing**
+   - **Input:** A mocked `Feature` possessing multiple `rules`, where each `Rule` contains multiple `clauses` (`EQUALS`, `IN`, etc.), mapped to a custom `RolloutStrategy`.
+   - **Assertion:** Deep comparison of `feature.getRulesList()` objects explicitly verifying the array size and properties of the Strategy + Clauses.
+
+### Test Suite 2: `createSegmentUsers`
+We will validate the instantiation of the wrapper mapping class parsing raw ID data arrays.
+
+1. **TestCase: Full SegmentUsers Mapping**
+   - **Input:** A `segmentId`, a `updatedAt` timestamp, and an array of Node SDK `SegmentUser` objects mapping users as `INCLUDED` and `EXCLUDED`.
+   - **Assertion:** `segmentUsers.getSegmentId()` matches, `getUpdatedAt()` matches, and `getUsersList()` returns precisely the same mapped states array without data loss.
+2. **TestCase: Empty Users List**
+   - **Input:** A `segmentId` with an empty `users` array.
+   - **Assertion:** Returns a valid protobuf with a `length === 0` users list.
+
+By implementing these strict tests beforehand, we will confidently execute the zero-impact strategy mapped above.
 
 ## 4. Next Steps & Summary
 Once these updates are made to `@bucketeer/evaluation`'s `modelFactory.ts`, the `node-server-sdk` will be able to iterate over `GetFeatureFlagsResponse.features` and `GetSegmentUsersResponse.segmentUsers`, pass the raw objects through the revised `modelFactory` functions, and safely persist the resulting Protobuf models into `FeaturesCache` and `SegmentUsersCache` for `LocalEvaluator` consumption. 
