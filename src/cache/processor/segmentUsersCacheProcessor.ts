@@ -6,9 +6,8 @@ import { ApiId } from '../../objects/apiId';
 import { SegmentUsers } from '../../objects/segment';
 import { createSchedule, removeSchedule } from '../../schedule';
 import { Clock } from '../../utils/clock';
-import { InvalidStatusError } from '../../objects/errors';
 import { SourceId } from '../../objects/sourceId';
-import { createSegmentUsers } from '../../evaluator/converter';
+import { toProtoSegmentUsers } from '../../evaluator/converter';
 
 interface SegementUsersCacheProcessor {
   start(): Promise<void>;
@@ -145,7 +144,7 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
       await this.segmentUsersCache.delete(deletedSegmentId);
     }
     for (const segmentUsers of segmentUsersList) {
-      await this.segmentUsersCache.put(createSegmentUsers(segmentUsers));
+      await this.segmentUsersCache.put(toProtoSegmentUsers(segmentUsers));
     }
     await this.putSegmentUsersRequestedAt(requestedAt);
   }
