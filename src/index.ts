@@ -252,7 +252,7 @@ function defaultInitialize(resolvedConfig: InternalConfig): Bucketeer {
       cache: cache,
       featureFlagCache: featureFlagCache,
       pollingInterval: resolvedConfig.cachePollingInterval!,
-      grpc: grpcClient,
+      apiClient: apiClient,
       eventEmitter: eventEmitter,
       featureTag: resolvedConfig.featureTag,
       clock: clock,
