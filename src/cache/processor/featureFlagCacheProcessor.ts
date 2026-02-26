@@ -7,6 +7,7 @@ import { Feature } from '../../objects/feature';
 import { ApiId } from '../../objects/apiId';
 import { Clock } from '../../utils/clock';
 import { SourceId } from '../../objects/sourceId';
+import { createFeatureWithOptions } from '../../evaluator/converter';
 
 interface FeatureFlagProcessor {
   start(): Promise<void>;
@@ -110,9 +111,8 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
     this.pushLatencyMetricsEvent(latency);
     this.pushSizeMetricsEvent(size);
 
-    const forceUpdate = featureFlags.forceUpdate;
     const responseRequestedAt = Number(featureFlags.requestedAt);
-    if (forceUpdate) {
+    if (featureFlags.forceUpdate) {
       await this.deleteAllAndSaveLocalCache(
         responseRequestedAt,
         featureFlags.featureFlagsId,
@@ -157,8 +157,7 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
       await this.featureFlagCache.delete(featureId);
     }
     for (const feature of features) {
-      // TODO: convert plain Feature → protobuf Feature via converter before put
-      await this.featureFlagCache.put(feature as any);
+      await this.featureFlagCache.put(createFeatureWithOptions(feature));
     }
     await this.cache.put(FEATURE_FLAG_ID, featureFlagsId, FEATURE_FLAG_CACHE_TTL);
     await this.cache.put(FEATURE_FLAG_REQUESTED_AT, requestedAt, FEATURE_FLAG_CACHE_TTL);
