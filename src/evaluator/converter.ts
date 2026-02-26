@@ -58,7 +58,7 @@ function mapSegmentUserState(state: string): ProtoSegmentUser.StateMap[keyof Pro
   }
 }
 
-export function createFeatureWithOptions(feature: Feature): ProtoFeature {
+export function toProtoFeature(feature: Feature): ProtoFeature {
   const f = new ProtoFeature();
   f.setId(feature.id);
   f.setName(feature.name);
@@ -173,7 +173,7 @@ function mapStrategy(s: SDKStrategy): ProtoStrategy {
   return ps;
 }
 
-export function createSegmentUsers(segmentUsers: SegmentUsers): ProtoSegmentUsers {
+export function toProtoSegmentUsers(segmentUsers: SegmentUsers): ProtoSegmentUsers {
   const psu = new ProtoSegmentUsers();
   psu.setSegmentId(segmentUsers.segmentId);
   psu.setUpdatedAt(parseInt(segmentUsers.updatedAt, 10));

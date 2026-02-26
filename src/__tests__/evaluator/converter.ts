@@ -1,10 +1,10 @@
 import test from 'ava';
 import { Feature } from '../../objects/feature';
 import { SegmentUsers } from '../../objects/segment';
-import { createFeatureWithOptions, createSegmentUsers } from '../../evaluator/converter';
+import { toProtoFeature, toProtoSegmentUsers } from '../../evaluator/converter';
 import { Feature as ProtoFeature } from '@bucketeer/evaluation';
 
-test('createFeatureWithOptions: Full Feature Object Conversion', (t) => {
+test('toProtoFeature: Full Feature Object Conversion', (t) => {
   const mockFeature: Feature = {
     id: 'feature_1',
     name: 'Feature 1',
@@ -58,7 +58,7 @@ test('createFeatureWithOptions: Full Feature Object Conversion', (t) => {
     samplingSeed: 'seed_1',
   };
 
-  const proto = createFeatureWithOptions(mockFeature);
+  const proto = toProtoFeature(mockFeature);
   const obj = proto.toObject();
 
   t.is(obj.id, 'feature_1');
@@ -123,7 +123,7 @@ test('createFeatureWithOptions: Full Feature Object Conversion', (t) => {
   t.is(obj.prerequisitesList[0].variationId, 'pre_var_1');
 });
 
-test('createFeatureWithOptions: Missing Optional Dependencies', (t) => {
+test('toProtoFeature: Missing Optional Dependencies', (t) => {
   const mockFeature: Feature = {
     id: 'feature_min',
     name: 'Feature Min',
@@ -145,7 +145,7 @@ test('createFeatureWithOptions: Missing Optional Dependencies', (t) => {
     samplingSeed: '',
   };
 
-  const proto = createFeatureWithOptions(mockFeature);
+  const proto = toProtoFeature(mockFeature);
   const obj = proto.toObject();
 
   t.is(obj.id, 'feature_min');
@@ -159,7 +159,7 @@ test('createFeatureWithOptions: Missing Optional Dependencies', (t) => {
   t.falsy(obj.defaultStrategy);
 });
 
-test('createSegmentUsers: Full SegmentUsers Mapping', (t) => {
+test('toProtoSegmentUsers: Full SegmentUsers Mapping', (t) => {
   const mockSegmentUsers: SegmentUsers = {
     segmentId: 'seg_1',
     updatedAt: '1690000000',
@@ -169,7 +169,7 @@ test('createSegmentUsers: Full SegmentUsers Mapping', (t) => {
     ],
   };
 
-  const proto = createSegmentUsers(mockSegmentUsers);
+  const proto = toProtoSegmentUsers(mockSegmentUsers);
   const obj = proto.toObject();
 
   t.is(obj.segmentId, 'seg_1');
@@ -191,14 +191,14 @@ test('createSegmentUsers: Full SegmentUsers Mapping', (t) => {
   t.is(obj.usersList[1].deleted, false);
 });
 
-test('createSegmentUsers: Empty Users List', (t) => {
+test('toProtoSegmentUsers: Empty Users List', (t) => {
   const mockSegmentUsers: SegmentUsers = {
     segmentId: 'seg_empty',
     updatedAt: '1690000000',
     users: [],
   };
 
-  const proto = createSegmentUsers(mockSegmentUsers);
+  const proto = toProtoSegmentUsers(mockSegmentUsers);
   const obj = proto.toObject();
 
   t.is(obj.segmentId, 'seg_empty');
