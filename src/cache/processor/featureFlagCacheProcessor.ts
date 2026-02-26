@@ -1,9 +1,9 @@
 import { FeaturesCache } from '../features';
 import { Cache } from '../cache';
-import { GRPCClient } from '../../grpc/client';
+import { APIClient } from '../../api/client';
 import { ProcessorEventsEmitter } from '../../processorEventsEmitter';
 import { createSchedule, removeSchedule } from '../../schedule';
-import { Feature } from '@bucketeer/evaluation';
+import { Feature } from '../../objects/feature';
 import { ApiId } from '../../objects/apiId';
 import { Clock } from '../../utils/clock';
 import { SourceId } from '../../objects/sourceId';
@@ -17,7 +17,7 @@ type FeatureFlagProcessorOptions = {
   cache: Cache;
   featureFlagCache: FeaturesCache;
   pollingInterval: number;
-  grpc: GRPCClient;
+  apiClient: APIClient;
   eventEmitter: ProcessorEventsEmitter;
   featureTag: string;
   clock: Clock;
@@ -36,7 +36,7 @@ const FEATURE_FLAG_ID = 'bucketeer_feature_flag_id';
 class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
   private featureFlagCache: FeaturesCache;
   private cache: Cache;
-  private grpc: GRPCClient;
+  private apiClient: APIClient;
   private eventEmitter: ProcessorEventsEmitter;
   private pollingScheduleID?: NodeJS.Timeout;
   private pollingInterval: number;
@@ -49,7 +49,7 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
   constructor(options: FeatureFlagProcessorOptions) {
     this.featureFlagCache = options.featureFlagCache;
     this.cache = options.cache;
-    this.grpc = options.grpc;
+    this.apiClient = options.apiClient;
     this.eventEmitter = options.eventEmitter;
     this.pollingInterval = options.pollingInterval;
     this.featureTag = options.featureTag;
@@ -96,33 +96,34 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
     const featureFlagsId = await this.getFeatureFlagId();
     const requestedAt = await this.getFeatureFlagRequestedAt();
     const startTime: number = this.clock.getTime();
-    const featureFlags = await this.grpc.getFeatureFlags({
-      requestedAt: requestedAt,
-      tag: this.featureTag,
-      featureFlagsId: featureFlagsId,
-      sourceId: this.sourceId,
-      sdkVersion: this.sdkVersion,
-    });
+    const [featureFlags, size] = await this.apiClient.getFeatureFlags(
+      this.featureTag,
+      featureFlagsId,
+      requestedAt,
+      this.sourceId,
+      this.sdkVersion,
+    );
 
     const endTime = this.clock.getTime();
     const latency = (endTime - startTime) / 1000;
 
     this.pushLatencyMetricsEvent(latency);
-    this.pushSizeMetricsEvent(featureFlags.serializeBinary().length);
+    this.pushSizeMetricsEvent(size);
 
-    const forceUpdate = featureFlags.getForceUpdate();
+    const forceUpdate = featureFlags.forceUpdate;
+    const responseRequestedAt = Number(featureFlags.requestedAt);
     if (forceUpdate) {
       await this.deleteAllAndSaveLocalCache(
-        featureFlags.getRequestedAt(),
-        featureFlags.getFeatureFlagsId(),
-        featureFlags.getFeaturesList(),
+        responseRequestedAt,
+        featureFlags.featureFlagsId,
+        featureFlags.features,
       );
     } else {
       await this.updateLocalCache(
-        featureFlags.getRequestedAt(),
-        featureFlags.getFeatureFlagsId(),
-        featureFlags.getFeaturesList(),
-        featureFlags.getArchivedFeatureFlagIdsList(),
+        responseRequestedAt,
+        featureFlags.featureFlagsId,
+        featureFlags.features,
+        featureFlags.archivedFeatureFlagIds,
       );
     }
   }
@@ -156,7 +157,8 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
       await this.featureFlagCache.delete(featureId);
     }
     for (const feature of features) {
-      await this.featureFlagCache.put(feature);
+      // TODO: convert plain Feature → protobuf Feature via converter before put
+      await this.featureFlagCache.put(feature as any);
     }
     await this.cache.put(FEATURE_FLAG_ID, featureFlagsId, FEATURE_FLAG_CACHE_TTL);
     await this.cache.put(FEATURE_FLAG_REQUESTED_AT, requestedAt, FEATURE_FLAG_CACHE_TTL);
