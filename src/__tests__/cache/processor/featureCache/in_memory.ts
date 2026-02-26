@@ -115,7 +115,7 @@ test('polling cache - using InMemoryCache()', async (t) => {
   t.is(featureFlagId, 'featureFlagsId');
 
   const requestedAt = await cache.get(FEATURE_FLAG_REQUESTED_AT);
-  t.true(requestedAt == 1000);
+  t.is(requestedAt, 1000);
 
   t.is(apiClient.capturedTag, featureFlag);
   t.is(apiClient.capturedFeatureFlagsId, '');
