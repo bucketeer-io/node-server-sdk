@@ -1,8 +1,5 @@
 import { APIClient } from '../../api/client';
-import {
-  GetFeatureFlagsResponse,
-  GetSegmentUsersResponse,
-} from '../../objects/response';
+import { GetFeatureFlagsResponse, GetSegmentUsersResponse } from '../../objects/response';
 import { SourceId } from '../../objects/sourceId';
 
 class MockAPIClient implements Pick<APIClient, 'getFeatureFlags' | 'getSegmentUsers'> {

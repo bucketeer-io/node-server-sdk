@@ -18,7 +18,7 @@ type FeatureFlagProcessorOptions = {
   cache: Cache;
   featureFlagCache: FeaturesCache;
   pollingInterval: number;
-  apiClient: APIClient;
+  apiClient: Pick<APIClient, 'getFeatureFlags' | 'getSegmentUsers'>;
   eventEmitter: ProcessorEventsEmitter;
   featureTag: string;
   clock: Clock;
@@ -37,7 +37,7 @@ const FEATURE_FLAG_ID = 'bucketeer_feature_flag_id';
 class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
   private featureFlagCache: FeaturesCache;
   private cache: Cache;
-  private apiClient: APIClient;
+  private apiClient: Pick<APIClient, 'getFeatureFlags' | 'getSegmentUsers'>;
   private eventEmitter: ProcessorEventsEmitter;
   private pollingScheduleID?: NodeJS.Timeout;
   private pollingInterval: number;

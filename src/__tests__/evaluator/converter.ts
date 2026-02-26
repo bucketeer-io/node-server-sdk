@@ -16,12 +16,8 @@ test('toProtoFeature: Full Feature Object Conversion', (t) => {
     createdAt: '1690000000',
     updatedAt: '1690000000',
     variationType: 'STRING',
-    variations: [
-      { id: 'var_1', value: 'value_1', name: 'Variation 1', description: 'desc 1' },
-    ],
-    targets: [
-      { variation: 'var_1', users: ['user_1'] },
-    ],
+    variations: [{ id: 'var_1', value: 'value_1', name: 'Variation 1', description: 'desc 1' }],
+    targets: [{ variation: 'var_1', users: ['user_1'] }],
     rules: [
       {
         id: 'rule_1',
@@ -31,9 +27,7 @@ test('toProtoFeature: Full Feature Object Conversion', (t) => {
             variations: [{ variation: 'var_1', weight: 100000 }],
           },
         },
-        clauses: [
-          { id: 'clause_1', attribute: 'attr_1', operator: 'EQUALS', values: ['val_1'] },
-        ],
+        clauses: [{ id: 'clause_1', attribute: 'attr_1', operator: 'EQUALS', values: ['val_1'] }],
       },
     ],
     defaultStrategy: {
@@ -52,9 +46,7 @@ test('toProtoFeature: Full Feature Object Conversion', (t) => {
     },
     maintainer: 'm1',
     archived: false,
-    prerequisites: [
-      { featureId: 'pre_1', variationId: 'pre_var_1' },
-    ],
+    prerequisites: [{ featureId: 'pre_1', variationId: 'pre_var_1' }],
     samplingSeed: 'seed_1',
   };
 
@@ -82,7 +74,7 @@ test('toProtoFeature: Full Feature Object Conversion', (t) => {
   t.is(obj.variationsList[0].value, 'value_1');
   t.is(obj.variationsList[0].name, 'Variation 1');
   t.is(obj.variationsList[0].description, 'desc 1');
-  
+
   t.is(obj.targetsList.length, 1);
   t.is(obj.targetsList[0].variation, 'var_1');
   t.deepEqual(obj.targetsList[0].usersList, ['user_1']);
@@ -96,7 +88,7 @@ test('toProtoFeature: Full Feature Object Conversion', (t) => {
   // EQUALS = 0, IN = 1, STARTS_WITH = 2, ENDS_WITH = 3, SEGMENT = 4, ...
   t.is(obj.rulesList[0].clausesList[0].operator, 0); // Clause.Operator.EQUALS = 0
   t.deepEqual(obj.rulesList[0].clausesList[0].valuesList, ['val_1']);
-  
+
   t.truthy(obj.rulesList[0].strategy);
   // Strategy.Type enum values are defined in @bucketeer/evaluation/lib/proto/feature/strategy_pb.d.ts
   // FIXED = 0, ROLLOUT = 1
