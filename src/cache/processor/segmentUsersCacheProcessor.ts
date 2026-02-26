@@ -18,7 +18,7 @@ type SegementUsersCacheProcessorOptions = {
   cache: Cache;
   segmentUsersCache: SegmentUsersCache;
   pollingInterval: number;
-  apiClient: APIClient;
+  apiClient: Pick<APIClient, 'getFeatureFlags' | 'getSegmentUsers'>;
   eventEmitter: ProcessorEventsEmitter;
   clock: Clock;
   sourceId: SourceId;
@@ -38,7 +38,7 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
   private cache: Cache;
   private segmentUsersCache: SegmentUsersCache;
   private pollingInterval: number;
-  private apiClient: APIClient;
+  private apiClient: Pick<APIClient, 'getFeatureFlags' | 'getSegmentUsers'>;
   private eventEmitter: ProcessorEventsEmitter;
   private pollingScheduleID?: NodeJS.Timeout;
   private clock: Clock;
@@ -64,10 +64,7 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
       this.pushErrorMetricsEvent(e);
       throw e;
     } finally {
-      this.pollingScheduleID = createSchedule(
-        () => this.runUpdateCache(),
-        this.pollingInterval,
-      );
+      this.pollingScheduleID = createSchedule(() => this.runUpdateCache(), this.pollingInterval);
     }
   }
 
@@ -114,23 +111,13 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
 
     const responseRequestedAt = Number(resp.requestedAt);
     if (resp.forceUpdate) {
-      await this.deleteAllAndSaveLocalCache(
-        responseRequestedAt,
-        resp.segmentUsers,
-      );
+      await this.deleteAllAndSaveLocalCache(responseRequestedAt, resp.segmentUsers);
     } else {
-      await this.updateLocalCache(
-        responseRequestedAt,
-        resp.segmentUsers,
-        resp.deletedSegmentIds,
-      );
+      await this.updateLocalCache(responseRequestedAt, resp.segmentUsers, resp.deletedSegmentIds);
     }
   }
 
-  async deleteAllAndSaveLocalCache(
-    requestedAt: number,
-    segmentUsersList: SegmentUsers[],
-  ) {
+  async deleteAllAndSaveLocalCache(requestedAt: number, segmentUsersList: SegmentUsers[]) {
     await this.segmentUsersCache.deleteAll();
     await this.updateLocalCache(requestedAt, segmentUsersList, []);
   }
@@ -155,11 +142,7 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
   }
 
   putSegmentUsersRequestedAt(requestedAt: number): Promise<void> {
-    return this.cache.put(
-      SEGEMENT_USERS_REQUESTED_AT,
-      requestedAt,
-      SEGEMENT_USERS_CACHE_TTL,
-    );
+    return this.cache.put(SEGEMENT_USERS_REQUESTED_AT, requestedAt, SEGEMENT_USERS_CACHE_TTL);
   }
 
   async pushLatencyMetricsEvent(latency: number) {
