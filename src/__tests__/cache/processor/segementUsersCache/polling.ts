@@ -75,15 +75,15 @@ test('polling cache', async (t) => {
   mockAPIClientGetSegmentUsersExpect.onFirstCall().resolves([response, responseSize]);
   mockAPIClientGetSegmentUsersExpect.resolves([response, responseSize]);
 
-  mockCache.expects('put').thrice().withArgs(SEGEMENT_USERS_REQUESTED_AT, 1200);
+  mockCache.expects('put').thrice().withArgs(SEGEMENT_USERS_REQUESTED_AT, 1200, SEGEMENT_USERS_CACHE_TTL);
   mockCache
     .expects('put')
     .thrice()
-    .withArgs(`${SEGMENT_USERS_CACHE_NAME_SPACE}segmentId1`, toProtoSegmentUsers(segementUser1));
+    .withArgs(`${SEGMENT_USERS_CACHE_NAME_SPACE}segmentId1`, toProtoSegmentUsers(segementUser1), SEGEMENT_USERS_CACHE_TTL);
   mockCache
     .expects('put')
     .thrice()
-    .withArgs(`${SEGMENT_USERS_CACHE_NAME_SPACE}segmentId2`, toProtoSegmentUsers(segementUser2));
+    .withArgs(`${SEGMENT_USERS_CACHE_NAME_SPACE}segmentId2`, toProtoSegmentUsers(segementUser2), SEGEMENT_USERS_CACHE_TTL);
 
   const mockEventEmitter = sino.mock(eventEmitter);
   mockEventEmitter

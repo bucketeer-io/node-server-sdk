@@ -171,7 +171,7 @@ test('err: failed while putting featureFlagsID, and the forceUpdate is true', as
     .expects('getFeatureFlags')
     .once()
     .withArgs(featureTag, 'feature-flags-id-1', 10, options.sourceId, options.sdkVersion)
-    .returns([response, responseSize]);
+    .resolves([response, responseSize]);
 
   mockProcessorEventsEmitter
     .expects('emit')
@@ -223,7 +223,7 @@ test('err: failed while putting requestedAt, and the forceUpdate is true', async
     .expects('getFeatureFlags')
     .once()
     .withArgs(featureTag, 'feature-flags-id-1', 10, options.sourceId, options.sdkVersion)
-    .returns([response, responseSize]);
+    .resolves([response, responseSize]);
 
   mockProcessorEventsEmitter
     .expects('emit')
@@ -280,7 +280,7 @@ test('err: failed while putting featureFlagsID, and the forceUpdate is false', a
     .expects('getFeatureFlags')
     .once()
     .withArgs(featureTag, 'feature-flags-id-1', 10, options.sourceId, options.sdkVersion)
-    .returns([response, responseSize]);
+    .resolves([response, responseSize]);
 
   mockProcessorEventsEmitter
     .expects('emit')
@@ -339,7 +339,7 @@ test('err: failed while putting requestedAt, and the forceUpdate is false', asyn
     .expects('getFeatureFlags')
     .once()
     .withArgs(featureTag, 'feature-flags-id-1', 10, options.sourceId, options.sdkVersion)
-    .returns([response, responseSize]);
+    .resolves([response, responseSize]);
 
   mockProcessorEventsEmitter
     .expects('emit')
@@ -391,7 +391,7 @@ test('success: featureFlagsID not found', async (t) => {
     .expects('getFeatureFlags')
     .once()
     .withArgs(featureTag, '', 10, options.sourceId, options.sdkVersion)
-    .returns([response, responseSize]);
+    .resolves([response, responseSize]);
 
   mockProcessorEventsEmitter
     .expects('emit')
@@ -430,7 +430,7 @@ test('success: requestedAt not found', async (t) => {
     .expects('getFeatureFlags')
     .once()
     .withArgs(featureTag, 'feature-flags-id-1', 0, options.sourceId, options.sdkVersion)
-    .returns([response, responseSize]);
+    .resolves([response, responseSize]);
 
   mockProcessorEventsEmitter
     .expects('emit')
@@ -468,7 +468,7 @@ test('success: forceUpdate is true', async (t) => {
     .expects('getFeatureFlags')
     .once()
     .withArgs(featureTag, 'feature-flags-id-1', 10, options.sourceId, options.sdkVersion)
-    .returns([response, responseSize]);
+    .resolves([response, responseSize]);
 
   mockProcessorEventsEmitter
     .expects('emit')
@@ -518,7 +518,7 @@ test('success: forceUpdate is false', async (t) => {
     .expects('getFeatureFlags')
     .once()
     .withArgs(featureTag, 'feature-flags-id-1', 10, options.sourceId, options.sdkVersion)
-    .returns([response, responseSize]);
+    .resolves([response, responseSize]);
 
   mockProcessorEventsEmitter
     .expects('emit')
