@@ -10,3 +10,6 @@ __e2e
 lib
 .vscode/launch.json
 .env
+.yarn/cache
+.yarn/install-state.gz
+.yarn/releases/
