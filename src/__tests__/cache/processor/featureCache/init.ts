@@ -108,7 +108,7 @@ test.serial('start success', async (t) => {
     .expects('getFeatureFlags')
     .once()
     .withArgs(featureTag, 'feature-flags-id-1', 10, options.sourceId, options.sdkVersion)
-    .returns([response, responseSize]);
+    .resolves([response, responseSize]);
 
   mockProcessorEventsEmitter
     .expects('emit')
