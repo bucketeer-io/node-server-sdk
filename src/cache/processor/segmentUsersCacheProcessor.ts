@@ -109,7 +109,7 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
     this.pushLatencyMetricsEvent(latency);
     this.pushSizeMetricsEvent(size);
 
-    const responseRequestedAt = Number(resp.requestedAt);
+    const responseRequestedAt = Number(resp.requestedAt) || 0;
     if (resp.forceUpdate) {
       await this.deleteAllAndSaveLocalCache(responseRequestedAt, resp.segmentUsers);
     } else {

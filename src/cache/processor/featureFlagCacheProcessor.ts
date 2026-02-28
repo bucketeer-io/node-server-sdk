@@ -111,7 +111,7 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
     this.pushLatencyMetricsEvent(latency);
     this.pushSizeMetricsEvent(size);
 
-    const responseRequestedAt = Number(featureFlags.requestedAt);
+    const responseRequestedAt = Number(featureFlags.requestedAt) || 0;
     if (featureFlags.forceUpdate) {
       await this.deleteAllAndSaveLocalCache(
         responseRequestedAt,
