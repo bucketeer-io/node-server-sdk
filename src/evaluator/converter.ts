@@ -98,8 +98,8 @@ export function toProtoFeature(feature: Feature): ProtoFeature {
   f.setDeleted(feature.deleted);
   f.setTtl(feature.ttl);
   f.setVersion(feature.version);
-  f.setCreatedAt(parseInt(feature.createdAt, 10));
-  f.setUpdatedAt(parseInt(feature.updatedAt, 10));
+  f.setCreatedAt(Number(feature.createdAt) || 0);
+  f.setUpdatedAt(Number(feature.updatedAt) || 0);
   f.setVariationType(mapVariationType(feature.variationType));
   f.setOffVariation(feature.offVariation);
   f.setTagsList(feature.tags);
@@ -169,8 +169,8 @@ export function toProtoFeature(feature: Feature): ProtoFeature {
     const pInfo = new ProtoFeatureLastUsedInfo();
     pInfo.setFeatureId(feature.lastUsedInfo.featureId);
     pInfo.setVersion(feature.lastUsedInfo.version);
-    pInfo.setLastUsedAt(parseInt(feature.lastUsedInfo.lastUsedAt, 10));
-    pInfo.setCreatedAt(parseInt(feature.lastUsedInfo.createdAt, 10));
+    pInfo.setLastUsedAt(Number(feature.lastUsedInfo.lastUsedAt) || 0);
+    pInfo.setCreatedAt(Number(feature.lastUsedInfo.createdAt) || 0);
     pInfo.setClientOldestVersion(feature.lastUsedInfo.clientOldestVersion);
     pInfo.setClientLatestVersion(feature.lastUsedInfo.clientLatestVersion);
     f.setLastUsedInfo(pInfo);
@@ -219,7 +219,7 @@ function mapStrategy(s: SDKStrategy): ProtoStrategy {
 export function toProtoSegmentUsers(segmentUsers: SegmentUsers): ProtoSegmentUsers {
   const psu = new ProtoSegmentUsers();
   psu.setSegmentId(segmentUsers.segmentId);
-  psu.setUpdatedAt(parseInt(segmentUsers.updatedAt, 10));
+  psu.setUpdatedAt(Number(segmentUsers.updatedAt) || 0);
 
   psu.setUsersList(
     segmentUsers.users.map((u) => {
