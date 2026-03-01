@@ -1,13 +1,13 @@
 import { SegmentUsersCache } from '../segmentUsers';
-import { GRPCClient } from '../../grpc/client';
+import { APIClient } from '../../api/client';
 import { ProcessorEventsEmitter } from '../../processorEventsEmitter';
 import { Cache } from '../cache';
 import { ApiId } from '../../objects/apiId';
-import { SegmentUsers } from '@bucketeer/evaluation';
+import { SegmentUsers } from '../../objects/segment';
 import { createSchedule, removeSchedule } from '../../schedule';
 import { Clock } from '../../utils/clock';
-import { InvalidStatusError } from '../../objects/errors';
 import { SourceId } from '../../objects/sourceId';
+import { toProtoSegmentUsers } from '../../evaluator/converter';
 
 interface SegementUsersCacheProcessor {
   start(): Promise<void>;
@@ -18,7 +18,7 @@ type SegementUsersCacheProcessorOptions = {
   cache: Cache;
   segmentUsersCache: SegmentUsersCache;
   pollingInterval: number;
-  grpc: GRPCClient;
+  apiClient: Pick<APIClient, 'getFeatureFlags' | 'getSegmentUsers'>;
   eventEmitter: ProcessorEventsEmitter;
   clock: Clock;
   sourceId: SourceId;
@@ -38,7 +38,7 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
   private cache: Cache;
   private segmentUsersCache: SegmentUsersCache;
   private pollingInterval: number;
-  private grpc: GRPCClient;
+  private apiClient: Pick<APIClient, 'getFeatureFlags' | 'getSegmentUsers'>;
   private eventEmitter: ProcessorEventsEmitter;
   private pollingScheduleID?: NodeJS.Timeout;
   private clock: Clock;
@@ -49,7 +49,7 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
     this.cache = options.cache;
     this.segmentUsersCache = options.segmentUsersCache;
     this.pollingInterval = options.pollingInterval;
-    this.grpc = options.grpc;
+    this.apiClient = options.apiClient;
     this.eventEmitter = options.eventEmitter;
     this.clock = options.clock;
     this.sourceId = options.sourceId;
@@ -64,10 +64,7 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
       this.pushErrorMetricsEvent(e);
       throw e;
     } finally {
-      this.pollingScheduleID = createSchedule(
-        () => this.runUpdateCache(),
-        this.pollingInterval,
-      );
+      this.pollingScheduleID = createSchedule(() => this.runUpdateCache(), this.pollingInterval);
     }
   }
 
@@ -99,37 +96,28 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
 
     const startTime: number = this.clock.getTime();
 
-    const resp = await this.grpc.getSegmentUsers({
-      segmentIdsList: segmentIds,
-      requestedAt: requestedAt,
-      sourceId: sourceId,
-      sdkVersion: sdkVersion,
-    });
+    const [resp, size] = await this.apiClient.getSegmentUsers(
+      segmentIds,
+      requestedAt,
+      sourceId,
+      sdkVersion,
+    );
 
     const endTime: number = this.clock.getTime();
     const latency = (endTime - startTime) / 1000;
 
     this.pushLatencyMetricsEvent(latency);
-    this.pushSizeMetricsEvent(resp.serializeBinary().length);
+    this.pushSizeMetricsEvent(size);
 
-    if (resp.getForceUpdate()) {
-      await this.deleteAllAndSaveLocalCache(
-        resp.getRequestedAt(),
-        resp.getSegmentUsersList(),
-      );
+    const responseRequestedAt = Number(resp.requestedAt) || 0;
+    if (resp.forceUpdate) {
+      await this.deleteAllAndSaveLocalCache(responseRequestedAt, resp.segmentUsers);
     } else {
-      await this.updateLocalCache(
-        resp.getRequestedAt(),
-        resp.getSegmentUsersList(),
-        resp.getDeletedSegmentIdsList(),
-      );
+      await this.updateLocalCache(responseRequestedAt, resp.segmentUsers, resp.deletedSegmentIds);
     }
   }
 
-  async deleteAllAndSaveLocalCache(
-    requestedAt: number,
-    segmentUsersList: SegmentUsers[],
-  ) {
+  async deleteAllAndSaveLocalCache(requestedAt: number, segmentUsersList: SegmentUsers[]) {
     await this.segmentUsersCache.deleteAll();
     await this.updateLocalCache(requestedAt, segmentUsersList, []);
   }
@@ -143,7 +131,7 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
       await this.segmentUsersCache.delete(deletedSegmentId);
     }
     for (const segmentUsers of segmentUsersList) {
-      await this.segmentUsersCache.put(segmentUsers);
+      await this.segmentUsersCache.put(toProtoSegmentUsers(segmentUsers));
     }
     await this.putSegmentUsersRequestedAt(requestedAt);
   }
@@ -154,11 +142,7 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
   }
 
   putSegmentUsersRequestedAt(requestedAt: number): Promise<void> {
-    return this.cache.put(
-      SEGEMENT_USERS_REQUESTED_AT,
-      requestedAt,
-      SEGEMENT_USERS_CACHE_TTL,
-    );
+    return this.cache.put(SEGEMENT_USERS_REQUESTED_AT, requestedAt, SEGEMENT_USERS_CACHE_TTL);
   }
 
   async pushLatencyMetricsEvent(latency: number) {

@@ -1,16 +1,14 @@
 import test from 'ava';
 import sino from 'sinon';
-
-import { GetSegmentUsersResponse, SegmentUsers } from '@bucketeer/evaluation';
-
+import { GetSegmentUsersResponse } from '../../../../objects/response';
+import { SegmentUsers } from '../../../../objects/segment';
 import {
   NewSegementUserCacheProcessor,
   SEGEMENT_USERS_CACHE_TTL,
   SEGEMENT_USERS_REQUESTED_AT,
 } from '../../../../cache/processor/segmentUsersCacheProcessor';
 import { MockCache } from '../../../mocks/cache';
-import { MockGRPCClient } from '../../../mocks/gprc';
-
+import { MockAPIClient } from '../../../mocks/api';
 import { Clock } from '../../../../utils/clock';
 import {
   NewSegmentUsersCache,
@@ -19,13 +17,13 @@ import {
 import { ApiId } from '../../../../objects/apiId';
 import { ProcessorEventsEmitter } from '../../../../processorEventsEmitter';
 import { SourceId } from '../../../../objects/sourceId';
+import { toProtoSegmentUsers } from '../../../../evaluator/converter';
 
 test('polling cache', async (t) => {
   const cache = new MockCache();
-  const grpc = new MockGRPCClient();
+  const apiClient = new MockAPIClient();
   const eventEmitter = new ProcessorEventsEmitter();
   const clock = new Clock();
-  const featureTag = 'featureTag';
   const sourceId = SourceId.OPEN_FEATURE_NODE;
   const sdkVersion = '0.1.0';
 
@@ -33,12 +31,11 @@ test('polling cache', async (t) => {
     cache,
     segmentUsersCache: NewSegmentUsersCache({ cache: cache, ttl: SEGEMENT_USERS_CACHE_TTL }),
     pollingInterval: 1000,
-    grpc,
+    apiClient,
     eventEmitter,
-    featureTag: featureTag,
     clock,
-    sourceId: sourceId,
-    sdkVersion: sdkVersion,
+    sourceId,
+    sdkVersion,
   };
 
   const mockClock = sino.mock(clock);
@@ -59,52 +56,48 @@ test('polling cache', async (t) => {
   mockCacheGetAllExpect.resolves([]);
 
   const mockCacheLastUpdatedExpect = mockCache.expects('get').thrice();
-
   mockCacheLastUpdatedExpect.withArgs(SEGEMENT_USERS_REQUESTED_AT).onFirstCall().resolves(null);
   mockCacheLastUpdatedExpect.resolves(1100);
 
-  const segementUser1 = new SegmentUsers();
-  segementUser1.setSegmentId('segmentId1');
+  const segementUser1: SegmentUsers = { segmentId: 'segmentId1', updatedAt: '1200', users: [] };
+  const segementUser2: SegmentUsers = { segmentId: 'segmentId2', updatedAt: '1200', users: [] };
 
-  const segementUser2 = new SegmentUsers();
-  segementUser2.setSegmentId('segmentId2');
+  const response: GetSegmentUsersResponse = {
+    requestedAt: '1200',
+    segmentUsers: [segementUser1, segementUser2],
+    forceUpdate: false,
+    deletedSegmentIds: [],
+  };
+  const responseSize = 256;
 
-  const response = new GetSegmentUsersResponse();
-  response.setRequestedAt(1200);
-  response.setSegmentUsersList([segementUser1, segementUser2]);
-  response.setForceUpdate(false);
+  const mockAPIClient = sino.mock(apiClient);
+  const mockAPIClientGetSegmentUsersExpect = mockAPIClient.expects('getSegmentUsers').thrice();
+  mockAPIClientGetSegmentUsersExpect.onFirstCall().resolves([response, responseSize]);
+  mockAPIClientGetSegmentUsersExpect.resolves([response, responseSize]);
 
-  const responseSize = response.serializeBinary().length;
-
-  const mockGRPCClient = sino.mock(grpc);
-  //TODO: should verify arguments for thrice calls
-  const mockGRPCClientGetSegmentUsersExpect = mockGRPCClient.expects('getSegmentUsers').thrice();
-  mockGRPCClientGetSegmentUsersExpect.onFirstCall().resolves(response);
-  mockGRPCClientGetSegmentUsersExpect.resolves(response);
-
-  mockCache.expects('put').thrice().withArgs(SEGEMENT_USERS_REQUESTED_AT, 1200);
+  mockCache.expects('put').thrice().withArgs(SEGEMENT_USERS_REQUESTED_AT, 1200, SEGEMENT_USERS_CACHE_TTL);
   mockCache
     .expects('put')
     .thrice()
-    .withArgs(`${SEGMENT_USERS_CACHE_NAME_SPACE}segmentId1`, segementUser1);
+    .withArgs(`${SEGMENT_USERS_CACHE_NAME_SPACE}segmentId1`, toProtoSegmentUsers(segementUser1), SEGEMENT_USERS_CACHE_TTL);
   mockCache
     .expects('put')
     .thrice()
-    .withArgs(`${SEGMENT_USERS_CACHE_NAME_SPACE}segmentId2`, segementUser2);
+    .withArgs(`${SEGMENT_USERS_CACHE_NAME_SPACE}segmentId2`, toProtoSegmentUsers(segementUser2), SEGEMENT_USERS_CACHE_TTL);
 
   const mockEventEmitter = sino.mock(eventEmitter);
-  mockEventEmitter.expects('emit').once().withArgs('pushLatencyMetricsEvent', {
-    latency: 2.21,
-    apiId: ApiId.GET_SEGMENT_USERS,
-  });
-  mockEventEmitter.expects('emit').once().withArgs('pushLatencyMetricsEvent', {
-    latency: 2.8,
-    apiId: ApiId.GET_SEGMENT_USERS,
-  });
-  mockEventEmitter.expects('emit').once().withArgs('pushLatencyMetricsEvent', {
-    latency: 1.0,
-    apiId: ApiId.GET_SEGMENT_USERS,
-  });
+  mockEventEmitter
+    .expects('emit')
+    .once()
+    .withArgs('pushLatencyMetricsEvent', { latency: 2.21, apiId: ApiId.GET_SEGMENT_USERS });
+  mockEventEmitter
+    .expects('emit')
+    .once()
+    .withArgs('pushLatencyMetricsEvent', { latency: 2.8, apiId: ApiId.GET_SEGMENT_USERS });
+  mockEventEmitter
+    .expects('emit')
+    .once()
+    .withArgs('pushLatencyMetricsEvent', { latency: 1.0, apiId: ApiId.GET_SEGMENT_USERS });
   mockEventEmitter
     .expects('emit')
     .thrice()
@@ -113,12 +106,12 @@ test('polling cache', async (t) => {
   const processor = NewSegementUserCacheProcessor(options);
 
   await processor.start();
-
   await new Promise((resolve) => setTimeout(resolve, 2100));
-
   await processor.stop();
 
+  mockClock.verify();
   mockCache.verify();
-  mockGRPCClient.verify();
+  mockAPIClient.verify();
+  mockEventEmitter.verify();
   t.pass();
 });
