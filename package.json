@@ -46,7 +46,7 @@
     "rename-cli": "6.2.1",
     "replace": "1.2.2",
     "rollup": "^4.50.2",
-    "semver": "7.7.3",
+    "semver": "7.7.4",
     "terser": "5.43.1",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.41.0",
