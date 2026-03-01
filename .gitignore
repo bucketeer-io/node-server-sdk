@@ -9,6 +9,8 @@ __test
 __e2e
 lib
 .vscode/launch.json
+# Ignore yarn v3 files as we are using v1.22
 .yarn/cache
 .yarn/install-state.gz
 .yarn/releases/
+.yarnrc.yml
