@@ -8,8 +8,8 @@
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "dependencies": {
-    "@bucketeer/evaluation": "0.0.7",
-    "uuid": "^11.1.0"
+    "uuid": "^11.1.0",
+    "@bucketeer/evaluation": "0.0.7"
   },
   "devDependencies": {
     "@ava/babel": "2.0.0",
@@ -27,13 +27,11 @@
     "@rollup/plugin-node-resolve": "^16.0.3",
     "@rollup/plugin-replace": "^6.0.3",
     "@types/eslint": "^9.6.1",
-    "@types/node": "^22.15.35",
     "@types/node-fetch": "2.6.13",
-    "@types/sinon": "^17.0.4",
-    "@types/uuid": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^8.46.3",
     "@typescript-eslint/parser": "^8.46.3",
     "ava": "6.4.1",
+    "@types/sinon": "^17.0.4",
     "sinon": "^21.0.0",
     "cpx": "1.5.0",
     "dotenv": "^17.4.2",
@@ -47,10 +45,11 @@
     "replace": "1.2.2",
     "rollup": "^4.50.2",
     "semver": "7.7.4",
-    "sinon": "^21.0.0",
     "terser": "5.46.2",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.41.0",
-    "uglify-es": "3.3.9"
+    "uglify-es": "3.3.9",
+    "@types/node": "^22.15.35",
+    "@types/uuid": "^10.0.0"
   }
 }
