@@ -108,8 +108,7 @@ export function toProtoFeature(feature: Feature): ProtoFeature {
   f.setSamplingSeed(feature.samplingSeed);
 
   // Note: Two fields present in the Protobuf definition ('evaluationUndelayable' and 'autoOpsSummary')
-  // are omitted because the current Node SDK Feature response model does not return them.
-  // Verify with backend team if these are needed for evaluation payload matching.
+  // are omitted because the current GO SDK Feature response model does not have them.
 
   if (feature.variations) {
     f.setVariationsList(
