@@ -22,7 +22,6 @@ import { LocalEvaluator, protoReasonToReason } from '../../evaluator/local';
 import { SEGEMENT_USERS_CACHE_TTL } from '../../cache/processor/segmentUsersCacheProcessor';
 import { FEATURE_FLAG_CACHE_TTL } from '../../cache/processor/featureFlagCacheProcessor';
 import { MockCache } from '../mocks/cache';
-import { MockGRPCClient } from '../mocks/gprc';
 
 import { Clock } from '../../utils/clock';
 import { NewSegmentUsersCache, SegmentUsersCache } from '../../cache/segmentUsers';
@@ -34,7 +33,6 @@ const test = anyTest as TestFn<{
   sandbox: sino.SinonSandbox;
   evaluator: LocalEvaluator;
   cache: MockCache;
-  grpc: MockGRPCClient;
   eventEmitter: ProcessorEventsEmitter;
   clock: Clock;
   segmentUsersCache: SegmentUsersCache;
@@ -247,7 +245,6 @@ test.beforeEach((t) => {
 
   const tag = 'server';
   const cache = new MockCache();
-  const grpc = new MockGRPCClient();
   const eventEmitter = new ProcessorEventsEmitter();
   const clock = new Clock();
   const segmentUsersCache = NewSegmentUsersCache({ cache: cache, ttl: SEGEMENT_USERS_CACHE_TTL });
@@ -272,7 +269,6 @@ test.beforeEach((t) => {
     },
     evaluator: evaluator,
     cache: cache,
-    grpc: grpc,
     eventEmitter: eventEmitter,
     clock: clock,
     segmentUsersCache: segmentUsersCache,

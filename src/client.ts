@@ -77,7 +77,7 @@ export class BKTClientImpl implements Bucketeer {
     this.apiClient = options.apiClient;
     this.eventStore = options.eventStore;
     this.registerEventsScheduleID = createSchedule(() => {
-      // Flush events in batches to avoid exceeding gRPC message size limits
+      // Flush events in batches to avoid large payloads
       while (this.eventStore.size() > 0) {
         const batchSize = Math.min(this.config.eventsMaxQueueSize, this.eventStore.size());
         this.callRegisterEvents(this.eventStore.takeout(batchSize));
@@ -233,7 +233,7 @@ export class BKTClientImpl implements Bucketeer {
    * Flush all remaining events in the event store in batches.
    * This method waits for the events to be sent before resolving.
    * Events are sent in batches of eventsMaxQueueSize to avoid
-   * exceeding gRPC message size limits (default 2MB).
+   * exceeding the maximum payload size.
    *
    * Note: During shutdown, if a batch fails to send, those events are lost.
    * This is by design to prevent infinite loops when the server is down or
@@ -258,7 +258,7 @@ export class BKTClientImpl implements Bucketeer {
     let failedCount = 0;
     let batchNumber = 0;
 
-    // Flush events in batches to avoid exceeding gRPC message size limits
+    // Flush events in batches to avoid large payloads
     while (this.eventStore.size() > 0) {
       batchNumber++;
       const batchSize = Math.min(this.config.eventsMaxQueueSize, this.eventStore.size());

@@ -23,7 +23,6 @@ import {
   SEGEMENT_USERS_CACHE_TTL,
   SegementUsersCacheProcessor,
 } from './cache/processor/segmentUsersCacheProcessor';
-import { DefaultGRPCClient } from './grpc/client';
 import { ProcessorEventsEmitter } from './processorEventsEmitter';
 import { Clock } from './utils/clock';
 import { LocalEvaluator } from './evaluator/local';
@@ -235,11 +234,6 @@ function defaultInitialize(resolvedConfig: InternalConfig): Bucketeer {
   let segementUsersCacheProcessor: SegementUsersCacheProcessor | null = null;
   let localEvaluator: LocalEvaluator | null = null;
   if (resolvedConfig.enableLocalEvaluation === true) {
-    const grpcClient = new DefaultGRPCClient(
-      resolvedConfig.apiEndpoint,
-      resolvedConfig.apiKey,
-      resolvedConfig.scheme,
-    );
     const cache = new InMemoryCache();
     const featureFlagCache = NewFeatureCache({ cache: cache, ttl: FEATURE_FLAG_CACHE_TTL });
     const clock = new Clock();
@@ -252,7 +246,7 @@ function defaultInitialize(resolvedConfig: InternalConfig): Bucketeer {
       cache: cache,
       featureFlagCache: featureFlagCache,
       pollingInterval: resolvedConfig.cachePollingInterval!,
-      grpc: grpcClient,
+      apiClient: apiClient,
       eventEmitter: eventEmitter,
       featureTag: resolvedConfig.featureTag,
       clock: clock,
@@ -264,7 +258,7 @@ function defaultInitialize(resolvedConfig: InternalConfig): Bucketeer {
       cache: cache,
       segmentUsersCache: segementUsersCache,
       pollingInterval: resolvedConfig.cachePollingInterval!,
-      grpc: grpcClient,
+      apiClient: apiClient,
       eventEmitter: eventEmitter,
       clock: clock,
       sourceId: resolvedConfig.sourceId,

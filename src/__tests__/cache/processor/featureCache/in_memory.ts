@@ -6,99 +6,98 @@ import {
   FEATURE_FLAG_REQUESTED_AT,
   NewFeatureFlagProcessor,
 } from '../../../../cache/processor/featureFlagCacheProcessor';
-
 import { Clock } from '../../../../utils/clock';
-import { GetFeatureFlagsRequest, GetFeatureFlagsResponse, GetSegmentUsersResponse, createFeature } from '@bucketeer/evaluation';
-import { GRPCClient } from '../../../../grpc/client';
 import { ProcessorEventsEmitter } from '../../../../processorEventsEmitter';
 import { SourceId } from '../../../../objects/sourceId';
+import { Feature } from '../../../../objects/feature';
+import { GetFeatureFlagsResponse, GetSegmentUsersResponse } from '../../../../objects/response';
+import { APIClient } from '../../../../api/client';
+import { toProtoFeature } from '../../../../evaluator/converter';
 
-class SpyGRPCCLient implements GRPCClient {
-  segmentUsersRes: GetSegmentUsersResponse | null = null;
-  featureFlags: GetFeatureFlagsResponse | null = null;
-  getSegmentUsersError: Error | null = null;
+const minimalFeature = (id: string): Feature => ({
+  id,
+  name: '',
+  description: '',
+  enabled: false,
+  deleted: false,
+  ttl: 0,
+  version: 0,
+  createdAt: '0',
+  updatedAt: '0',
+  variationType: 'STRING',
+  offVariation: '',
+  tags: [],
+  maintainer: '',
+  archived: false,
+  samplingSeed: '',
+  variations: [],
+  targets: [],
+  rules: [],
+});
+
+class SpyAPIClient implements Pick<APIClient, 'getFeatureFlags' | 'getSegmentUsers'> {
+  featureFlagsRes: GetFeatureFlagsResponse | null = null;
   getFeatureFlagsError: Error | null = null;
 
-  getSegementUsersRequest: {
-    segmentIdsList: Array<string>;
-    requestedAt: number;
-    version: string;
-  } | null = null;
+  capturedTag: string | null = null;
+  capturedFeatureFlagsId: string | null = null;
+  capturedRequestedAt: number | null = null;
 
-  getFeatureFlagsRequest: {
-    tag: string;
-    featureFlagsId: string;
-    requestedAt: number;
-    version: string;
-  } | null = null;
-
-  getSegmentUsers(options: {
-    segmentIdsList: Array<string>;
-    requestedAt: number;
-    version: string;
-    sourceId: SourceId;
-    sdkVersion: string;
-  }): Promise<GetSegmentUsersResponse> {
-
-    this.getSegementUsersRequest = options
-
-    if (this.getSegmentUsersError) {
-      return Promise.reject(this.getSegmentUsersError);
-    }
-    if (this.segmentUsersRes) {
-      return Promise.resolve(this.segmentUsersRes);
-    }
-    throw new Error('Missing response');
-  }
-
-  getFeatureFlags(options: {
-    tag: string;
-    featureFlagsId: string;
-    requestedAt: number;
-    version: string;
-    sourceId: SourceId;
-    sdkVersion: string;
-  }): Promise<GetFeatureFlagsResponse> {
-
-    this.getFeatureFlagsRequest = options
+  getFeatureFlags(
+    tag: string,
+    featureFlagsId: string,
+    requestedAt: number,
+    _sourceId: SourceId,
+    _sdkVersion: string,
+  ): Promise<[GetFeatureFlagsResponse, number]> {
+    this.capturedTag = tag;
+    this.capturedFeatureFlagsId = featureFlagsId;
+    this.capturedRequestedAt = requestedAt;
 
     if (this.getFeatureFlagsError) {
       return Promise.reject(this.getFeatureFlagsError);
     }
-    if (this.featureFlags) {
-      return Promise.resolve(this.featureFlags);
+    if (this.featureFlagsRes) {
+      return Promise.resolve([this.featureFlagsRes, 0]);
     }
-    throw new Error('Missing response');
+    return Promise.reject(new Error('Missing response'));
+  }
+
+  getSegmentUsers(
+    _segmentIds: string[],
+    _requestedAt: number,
+    _sourceId: SourceId,
+    _sdkVersion: string,
+  ): Promise<[GetSegmentUsersResponse, number]> {
+    return Promise.reject(new Error('Not expected in this test'));
   }
 }
 
 test('polling cache - using InMemoryCache()', async (t) => {
   const clock = new Clock();
-
   const cache = new InMemoryCache();
   const featureCache = NewFeatureCache({ cache, ttl: 1000 });
   const eventEmitter = new ProcessorEventsEmitter();
   const featureFlag = 'nodejs';
   const sourceId = SourceId.NODE_SERVER;
-  const grpc = new SpyGRPCCLient();
+  const apiClient = new SpyAPIClient();
 
-  const featuresResponse = new GetFeatureFlagsResponse();
-  featuresResponse.setFeatureFlagsId('featureFlagsId');
-  featuresResponse.setRequestedAt(1000);
-  const featureList = featuresResponse.getFeaturesList();
-  const feature1 = createFeature({ id: 'feature1' });
-  const feature2 = createFeature({ id: 'feature2' });
+  const feature1 = minimalFeature('feature1');
+  const feature2 = minimalFeature('feature2');
 
-  featureList.push(feature1);
-  featureList.push(feature2);
-
-  grpc.featureFlags = featuresResponse;
+  apiClient.featureFlagsRes = {
+    featureFlagsId: 'featureFlagsId',
+    requestedAt: '1000',
+    forceUpdate: false,
+    features: [feature1, feature2],
+    archivedFeatureFlagIds: [],
+  };
 
   const processor = NewFeatureFlagProcessor({
     cache: cache,
     featureFlagCache: featureCache,
     pollingInterval: 10,
-    grpc: grpc,
+    apiClient: apiClient,
     eventEmitter: eventEmitter,
     featureTag: featureFlag,
     clock: clock,
@@ -108,33 +107,26 @@ test('polling cache - using InMemoryCache()', async (t) => {
 
   await processor.start();
 
-  t.deepEqual(await featureCache.get('feature1'), feature1);
-  t.deepEqual(await featureCache.get('feature2'), feature2);
+  // Features are stored as proto objects after toProtoFeature conversion
+  t.deepEqual(await featureCache.get('feature1'), toProtoFeature(feature1));
+  t.deepEqual(await featureCache.get('feature2'), toProtoFeature(feature2));
 
   const featureFlagId = await cache.get(FEATURE_FLAG_ID);
   t.is(featureFlagId, 'featureFlagsId');
 
   const requestedAt = await cache.get(FEATURE_FLAG_REQUESTED_AT);
-  t.true(requestedAt == 1000);
+  t.is(requestedAt, 1000);
 
-  t.deepEqual(grpc.getFeatureFlagsRequest, {
-    tag: featureFlag,
-    featureFlagsId: '',
-    requestedAt: 0,
-    sourceId: sourceId,
-    sdkVersion: '2.0.1',
-  });
+  t.is(apiClient.capturedTag, featureFlag);
+  t.is(apiClient.capturedFeatureFlagsId, '');
+  t.is(apiClient.capturedRequestedAt, 0);
 
   // Wait for 2 seconds before continuing the test
   await new Promise((resolve) => setTimeout(resolve, 2000));
 
   await processor.stop();
 
-  t.deepEqual(grpc.getFeatureFlagsRequest, {
-    tag: featureFlag,
-    featureFlagsId: 'featureFlagsId',
-    requestedAt: 1000,
-    sourceId: sourceId,
-    sdkVersion: '2.0.1',
-  });
+  t.is(apiClient.capturedTag, featureFlag);
+  t.is(apiClient.capturedFeatureFlagsId, 'featureFlagsId');
+  t.is(apiClient.capturedRequestedAt, 1000);
 });
