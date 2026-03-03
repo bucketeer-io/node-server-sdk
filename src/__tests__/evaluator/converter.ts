@@ -1,7 +1,20 @@
 import test from 'ava';
 import { Feature } from '../../objects/feature';
 import { SegmentUsers } from '../../objects/segment';
-import { toProtoFeature, toProtoSegmentUsers } from '../../evaluator/converter';
+import {
+  toProtoFeature,
+  toProtoSegmentUsers,
+  toProtoTarget,
+  toProtoVariation,
+  toProtoClause,
+  toProtoFixedStrategy,
+  toProtoRolloutStrategyVariation,
+  toProtoRolloutStrategy,
+  toProtoStrategy,
+  toProtoRule,
+  toProtoFeatureLastUsedInfo,
+  toProtoPrerequisite,
+} from '../../evaluator/converter';
 import { Feature as ProtoFeature } from '@bucketeer/evaluation';
 
 test('toProtoFeature: Full Feature Object Conversion', (t) => {
@@ -195,4 +208,82 @@ test('toProtoSegmentUsers: Empty Users List', (t) => {
 
   t.is(obj.segmentId, 'seg_empty');
   t.is(obj.usersList.length, 0);
+});
+
+test('toProtoVariation: minimal', (t) => {
+  const result = toProtoVariation({ id: 'v1' });
+  t.is(result.toObject().id, 'v1');
+});
+
+test('toProtoTarget: basic', (t) => {
+  const result = toProtoTarget({ variation: 'v1', users: ['u1', 'u2'] });
+  const obj = result.toObject();
+  t.is(obj.variation, 'v1');
+  t.deepEqual(obj.usersList, ['u1', 'u2']);
+});
+
+test('toProtoClause: IN operator', (t) => {
+  const result = toProtoClause({ id: 'c1', attribute: 'a1', operator: 'IN', values: ['v1'] });
+  const obj = result.toObject();
+  t.is(obj.id, 'c1');
+  t.is(obj.attribute, 'a1');
+  t.is(obj.operator, 1); // Clause.Operator.IN
+  t.deepEqual(obj.valuesList, ['v1']);
+});
+
+test('toProtoFixedStrategy: basic', (t) => {
+  const result = toProtoFixedStrategy({ variation: 'v1' });
+  t.is(result.toObject().variation, 'v1');
+});
+
+test('toProtoRolloutStrategyVariation: basic', (t) => {
+  const result = toProtoRolloutStrategyVariation({ variation: 'v1', weight: 50 });
+  const obj = result.toObject();
+  t.is(obj.variation, 'v1');
+  t.is(obj.weight, 50);
+});
+
+test('toProtoRolloutStrategy: basic', (t) => {
+  const result = toProtoRolloutStrategy({
+    variations: [
+      { variation: 'v1', weight: 50 },
+      { variation: 'v2', weight: 50 },
+    ],
+  });
+  const obj = result.toObject();
+  t.is(obj.variationsList.length, 2);
+  t.is(obj.variationsList[0].variation, 'v1');
+});
+
+test('toProtoStrategy: FIXED', (t) => {
+  const result = toProtoStrategy({ type: 'FIXED', fixedStrategy: { variation: 'v1' } });
+  const obj = result.toObject();
+  t.is(obj.type, 0); // Type.FIXED = 0
+  t.is(obj.fixedStrategy?.variation, 'v1');
+});
+
+test('toProtoRule: minimal', (t) => {
+  const result = toProtoRule({ id: 'r1', clauses: [] });
+  t.is(result.toObject().id, 'r1');
+});
+
+test('toProtoFeatureLastUsedInfo: minimal text numbers', (t) => {
+  const result = toProtoFeatureLastUsedInfo({
+    featureId: 'f1',
+    version: 1,
+    lastUsedAt: '123',
+    createdAt: '456',
+    clientOldestVersion: '1.0.0',
+    clientLatestVersion: '2.0.0',
+  });
+  const obj = result.toObject();
+  t.is(obj.lastUsedAt, 123);
+  t.is(obj.createdAt, 456);
+});
+
+test('toProtoPrerequisite: basic', (t) => {
+  const result = toProtoPrerequisite({ featureId: 'f1', variationId: 'v1' });
+  const obj = result.toObject();
+  t.is(obj.featureId, 'f1');
+  t.is(obj.variationId, 'v1');
 });

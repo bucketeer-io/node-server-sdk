@@ -1,4 +1,16 @@
-import { Feature, Strategy as SDKStrategy } from '../objects/feature';
+import {
+  Feature,
+  Strategy as SDKStrategy,
+  Target,
+  FixedStrategy,
+  RolloutStrategyVariation,
+  RolloutStrategy,
+  Clause,
+  Rule,
+  Variation,
+  Prerequisite,
+  FeatureLastUsedInfo,
+} from '../objects/feature';
 import { SegmentUsers } from '../objects/segment';
 import {
   Feature as ProtoFeature,
@@ -89,6 +101,98 @@ function mapSegmentUserState(
   }
 }
 
+export function toProtoVariation(variation: Variation): ProtoVariation {
+  const pv = new ProtoVariation();
+  pv.setId(variation.id || '');
+  pv.setValue(variation.value || '');
+  pv.setName(variation.name || '');
+  pv.setDescription(variation.description || '');
+  return pv;
+}
+
+export function toProtoTarget(target: Target): ProtoTarget {
+  const pt = new ProtoTarget();
+  pt.setVariation(target.variation);
+  pt.setUsersList(target.users);
+  return pt;
+}
+
+export function toProtoClause(clause: Clause): ProtoClause {
+  const pc = new ProtoClause();
+  pc.setId(clause.id);
+  pc.setAttribute(clause.attribute);
+  pc.setOperator(mapOperator(clause.operator));
+  pc.setValuesList(clause.values);
+  return pc;
+}
+
+export function toProtoFixedStrategy(strategy: FixedStrategy): ProtoFixedStrategy {
+  const pf = new ProtoFixedStrategy();
+  pf.setVariation(strategy.variation);
+  return pf;
+}
+
+export function toProtoRolloutStrategyVariation(
+  variation: RolloutStrategyVariation,
+): ProtoRolloutStrategy.Variation {
+  const prv = new ProtoRolloutStrategy.Variation();
+  prv.setVariation(variation.variation);
+  prv.setWeight(variation.weight);
+  return prv;
+}
+
+export function toProtoRolloutStrategy(strategy: RolloutStrategy): ProtoRolloutStrategy {
+  const pr = new ProtoRolloutStrategy();
+  pr.setVariationsList(strategy.variations.map(toProtoRolloutStrategyVariation));
+  return pr;
+}
+
+export function toProtoStrategy(strategy: SDKStrategy): ProtoStrategy {
+  const ps = new ProtoStrategy();
+  ps.setType(mapStrategyType(strategy.type));
+
+  if (strategy.fixedStrategy) {
+    ps.setFixedStrategy(toProtoFixedStrategy(strategy.fixedStrategy));
+  }
+
+  if (strategy.rolloutStrategy) {
+    ps.setRolloutStrategy(toProtoRolloutStrategy(strategy.rolloutStrategy));
+  }
+
+  return ps;
+}
+
+export function toProtoRule(rule: Rule): ProtoRule {
+  const pr = new ProtoRule();
+  pr.setId(rule.id);
+
+  if (rule.strategy) {
+    pr.setStrategy(toProtoStrategy(rule.strategy));
+  }
+
+  pr.setClausesList(rule.clauses.map(toProtoClause));
+
+  return pr;
+}
+
+export function toProtoFeatureLastUsedInfo(info: FeatureLastUsedInfo): ProtoFeatureLastUsedInfo {
+  const pInfo = new ProtoFeatureLastUsedInfo();
+  pInfo.setFeatureId(info.featureId);
+  pInfo.setVersion(info.version);
+  pInfo.setLastUsedAt(Number(info.lastUsedAt) || 0);
+  pInfo.setCreatedAt(Number(info.createdAt) || 0);
+  pInfo.setClientOldestVersion(info.clientOldestVersion);
+  pInfo.setClientLatestVersion(info.clientLatestVersion);
+  return pInfo;
+}
+
+export function toProtoPrerequisite(prerequisite: Prerequisite): ProtoPrerequisite {
+  const pp = new ProtoPrerequisite();
+  pp.setFeatureId(prerequisite.featureId);
+  pp.setVariationId(prerequisite.variationId);
+  return pp;
+}
+
 export function toProtoFeature(feature: Feature): ProtoFeature {
   const f = new ProtoFeature();
   f.setId(feature.id);
@@ -111,108 +215,30 @@ export function toProtoFeature(feature: Feature): ProtoFeature {
   // are omitted because the current GO SDK Feature response model does not have them.
 
   if (feature.variations) {
-    f.setVariationsList(
-      feature.variations.map((v) => {
-        const pv = new ProtoVariation();
-        pv.setId(v.id || '');
-        pv.setValue(v.value || '');
-        pv.setName(v.name || '');
-        pv.setDescription(v.description || '');
-        return pv;
-      }),
-    );
+    f.setVariationsList(feature.variations.map(toProtoVariation));
   }
 
   if (feature.targets) {
-    f.setTargetsList(
-      feature.targets.map((t) => {
-        const pt = new ProtoTarget();
-        pt.setVariation(t.variation);
-        pt.setUsersList(t.users);
-        return pt;
-      }),
-    );
+    f.setTargetsList(feature.targets.map(toProtoTarget));
   }
 
   if (feature.rules) {
-    f.setRulesList(
-      feature.rules.map((r) => {
-        const pr = new ProtoRule();
-        pr.setId(r.id);
-
-        if (r.strategy) {
-          pr.setStrategy(mapStrategy(r.strategy));
-        }
-
-        pr.setClausesList(
-          r.clauses.map((c) => {
-            const pc = new ProtoClause();
-            pc.setId(c.id);
-            pc.setAttribute(c.attribute);
-            pc.setOperator(mapOperator(c.operator));
-            pc.setValuesList(c.values);
-            return pc;
-          }),
-        );
-
-        return pr;
-      }),
-    );
+    f.setRulesList(feature.rules.map(toProtoRule));
   }
 
   if (feature.defaultStrategy) {
-    f.setDefaultStrategy(mapStrategy(feature.defaultStrategy));
+    f.setDefaultStrategy(toProtoStrategy(feature.defaultStrategy));
   }
 
   if (feature.lastUsedInfo) {
-    const pInfo = new ProtoFeatureLastUsedInfo();
-    pInfo.setFeatureId(feature.lastUsedInfo.featureId);
-    pInfo.setVersion(feature.lastUsedInfo.version);
-    pInfo.setLastUsedAt(Number(feature.lastUsedInfo.lastUsedAt) || 0);
-    pInfo.setCreatedAt(Number(feature.lastUsedInfo.createdAt) || 0);
-    pInfo.setClientOldestVersion(feature.lastUsedInfo.clientOldestVersion);
-    pInfo.setClientLatestVersion(feature.lastUsedInfo.clientLatestVersion);
-    f.setLastUsedInfo(pInfo);
+    f.setLastUsedInfo(toProtoFeatureLastUsedInfo(feature.lastUsedInfo));
   }
 
   if (feature.prerequisites) {
-    f.setPrerequisitesList(
-      feature.prerequisites.map((p) => {
-        const pp = new ProtoPrerequisite();
-        pp.setFeatureId(p.featureId);
-        pp.setVariationId(p.variationId);
-        return pp;
-      }),
-    );
+    f.setPrerequisitesList(feature.prerequisites.map(toProtoPrerequisite));
   }
 
   return f;
-}
-
-function mapStrategy(s: SDKStrategy): ProtoStrategy {
-  const ps = new ProtoStrategy();
-  ps.setType(mapStrategyType(s.type));
-
-  if (s.fixedStrategy) {
-    const pf = new ProtoFixedStrategy();
-    pf.setVariation(s.fixedStrategy.variation);
-    ps.setFixedStrategy(pf);
-  }
-
-  if (s.rolloutStrategy) {
-    const pr = new ProtoRolloutStrategy();
-    pr.setVariationsList(
-      s.rolloutStrategy.variations.map((v) => {
-        const prv = new ProtoRolloutStrategy.Variation();
-        prv.setVariation(v.variation);
-        prv.setWeight(v.weight);
-        return prv;
-      }),
-    );
-    ps.setRolloutStrategy(pr);
-  }
-
-  return ps;
 }
 
 export function toProtoSegmentUsers(segmentUsers: SegmentUsers): ProtoSegmentUsers {
