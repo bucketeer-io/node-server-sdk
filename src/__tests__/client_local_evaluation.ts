@@ -30,7 +30,6 @@ import { ProcessorEventsEmitter } from '../processorEventsEmitter';
 import { Clock } from '../utils/clock';
 import { NewSegmentUsersCache, SegmentUsersCache } from '../cache/segmentUsers';
 import { NewFeatureCache, FeaturesCache } from '../cache/features';
-import { ApiId } from '@bucketeer/evaluation/lib/proto/event/client/event_pb';
 import { DefaultLogger, defineBKTConfig } from '../index';
 import { APIClient } from '../api/client';
 import { MockAPIClient } from './mocks/api';
@@ -41,6 +40,7 @@ import { BKTValue } from '../types';
 import { BKTClientImpl } from '../client';
 import { IllegalStateError } from '../objects/errors';
 import { requiredInternalConfig } from '../internalConfig';
+import { ApiId } from '../objects/apiId';
 
 const test = anyTest as TestFn<{
   sandbox: sinon.SinonSandbox;
