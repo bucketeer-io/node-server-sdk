@@ -130,7 +130,7 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
 
   private async getFeatureFlagRequestedAt(): Promise<number> {
     const requestedAt = await this.cache.get(FEATURE_FLAG_REQUESTED_AT);
-    return requestedAt || 0;
+    return Number(requestedAt) || 0;
   }
 
   private async getFeatureFlagId(): Promise<string> {
