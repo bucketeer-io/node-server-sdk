@@ -13,27 +13,7 @@ import { Feature } from '../../../../objects/feature';
 import { GetFeatureFlagsResponse, GetSegmentUsersResponse } from '../../../../objects/response';
 import { APIClient } from '../../../../api/client';
 import { toProtoFeature } from '../../../../evaluator/converter';
-
-const minimalFeature = (id: string): Feature => ({
-  id,
-  name: '',
-  description: '',
-  enabled: false,
-  deleted: false,
-  ttl: 0,
-  version: 0,
-  createdAt: '0',
-  updatedAt: '0',
-  variationType: 'STRING',
-  offVariation: '',
-  tags: [],
-  maintainer: '',
-  archived: false,
-  samplingSeed: '',
-  variations: [],
-  targets: [],
-  rules: [],
-});
+import { minimalFeature } from '../../../utils/feature';
 
 class SpyAPIClient implements Pick<APIClient, 'getFeatureFlags' | 'getSegmentUsers'> {
   featureFlagsRes: GetFeatureFlagsResponse | null = null;

@@ -15,27 +15,8 @@ import { MockCache } from '../../../mocks/cache';
 import { MockAPIClient } from '../../../mocks/api';
 import { SourceId } from '../../../../objects/sourceId';
 import { toProtoFeature } from '../../../../evaluator/converter';
+import { minimalFeature } from '../../../utils/feature';
 
-const minimalFeature = (id: string): Feature => ({
-  id,
-  name: '',
-  description: '',
-  enabled: false,
-  deleted: false,
-  ttl: 0,
-  version: 0,
-  createdAt: '0',
-  updatedAt: '0',
-  variationType: 'STRING',
-  offVariation: '',
-  tags: [],
-  maintainer: '',
-  archived: false,
-  samplingSeed: '',
-  variations: [],
-  targets: [],
-  rules: [],
-});
 
 test('polling cache', async (t) => {
   const clock = new Clock();
