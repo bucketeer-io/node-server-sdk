@@ -45,22 +45,8 @@ export class APIClient {
       sourceId,
       sdkVersion,
     };
-    const chunk = JSON.stringify(req);
     const url = scheme.concat(this.host, featureFlagsAPI);
-    return new Promise((resolve, reject) => {
-      this.postRequest(url, chunk)
-        .then(([res, size]) => {
-          try {
-            const msg = JSON.parse(res) as GetFeatureFlagsResponse;
-            resolve([msg, size]);
-          } catch (error) {
-            reject(error);
-          }
-        })
-        .catch((err) => {
-          return reject(err);
-        });
-    });
+    return this.postRequest<GetFeatureFlagsResponse>(url, req);
   }
 
   getSegmentUsers(
@@ -75,22 +61,8 @@ export class APIClient {
       sourceId,
       sdkVersion,
     };
-    const chunk = JSON.stringify(req);
     const url = scheme.concat(this.host, segmentUsersAPI);
-    return new Promise((resolve, reject) => {
-      this.postRequest(url, chunk)
-        .then(([res, size]) => {
-          try {
-            const msg = JSON.parse(res) as GetSegmentUsersResponse;
-            resolve([msg, size]);
-          } catch (error) {
-            reject(error);
-          }
-        })
-        .catch((err) => {
-          return reject(err);
-        });
-    });
+    return this.postRequest<GetSegmentUsersResponse>(url, req);
   }
 
   getEvaluation(
@@ -107,22 +79,8 @@ export class APIClient {
       sourceId: sourceId,
       sdkVersion: sdkVersion,
     };
-    const chunk = JSON.stringify(req);
     const url = scheme.concat(this.host, evaluationAPI);
-    return new Promise((resolve, reject) => {
-      this.postRequest(url, chunk)
-        .then(([res, size]) => {
-          try {
-            const msg = JSON.parse(res) as GetEvaluationResponse;
-            resolve([msg, size]);
-          } catch (error) {
-            reject(error);
-          }
-        })
-        .catch((err) => {
-          return reject(err);
-        });
-    });
+    return this.postRequest<GetEvaluationResponse>(url, req);
   }
 
   registerEvents(
@@ -135,25 +93,12 @@ export class APIClient {
       sdkVersion: sdkVersion,
       sourceId: sourceId,
     };
-    const chunk = JSON.stringify(req);
     const url = scheme.concat(this.host, eventsAPI);
-    return new Promise((resolve, reject) => {
-      this.postRequest(url, chunk)
-        .then(([res, size]) => {
-          try {
-            const msg = JSON.parse(res) as RegisterEventsResponse;
-            resolve([msg, size]);
-          } catch (error) {
-            reject(error);
-          }
-        })
-        .catch((err) => {
-          return reject(err);
-        });
-    });
+    return this.postRequest<RegisterEventsResponse>(url, req);
   }
 
-  private postRequest(url: string, chunk: string): Promise<[string, number]> {
+  private postRequest<T>(url: string, req: unknown): Promise<[T, number]> {
+    const chunk = JSON.stringify(req);
     const opts: https.RequestOptions = {
       method: 'POST',
       headers: {
@@ -178,8 +123,13 @@ export class APIClient {
           rawData += chunk.toString();
         });
         res.on('end', () => {
-          const header = res.headers['content-length'];
-          resolve([rawData, Number(header || 0)]);
+          const headerContentLength = res.headers['content-length'];
+          try {
+            const result = JSON.parse(rawData) as T;
+            resolve([result, Number(headerContentLength || 0)]);
+          } catch (e) {
+            reject(e);
+          }
         });
       });
       clientReq.on('error', (e) => {

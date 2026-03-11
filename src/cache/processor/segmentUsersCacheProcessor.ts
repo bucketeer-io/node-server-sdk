@@ -138,7 +138,7 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
 
   private async getSegmentUsersRequestedAt(): Promise<number> {
     const requestedAt = await this.cache.get(SEGEMENT_USERS_REQUESTED_AT);
-    return requestedAt ? Number(requestedAt) : 0;
+    return Number(requestedAt) || 0;
   }
 
   putSegmentUsersRequestedAt(requestedAt: number): Promise<void> {
