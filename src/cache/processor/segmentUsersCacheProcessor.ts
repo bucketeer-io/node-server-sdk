@@ -18,7 +18,7 @@ type SegementUsersCacheProcessorOptions = {
   cache: Cache;
   segmentUsersCache: SegmentUsersCache;
   pollingInterval: number;
-  apiClient: Pick<APIClient, 'getFeatureFlags' | 'getSegmentUsers'>;
+  apiClient: Pick<APIClient, 'getSegmentUsers'>;
   eventEmitter: ProcessorEventsEmitter;
   clock: Clock;
   sourceId: SourceId;
@@ -38,7 +38,7 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
   private cache: Cache;
   private segmentUsersCache: SegmentUsersCache;
   private pollingInterval: number;
-  private apiClient: Pick<APIClient, 'getFeatureFlags' | 'getSegmentUsers'>;
+  private apiClient: Pick<APIClient, 'getSegmentUsers'>;
   private eventEmitter: ProcessorEventsEmitter;
   private pollingScheduleID?: NodeJS.Timeout;
   private clock: Clock;

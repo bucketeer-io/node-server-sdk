@@ -47,15 +47,19 @@ function mapVariationType(
 }
 
 function mapOperator(op: string): ProtoClause.OperatorMap[keyof ProtoClause.OperatorMap] {
+  // Actual operator enum values from clause_pb.d.ts:
+  // EQUALS=0, IN=1, ENDS_WITH=2, STARTS_WITH=3, SEGMENT=4,
+  // GREATER=5, GREATER_OR_EQUAL=6, LESS=7, LESS_OR_EQUAL=8,
+  // BEFORE=9, AFTER=10, FEATURE_FLAG=11, PARTIALLY_MATCH=12, NOT_EQUALS=13
   switch (op.toUpperCase()) {
     case 'EQUALS':
       return ProtoClause.Operator.EQUALS;
     case 'IN':
       return ProtoClause.Operator.IN;
-    case 'STARTS_WITH':
-      return ProtoClause.Operator.STARTS_WITH;
     case 'ENDS_WITH':
       return ProtoClause.Operator.ENDS_WITH;
+    case 'STARTS_WITH':
+      return ProtoClause.Operator.STARTS_WITH;
     case 'SEGMENT':
       return ProtoClause.Operator.SEGMENT;
     case 'GREATER':
@@ -70,8 +74,12 @@ function mapOperator(op: string): ProtoClause.OperatorMap[keyof ProtoClause.Oper
       return ProtoClause.Operator.BEFORE;
     case 'AFTER':
       return ProtoClause.Operator.AFTER;
+    case 'FEATURE_FLAG':
+      return ProtoClause.Operator.FEATURE_FLAG;
     case 'PARTIALLY_MATCH':
       return ProtoClause.Operator.PARTIALLY_MATCH;
+    case 'NOT_EQUALS':
+      return ProtoClause.Operator.NOT_EQUALS;
     default:
       return ProtoClause.Operator.EQUALS;
   }
