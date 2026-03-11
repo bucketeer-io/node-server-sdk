@@ -610,7 +610,9 @@ test('toProtoClause: all operators parameterized', (t) => {
     { name: 'LESS_OR_EQUAL', operator: 'LESS_OR_EQUAL', expected: 8 },
     { name: 'BEFORE', operator: 'BEFORE', expected: 9 },
     { name: 'AFTER', operator: 'AFTER', expected: 10 },
+    { name: 'FEATURE_FLAG', operator: 'FEATURE_FLAG', expected: 11 },
     { name: 'PARTIALLY_MATCH', operator: 'PARTIALLY_MATCH', expected: 12 },
+    { name: 'NOT_EQUALS', operator: 'NOT_EQUALS', expected: 13 },
     { name: 'unknown defaults to EQUALS', operator: 'FOO_BAR', expected: 0 },
     { name: 'empty defaults to EQUALS', operator: '', expected: 0 },
   ];
