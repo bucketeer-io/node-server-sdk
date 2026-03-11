@@ -17,6 +17,7 @@ import { MockAPIClient } from '../../../mocks/api';
 import { SourceId } from '../../../../objects/sourceId';
 import { ApiId } from '../../../../objects/apiId';
 import { toProtoFeature } from '../../../../evaluator/converter';
+import { minimalFeature } from '../../../utils/feature';
 
 const test = anyTest as TestFn<{
   featureTag: string;
@@ -28,26 +29,6 @@ const test = anyTest as TestFn<{
   clearIntervalSpy: sino.SinonSpy;
 }>;
 
-const minimalFeature = (id: string): Feature => ({
-  id,
-  name: '',
-  description: '',
-  enabled: false,
-  deleted: false,
-  ttl: 0,
-  version: 0,
-  createdAt: '0',
-  updatedAt: '0',
-  variationType: 'STRING',
-  offVariation: '',
-  tags: [],
-  maintainer: '',
-  archived: false,
-  samplingSeed: '',
-  variations: [],
-  targets: [],
-  rules: [],
-});
 
 test.beforeEach((t) => {
   const sandbox = sino.createSandbox();
