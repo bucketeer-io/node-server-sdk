@@ -2,21 +2,24 @@ import anyTest, { TestFn } from 'ava';
 import sino from 'sinon';
 
 import {
-  createFeature,
   Feature,
   SegmentUser,
   SegmentUsers,
   User,
-  createPrerequisite,
   Strategy,
   Clause,
-  createUser,
-  createSegmentUser,
   createEvaluation,
   Reason,
   createReason,
   NewUserEvaluations,
 } from '@bucketeer/evaluation';
+
+import {
+  createFeature,
+  createPrerequisite,
+  createUser,
+  createSegmentUser,
+} from '../utils';
 
 import { LocalEvaluator, protoReasonToReason } from '../../evaluator/local';
 import { SEGEMENT_USERS_CACHE_TTL } from '../../cache/processor/segmentUsersCacheProcessor';

@@ -1,17 +1,19 @@
 import anyTest, { TestFn } from 'ava';
 import sinon from 'sinon';
 import {
-  createFeature,
   Feature,
   SegmentUser,
   SegmentUsers,
   User,
-  createPrerequisite,
   Strategy,
   Clause,
+} from '@bucketeer/evaluation';
+import {
+  createFeature,
+  createPrerequisite,
   createUser,
   createSegmentUser,
-} from '@bucketeer/evaluation';
+} from './utils';
 
 import { LocalEvaluator } from '../evaluator/local';
 import {
