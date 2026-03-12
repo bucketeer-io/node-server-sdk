@@ -1,17 +1,19 @@
 import anyTest, { TestFn } from 'ava';
 import sinon from 'sinon';
 import {
-  createFeature,
   Feature,
   SegmentUser,
   SegmentUsers,
   User,
-  createPrerequisite,
   Strategy,
   Clause,
+} from '@bucketeer/evaluation';
+import {
+  createFeature,
+  createPrerequisite,
   createUser,
   createSegmentUser,
-} from '@bucketeer/evaluation';
+} from './utils/feature';
 
 import { LocalEvaluator } from '../evaluator/local';
 import {
@@ -25,14 +27,14 @@ import {
   NewFeatureFlagProcessor,
 } from '../cache/processor/featureFlagCacheProcessor';
 import { MockCache } from './mocks/cache';
-import { MockGRPCClient } from './mocks/gprc';
+
 import { ProcessorEventsEmitter } from '../processorEventsEmitter';
 import { Clock } from '../utils/clock';
 import { NewSegmentUsersCache, SegmentUsersCache } from '../cache/segmentUsers';
 import { NewFeatureCache, FeaturesCache } from '../cache/features';
-import { ApiId } from '@bucketeer/evaluation/lib/proto/event/client/event_pb';
 import { DefaultLogger, defineBKTConfig } from '../index';
 import { APIClient } from '../api/client';
+import { MockAPIClient } from './mocks/api';
 import { EventStore } from '../stores/EventStore';
 import { Evaluation } from '../objects/evaluation';
 import { BKTEvaluationDetails } from '../evaluationDetails';
@@ -40,12 +42,12 @@ import { BKTValue } from '../types';
 import { BKTClientImpl } from '../client';
 import { IllegalStateError } from '../objects/errors';
 import { requiredInternalConfig } from '../internalConfig';
+import { ApiId } from '../objects/apiId';
 
 const test = anyTest as TestFn<{
   sandbox: sinon.SinonSandbox;
   evaluator: LocalEvaluator;
   cache: MockCache;
-  grpc: MockGRPCClient;
   eventEmitter: ProcessorEventsEmitter;
   clock: Clock;
   segmentUsersCache: SegmentUsersCache;
@@ -91,15 +93,18 @@ test.beforeEach((t) => {
     version: 0,
     name: 'feature3',
     enabled: true,
-    tagList: ['server'],
-    prerequisitesList: [createPrerequisite('feature-id-4', 'variation-true-id')],
+    tags: ['server'],
+    prerequisites: [{ featureId: 'feature-id-4', variationId: 'variation-true-id' }],
     rules: [
       {
         id: '',
-        attribute: '',
-        fixedVariation: '',
-        operator: Clause.Operator.SEGMENT,
-        values: [segmentUsers2.getSegmentId()],
+        strategy: { type: 'FIXED', fixedStrategy: { variation: '' } },
+        clauses: [{
+          id: '',
+          attribute: '',
+          operator: 'SEGMENT',
+          values: [segmentUsers2.getSegmentId()],
+        }],
       },
     ],
     variations: [
@@ -117,8 +122,8 @@ test.beforeEach((t) => {
       },
     ],
     defaultStrategy: {
-      type: Strategy.Type.FIXED,
-      variation: 'variation-true-id',
+      type: 'FIXED',
+      fixedStrategy: { variation: 'variation-true-id' },
     },
     offVariation: 'variation-false-id',
   });
@@ -128,8 +133,8 @@ test.beforeEach((t) => {
     version: 0,
     name: 'feature4',
     enabled: true,
-    tagList: ['server'],
-    variationType: Feature.VariationType.BOOLEAN,
+    tags: ['server'],
+    variationType: 'BOOLEAN',
     variations: [
       {
         id: 'variation-true-id',
@@ -145,8 +150,8 @@ test.beforeEach((t) => {
       },
     ],
     defaultStrategy: {
-      type: Strategy.Type.FIXED,
-      variation: 'variation-true-id',
+      type: 'FIXED',
+      fixedStrategy: { variation: 'variation-true-id' },
     },
     offVariation: 'variation-false-id',
   });
@@ -156,8 +161,8 @@ test.beforeEach((t) => {
     version: 0,
     name: 'feature-boolean',
     enabled: true,
-    tagList: ['server'],
-    variationType: Feature.VariationType.BOOLEAN,
+    tags: ['server'],
+    variationType: 'BOOLEAN',
     variations: [
       {
         id: 'variation-true-id',
@@ -173,8 +178,8 @@ test.beforeEach((t) => {
       },
     ],
     defaultStrategy: {
-      type: Strategy.Type.FIXED,
-      variation: 'variation-true-id',
+      type: 'FIXED',
+      fixedStrategy: { variation: 'variation-true-id' },
     },
     offVariation: 'variation-false-id',
   });
@@ -184,8 +189,8 @@ test.beforeEach((t) => {
     version: 0,
     name: 'feature-int',
     enabled: true,
-    tagList: ['server'],
-    variationType: Feature.VariationType.NUMBER,
+    tags: ['server'],
+    variationType: 'NUMBER',
     variations: [
       {
         id: 'variation-int10-id',
@@ -201,8 +206,8 @@ test.beforeEach((t) => {
       },
     ],
     defaultStrategy: {
-      type: Strategy.Type.FIXED,
-      variation: 'variation-int10-id',
+      type: 'FIXED',
+      fixedStrategy: { variation: 'variation-int10-id' },
     },
     offVariation: 'variation-int20-id',
   });
@@ -212,8 +217,8 @@ test.beforeEach((t) => {
     version: 0,
     name: 'feature-float',
     enabled: true,
-    tagList: ['server'],
-    variationType: Feature.VariationType.NUMBER,
+    tags: ['server'],
+    variationType: 'NUMBER',
     variations: [
       {
         id: 'variation-float10-id',
@@ -229,8 +234,8 @@ test.beforeEach((t) => {
       },
     ],
     defaultStrategy: {
-      type: Strategy.Type.FIXED,
-      variation: 'variation-float10-id',
+      type: 'FIXED',
+      fixedStrategy: { variation: 'variation-float10-id' },
     },
     offVariation: 'variation-float20-id',
   });
@@ -240,8 +245,8 @@ test.beforeEach((t) => {
     version: 0,
     name: 'feature-string',
     enabled: true,
-    tagList: ['server'],
-    variationType: Feature.VariationType.STRING,
+    tags: ['server'],
+    variationType: 'STRING',
     variations: [
       {
         id: 'variation-string10-id',
@@ -257,8 +262,8 @@ test.beforeEach((t) => {
       },
     ],
     defaultStrategy: {
-      type: Strategy.Type.FIXED,
-      variation: 'variation-string10-id',
+      type: 'FIXED',
+      fixedStrategy: { variation: 'variation-string10-id' },
     },
     offVariation: 'variation-string20-id',
   });
@@ -268,8 +273,8 @@ test.beforeEach((t) => {
     version: 0,
     name: 'feature-json',
     enabled: true,
-    tagList: ['server'],
-    variationType: Feature.VariationType.JSON,
+    tags: ['server'],
+    variationType: 'JSON',
     variations: [
       {
         id: 'variation-json1-id',
@@ -285,8 +290,8 @@ test.beforeEach((t) => {
       },
     ],
     defaultStrategy: {
-      type: Strategy.Type.FIXED,
-      variation: 'variation-json1-id',
+      type: 'FIXED',
+      fixedStrategy: { variation: 'variation-json1-id' },
     },
     //TODO: is this correct? I think it should be a string `variation-json2-id`
     offVariation: '{"Str": "str2", "Int": 2}',
@@ -294,7 +299,6 @@ test.beforeEach((t) => {
 
   const tag = 'server';
   const cache = new MockCache();
-  const grpc = new MockGRPCClient();
   const eventEmitter = new ProcessorEventsEmitter();
   const clock = new Clock();
   const segmentUsersCache = NewSegmentUsersCache({ cache: cache, ttl: SEGEMENT_USERS_CACHE_TTL });
@@ -311,11 +315,13 @@ test.beforeEach((t) => {
     }),
   );
 
+  const apiClient = new MockAPIClient();
+
   const featureFlagProcessor = NewFeatureFlagProcessor({
     cache: cache,
     featureFlagCache: featureFlagCache,
     pollingInterval: config.cachePollingInterval!,
-    grpc: grpc,
+    apiClient: apiClient,
     eventEmitter: eventEmitter,
     featureTag: config.featureTag,
     clock: new Clock(),
@@ -327,7 +333,7 @@ test.beforeEach((t) => {
     cache: cache,
     segmentUsersCache: segmentUsersCache,
     pollingInterval: config.cachePollingInterval!,
-    grpc: grpc,
+    apiClient: apiClient,
     eventEmitter: eventEmitter,
     clock: new Clock(),
     sourceId: config.sourceId,
@@ -368,7 +374,6 @@ test.beforeEach((t) => {
     },
     evaluator: evaluator,
     cache: cache,
-    grpc: grpc,
     eventEmitter: eventEmitter,
     clock: clock,
     segmentUsersCache: segmentUsersCache,

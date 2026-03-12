@@ -2,12 +2,24 @@ import { User } from '../bootstrap';
 import https from 'https';
 import { Event } from '../objects/event';
 import { SourceId } from '../objects/sourceId';
-import { GetEvaluationRequest, RegisterEventsRequest } from '../objects/request';
-import { GetEvaluationResponse, RegisterEventsResponse } from '../objects/response';
+import {
+  GetEvaluationRequest,
+  GetFeatureFlagsRequest,
+  GetSegmentUsersRequest,
+  RegisterEventsRequest,
+} from '../objects/request';
+import {
+  GetEvaluationResponse,
+  GetFeatureFlagsResponse,
+  GetSegmentUsersResponse,
+  RegisterEventsResponse,
+} from '../objects/response';
 import { InvalidStatusError } from '../objects/errors';
 
 const scheme = 'https://';
 const evaluationAPI = '/get_evaluation';
+const featureFlagsAPI = '/get_feature_flags';
+const segmentUsersAPI = '/get_segment_users';
 const eventsAPI = '/register_events';
 
 export class APIClient {
@@ -17,6 +29,40 @@ export class APIClient {
   constructor(host: string, apiKey: string) {
     this.host = host;
     this.apiKey = apiKey;
+  }
+
+  getFeatureFlags(
+    tag: string,
+    featureFlagsId: string,
+    requestedAt: number,
+    sourceId: SourceId,
+    sdkVersion: string,
+  ): Promise<[GetFeatureFlagsResponse, number]> {
+    const req: GetFeatureFlagsRequest = {
+      tag,
+      featureFlagsId,
+      requestedAt,
+      sourceId,
+      sdkVersion,
+    };
+    const url = scheme.concat(this.host, featureFlagsAPI);
+    return this.postRequest<GetFeatureFlagsResponse>(url, req);
+  }
+
+  getSegmentUsers(
+    segmentIds: string[],
+    requestedAt: number,
+    sourceId: SourceId,
+    sdkVersion: string,
+  ): Promise<[GetSegmentUsersResponse, number]> {
+    const req: GetSegmentUsersRequest = {
+      segmentIds,
+      requestedAt,
+      sourceId,
+      sdkVersion,
+    };
+    const url = scheme.concat(this.host, segmentUsersAPI);
+    return this.postRequest<GetSegmentUsersResponse>(url, req);
   }
 
   getEvaluation(
@@ -33,22 +79,8 @@ export class APIClient {
       sourceId: sourceId,
       sdkVersion: sdkVersion,
     };
-    const chunk = JSON.stringify(req);
     const url = scheme.concat(this.host, evaluationAPI);
-    return new Promise((resolve, reject) => {
-      this.postRequest(url, chunk)
-        .then(([res, size]) => {
-          try {
-            const msg = JSON.parse(res) as GetEvaluationResponse;
-            resolve([msg, size]);
-          } catch (error) {
-            reject(error);
-          }
-        })
-        .catch((err) => {
-          return reject(err);
-        });
-    });
+    return this.postRequest<GetEvaluationResponse>(url, req);
   }
 
   registerEvents(
@@ -61,25 +93,12 @@ export class APIClient {
       sdkVersion: sdkVersion,
       sourceId: sourceId,
     };
-    const chunk = JSON.stringify(req);
     const url = scheme.concat(this.host, eventsAPI);
-    return new Promise((resolve, reject) => {
-      this.postRequest(url, chunk)
-        .then(([res, size]) => {
-          try {
-            const msg = JSON.parse(res) as RegisterEventsResponse;
-            resolve([msg, size]);
-          } catch (error) {
-            reject(error);
-          }
-        })
-        .catch((err) => {
-          return reject(err);
-        });
-    });
+    return this.postRequest<RegisterEventsResponse>(url, req);
   }
 
-  private postRequest(url: string, chunk: string): Promise<[string, number]> {
+  private postRequest<T>(url: string, req: unknown): Promise<[T, number]> {
+    const chunk = JSON.stringify(req);
     const opts: https.RequestOptions = {
       method: 'POST',
       headers: {
@@ -104,8 +123,13 @@ export class APIClient {
           rawData += chunk.toString();
         });
         res.on('end', () => {
-          const header = res.headers['content-length'];
-          resolve([rawData, Number(header || 0)]);
+          const headerContentLength = res.headers['content-length'];
+          try {
+            const result = JSON.parse(rawData) as T;
+            resolve([result, Number(headerContentLength || 0)]);
+          } catch (e) {
+            reject(e);
+          }
         });
       });
       clientReq.on('error', (e) => {

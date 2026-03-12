@@ -2,27 +2,29 @@ import anyTest, { TestFn } from 'ava';
 import sino from 'sinon';
 
 import {
-  createFeature,
   Feature,
   SegmentUser,
   SegmentUsers,
   User,
-  createPrerequisite,
   Strategy,
   Clause,
-  createUser,
-  createSegmentUser,
   createEvaluation,
   Reason,
   createReason,
   NewUserEvaluations,
 } from '@bucketeer/evaluation';
 
+import {
+  createFeature,
+  createPrerequisite,
+  createUser,
+  createSegmentUser,
+} from '../utils/feature';
+
 import { LocalEvaluator, protoReasonToReason } from '../../evaluator/local';
 import { SEGEMENT_USERS_CACHE_TTL } from '../../cache/processor/segmentUsersCacheProcessor';
 import { FEATURE_FLAG_CACHE_TTL } from '../../cache/processor/featureFlagCacheProcessor';
 import { MockCache } from '../mocks/cache';
-import { MockGRPCClient } from '../mocks/gprc';
 
 import { Clock } from '../../utils/clock';
 import { NewSegmentUsersCache, SegmentUsersCache } from '../../cache/segmentUsers';
@@ -34,7 +36,6 @@ const test = anyTest as TestFn<{
   sandbox: sino.SinonSandbox;
   evaluator: LocalEvaluator;
   cache: MockCache;
-  grpc: MockGRPCClient;
   eventEmitter: ProcessorEventsEmitter;
   clock: Clock;
   segmentUsersCache: SegmentUsersCache;
@@ -81,8 +82,8 @@ test.beforeEach((t) => {
     version: 0,
     name: 'feature1',
     enabled: true,
-    tagList: ['server'],
-    prerequisitesList: [createPrerequisite('feature-id-2', 'variation-true-id')],
+    tags: ['server'],
+    prerequisites: [{ featureId: 'feature-id-2', variationId: 'variation-true-id' }],
     variations: [
       {
         id: 'variation-true-id',
@@ -98,8 +99,8 @@ test.beforeEach((t) => {
       },
     ],
     defaultStrategy: {
-      type: Strategy.Type.FIXED,
-      variation: 'variation-true-id',
+      type: 'FIXED',
+      fixedStrategy: { variation: 'variation-true-id' },
     },
     offVariation: 'variation-false-id',
   });
@@ -109,7 +110,7 @@ test.beforeEach((t) => {
     version: 0,
     name: 'feature2',
     enabled: true,
-    tagList: ['server'],
+    tags: ['server'],
     variations: [
       {
         id: 'variation-true-id',
@@ -125,8 +126,8 @@ test.beforeEach((t) => {
       },
     ],
     defaultStrategy: {
-      type: Strategy.Type.FIXED,
-      variation: 'variation-true-id',
+      type: 'FIXED',
+      fixedStrategy: { variation: 'variation-true-id' },
     },
     offVariation: 'variation-false-id',
   });
@@ -136,29 +137,38 @@ test.beforeEach((t) => {
     version: 0,
     name: 'feature3',
     enabled: true,
-    tagList: ['server'],
-    prerequisitesList: [createPrerequisite('feature-id-4', 'variation-true-id')],
+    tags: ['server'],
+    prerequisites: [{ featureId: 'feature-id-4', variationId: 'variation-true-id' }],
     rules: [
       {
         id: '',
-        attribute: '',
-        fixedVariation: '',
-        operator: Clause.Operator.SEGMENT,
-        values: [segmentUsers1.getSegmentId()],
+        strategy: { type: 'FIXED', fixedStrategy: { variation: '' } },
+        clauses: [{
+          id: '',
+          attribute: '',
+          operator: 'SEGMENT',
+          values: [segmentUsers1.getSegmentId()],
+        }],
       },
       {
         id: '',
-        attribute: '',
-        fixedVariation: '',
-        operator: Clause.Operator.SEGMENT,
-        values: [segmentUsers2.getSegmentId()],
+        strategy: { type: 'FIXED', fixedStrategy: { variation: '' } },
+        clauses: [{
+          id: '',
+          attribute: '',
+          operator: 'SEGMENT',
+          values: [segmentUsers2.getSegmentId()],
+        }],
       },
       {
         id: '',
-        attribute: feature5Id,
-        fixedVariation: '',
-        operator: Clause.Operator.FEATURE_FLAG,
-        values: [feature5VariationFirstId],
+        strategy: { type: 'FIXED', fixedStrategy: { variation: '' } },
+        clauses: [{
+          id: '',
+          attribute: feature5Id,
+          operator: 'FEATURE_FLAG',
+          values: [feature5VariationFirstId],
+        }],
       },
     ],
     variations: [
@@ -176,8 +186,8 @@ test.beforeEach((t) => {
       },
     ],
     defaultStrategy: {
-      type: Strategy.Type.FIXED,
-      variation: 'variation-true-id',
+      type: 'FIXED',
+      fixedStrategy: { variation: 'variation-true-id' },
     },
     offVariation: 'variation-false-id',
   });
@@ -187,7 +197,7 @@ test.beforeEach((t) => {
     version: 0,
     name: 'feature4',
     enabled: false,
-    tagList: ['server'],
+    tags: ['server'],
     variations: [
       {
         id: 'variation-true-id',
@@ -203,8 +213,8 @@ test.beforeEach((t) => {
       },
     ],
     defaultStrategy: {
-      type: Strategy.Type.FIXED,
-      variation: 'variation-true-id',
+      type: 'FIXED',
+      fixedStrategy: { variation: 'variation-true-id' },
     },
     offVariation: 'variation-false-id',
   });
@@ -214,7 +224,7 @@ test.beforeEach((t) => {
     version: 0,
     name: 'feature5',
     enabled: true,
-    tagList: ['server'],
+    tags: ['server'],
     variations: [
       {
         id: feature5VariationFirstId,
@@ -232,22 +242,24 @@ test.beforeEach((t) => {
     rules: [
       {
         id: 'clause-id',
-        attribute: '',
-        operator: Clause.Operator.SEGMENT,
-        values: [segmentUsers2.getSegmentId()],
-        fixedVariation: 'variation-true-id',
+        strategy: { type: 'FIXED', fixedStrategy: { variation: 'variation-true-id' } },
+        clauses: [{
+          id: 'clause-id',
+          attribute: '',
+          operator: 'SEGMENT',
+          values: [segmentUsers2.getSegmentId()],
+        }],
       },
     ],
     defaultStrategy: {
-      type: Strategy.Type.FIXED,
-      variation: 'variation-true-id',
+      type: 'FIXED',
+      fixedStrategy: { variation: 'variation-true-id' },
     },
     offVariation: 'variation-false-id',
   });
 
   const tag = 'server';
   const cache = new MockCache();
-  const grpc = new MockGRPCClient();
   const eventEmitter = new ProcessorEventsEmitter();
   const clock = new Clock();
   const segmentUsersCache = NewSegmentUsersCache({ cache: cache, ttl: SEGEMENT_USERS_CACHE_TTL });
@@ -272,7 +284,6 @@ test.beforeEach((t) => {
     },
     evaluator: evaluator,
     cache: cache,
-    grpc: grpc,
     eventEmitter: eventEmitter,
     clock: clock,
     segmentUsersCache: segmentUsersCache,

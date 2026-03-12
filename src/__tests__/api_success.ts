@@ -5,12 +5,19 @@ import { APIClient } from '../api/client';
 import { User } from '../bootstrap';
 import path from 'path';
 import { v4 } from 'uuid';
-import { GetEvaluationResponse, RegisterEventsResponse } from '../objects/response';
+import {
+  GetEvaluationResponse,
+  GetFeatureFlagsResponse,
+  GetSegmentUsersResponse,
+  RegisterEventsResponse,
+} from '../objects/response';
 import { BaseRequest } from '../objects/request';
 import { SourceId } from '../objects/sourceId';
 
 const evaluationAPI = '/get_evaluation';
 const eventsAPI = '/register_events';
+const featureFlagsAPI = '/get_feature_flags';
+const segmentUsersAPI = '/get_segment_users';
 const apiKey = '';
 
 const port = 9990;
@@ -40,6 +47,106 @@ const dummyEvalResponse: GetEvaluationResponse = {
 
 const dummpyRegisterEvtsResponse: RegisterEventsResponse = {
   errors: { key: { message: 'Invalid message type', retriable: false } },
+};
+
+const dummyFeatureFlagsResponse: GetFeatureFlagsResponse = {
+  featureFlagsId: 'feature_flags_id',
+  features: [
+    {
+      id: 'feature_id_1',
+      name: 'feature_name_1',
+      description: 'feature_description_1',
+      enabled: true,
+      deleted: false,
+      ttl: 3600,
+      version: 1,
+      createdAt: '1690000000',
+      updatedAt: '1690000000',
+      variations: [
+        {
+          id: 'var_id_1',
+          value: 'var_value_1',
+          name: 'var_name_1',
+          description: 'var_desc_1',
+        },
+      ],
+      targets: [
+        {
+          variation: 'var_id_1',
+          users: ['user_id_1'],
+        },
+      ],
+      rules: [
+        {
+          id: 'rule_id_1',
+          strategy: {
+            type: 'FIXED',
+            fixedStrategy: {
+              variation: 'var_id_1',
+            },
+          },
+          clauses: [
+            {
+              id: 'clause_id_1',
+              attribute: 'attr_1',
+              operator: 'EQUALS',
+              values: ['val_1'],
+            },
+          ],
+        },
+      ],
+      defaultStrategy: {
+        type: 'FIXED',
+        fixedStrategy: {
+          variation: 'var_id_1',
+        },
+      },
+      offVariation: 'var_id_1',
+      tags: ['tag_1'],
+      lastUsedInfo: {
+        featureId: 'feature_id_1',
+        version: 1,
+        lastUsedAt: '1690000000',
+        createdAt: '1690000000',
+        clientOldestVersion: '1.0.0',
+        clientLatestVersion: '1.0.0',
+      },
+      maintainer: 'maintainer_1',
+      variationType: 'STRING',
+      archived: false,
+      prerequisites: [
+        {
+          featureId: 'pre_feature_id_1',
+          variationId: 'pre_var_id_1',
+        },
+      ],
+      samplingSeed: 'seed_1',
+    },
+  ],
+  archivedFeatureFlagIds: ['archived_id_1'],
+  requestedAt: '12345',
+  forceUpdate: false,
+};
+
+const dummySegmentUsersResponse: GetSegmentUsersResponse = {
+  segmentUsers: [
+    {
+      segmentId: 'segment_id_1',
+      users: [
+        {
+          id: 'seg_user_id_1',
+          segmentId: 'segment_id_1',
+          userId: 'user_id_1',
+          state: 'INCLUDED',
+          deleted: false,
+        },
+      ],
+      updatedAt: '1690000000',
+    },
+  ],
+  deletedSegmentIds: ['deleted_segment_id_1'],
+  requestedAt: '12345',
+  forceUpdate: false,
 };
 
 test.before((t) => {
@@ -75,6 +182,14 @@ test.before((t) => {
               res.setHeader('Content-Type', 'application/json');
               res.end(JSON.stringify(dummpyRegisterEvtsResponse));
               break;
+            case featureFlagsAPI:
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify(dummyFeatureFlagsResponse));
+              break;
+            case segmentUsersAPI:
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify(dummySegmentUsersResponse));
+              break;
             default:
               res.writeHead(400);
               res.end();
@@ -100,6 +215,18 @@ test('getEvaluation: success', async (t) => {
   };
   const [res] = await client.getEvaluation('', user, '', defaultSourceId, sdkVersion);
   t.deepEqual(res.evaluation, dummyEvalResponse.evaluation);
+});
+
+test('getFeatureFlags: success', async (t) => {
+  const client = new APIClient(host, apiKey);
+  const [res] = await client.getFeatureFlags('', '', 0, defaultSourceId, sdkVersion);
+  t.deepEqual(res, dummyFeatureFlagsResponse);
+});
+
+test('getSegmentUsers: success', async (t) => {
+  const client = new APIClient(host, apiKey);
+  const [res] = await client.getSegmentUsers([], 0, defaultSourceId, sdkVersion);
+  t.deepEqual(res, dummySegmentUsersResponse);
 });
 
 test('registerEvents', async (t) => {
