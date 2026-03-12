@@ -13,7 +13,7 @@ import {
   createPrerequisite,
   createUser,
   createSegmentUser,
-} from './utils';
+} from './utils/feature';
 
 import { LocalEvaluator } from '../evaluator/local';
 import {
@@ -93,15 +93,18 @@ test.beforeEach((t) => {
     version: 0,
     name: 'feature3',
     enabled: true,
-    tagList: ['server'],
-    prerequisitesList: [createPrerequisite('feature-id-4', 'variation-true-id')],
+    tags: ['server'],
+    prerequisites: [{ featureId: 'feature-id-4', variationId: 'variation-true-id' }],
     rules: [
       {
         id: '',
-        attribute: '',
-        fixedVariation: '',
-        operator: Clause.Operator.SEGMENT,
-        values: [segmentUsers2.getSegmentId()],
+        strategy: { type: 'FIXED', fixedStrategy: { variation: '' } },
+        clauses: [{
+          id: '',
+          attribute: '',
+          operator: 'SEGMENT',
+          values: [segmentUsers2.getSegmentId()],
+        }],
       },
     ],
     variations: [
@@ -119,8 +122,8 @@ test.beforeEach((t) => {
       },
     ],
     defaultStrategy: {
-      type: Strategy.Type.FIXED,
-      variation: 'variation-true-id',
+      type: 'FIXED',
+      fixedStrategy: { variation: 'variation-true-id' },
     },
     offVariation: 'variation-false-id',
   });
@@ -130,8 +133,8 @@ test.beforeEach((t) => {
     version: 0,
     name: 'feature4',
     enabled: true,
-    tagList: ['server'],
-    variationType: Feature.VariationType.BOOLEAN,
+    tags: ['server'],
+    variationType: 'BOOLEAN',
     variations: [
       {
         id: 'variation-true-id',
@@ -147,8 +150,8 @@ test.beforeEach((t) => {
       },
     ],
     defaultStrategy: {
-      type: Strategy.Type.FIXED,
-      variation: 'variation-true-id',
+      type: 'FIXED',
+      fixedStrategy: { variation: 'variation-true-id' },
     },
     offVariation: 'variation-false-id',
   });
@@ -158,8 +161,8 @@ test.beforeEach((t) => {
     version: 0,
     name: 'feature-boolean',
     enabled: true,
-    tagList: ['server'],
-    variationType: Feature.VariationType.BOOLEAN,
+    tags: ['server'],
+    variationType: 'BOOLEAN',
     variations: [
       {
         id: 'variation-true-id',
@@ -175,8 +178,8 @@ test.beforeEach((t) => {
       },
     ],
     defaultStrategy: {
-      type: Strategy.Type.FIXED,
-      variation: 'variation-true-id',
+      type: 'FIXED',
+      fixedStrategy: { variation: 'variation-true-id' },
     },
     offVariation: 'variation-false-id',
   });
@@ -186,8 +189,8 @@ test.beforeEach((t) => {
     version: 0,
     name: 'feature-int',
     enabled: true,
-    tagList: ['server'],
-    variationType: Feature.VariationType.NUMBER,
+    tags: ['server'],
+    variationType: 'NUMBER',
     variations: [
       {
         id: 'variation-int10-id',
@@ -203,8 +206,8 @@ test.beforeEach((t) => {
       },
     ],
     defaultStrategy: {
-      type: Strategy.Type.FIXED,
-      variation: 'variation-int10-id',
+      type: 'FIXED',
+      fixedStrategy: { variation: 'variation-int10-id' },
     },
     offVariation: 'variation-int20-id',
   });
@@ -214,8 +217,8 @@ test.beforeEach((t) => {
     version: 0,
     name: 'feature-float',
     enabled: true,
-    tagList: ['server'],
-    variationType: Feature.VariationType.NUMBER,
+    tags: ['server'],
+    variationType: 'NUMBER',
     variations: [
       {
         id: 'variation-float10-id',
@@ -231,8 +234,8 @@ test.beforeEach((t) => {
       },
     ],
     defaultStrategy: {
-      type: Strategy.Type.FIXED,
-      variation: 'variation-float10-id',
+      type: 'FIXED',
+      fixedStrategy: { variation: 'variation-float10-id' },
     },
     offVariation: 'variation-float20-id',
   });
@@ -242,8 +245,8 @@ test.beforeEach((t) => {
     version: 0,
     name: 'feature-string',
     enabled: true,
-    tagList: ['server'],
-    variationType: Feature.VariationType.STRING,
+    tags: ['server'],
+    variationType: 'STRING',
     variations: [
       {
         id: 'variation-string10-id',
@@ -259,8 +262,8 @@ test.beforeEach((t) => {
       },
     ],
     defaultStrategy: {
-      type: Strategy.Type.FIXED,
-      variation: 'variation-string10-id',
+      type: 'FIXED',
+      fixedStrategy: { variation: 'variation-string10-id' },
     },
     offVariation: 'variation-string20-id',
   });
@@ -270,8 +273,8 @@ test.beforeEach((t) => {
     version: 0,
     name: 'feature-json',
     enabled: true,
-    tagList: ['server'],
-    variationType: Feature.VariationType.JSON,
+    tags: ['server'],
+    variationType: 'JSON',
     variations: [
       {
         id: 'variation-json1-id',
@@ -287,8 +290,8 @@ test.beforeEach((t) => {
       },
     ],
     defaultStrategy: {
-      type: Strategy.Type.FIXED,
-      variation: 'variation-json1-id',
+      type: 'FIXED',
+      fixedStrategy: { variation: 'variation-json1-id' },
     },
     //TODO: is this correct? I think it should be a string `variation-json2-id`
     offVariation: '{"Str": "str2", "Int": 2}',

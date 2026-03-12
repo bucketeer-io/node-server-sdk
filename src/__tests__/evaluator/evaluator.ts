@@ -19,7 +19,7 @@ import {
   createPrerequisite,
   createUser,
   createSegmentUser,
-} from '../utils';
+} from '../utils/feature';
 
 import { LocalEvaluator, protoReasonToReason } from '../../evaluator/local';
 import { SEGEMENT_USERS_CACHE_TTL } from '../../cache/processor/segmentUsersCacheProcessor';
@@ -82,8 +82,8 @@ test.beforeEach((t) => {
     version: 0,
     name: 'feature1',
     enabled: true,
-    tagList: ['server'],
-    prerequisitesList: [createPrerequisite('feature-id-2', 'variation-true-id')],
+    tags: ['server'],
+    prerequisites: [{ featureId: 'feature-id-2', variationId: 'variation-true-id' }],
     variations: [
       {
         id: 'variation-true-id',
@@ -99,8 +99,8 @@ test.beforeEach((t) => {
       },
     ],
     defaultStrategy: {
-      type: Strategy.Type.FIXED,
-      variation: 'variation-true-id',
+      type: 'FIXED',
+      fixedStrategy: { variation: 'variation-true-id' },
     },
     offVariation: 'variation-false-id',
   });
@@ -110,7 +110,7 @@ test.beforeEach((t) => {
     version: 0,
     name: 'feature2',
     enabled: true,
-    tagList: ['server'],
+    tags: ['server'],
     variations: [
       {
         id: 'variation-true-id',
@@ -126,8 +126,8 @@ test.beforeEach((t) => {
       },
     ],
     defaultStrategy: {
-      type: Strategy.Type.FIXED,
-      variation: 'variation-true-id',
+      type: 'FIXED',
+      fixedStrategy: { variation: 'variation-true-id' },
     },
     offVariation: 'variation-false-id',
   });
@@ -137,29 +137,38 @@ test.beforeEach((t) => {
     version: 0,
     name: 'feature3',
     enabled: true,
-    tagList: ['server'],
-    prerequisitesList: [createPrerequisite('feature-id-4', 'variation-true-id')],
+    tags: ['server'],
+    prerequisites: [{ featureId: 'feature-id-4', variationId: 'variation-true-id' }],
     rules: [
       {
         id: '',
-        attribute: '',
-        fixedVariation: '',
-        operator: Clause.Operator.SEGMENT,
-        values: [segmentUsers1.getSegmentId()],
+        strategy: { type: 'FIXED', fixedStrategy: { variation: '' } },
+        clauses: [{
+          id: '',
+          attribute: '',
+          operator: 'SEGMENT',
+          values: [segmentUsers1.getSegmentId()],
+        }],
       },
       {
         id: '',
-        attribute: '',
-        fixedVariation: '',
-        operator: Clause.Operator.SEGMENT,
-        values: [segmentUsers2.getSegmentId()],
+        strategy: { type: 'FIXED', fixedStrategy: { variation: '' } },
+        clauses: [{
+          id: '',
+          attribute: '',
+          operator: 'SEGMENT',
+          values: [segmentUsers2.getSegmentId()],
+        }],
       },
       {
         id: '',
-        attribute: feature5Id,
-        fixedVariation: '',
-        operator: Clause.Operator.FEATURE_FLAG,
-        values: [feature5VariationFirstId],
+        strategy: { type: 'FIXED', fixedStrategy: { variation: '' } },
+        clauses: [{
+          id: '',
+          attribute: feature5Id,
+          operator: 'FEATURE_FLAG',
+          values: [feature5VariationFirstId],
+        }],
       },
     ],
     variations: [
@@ -177,8 +186,8 @@ test.beforeEach((t) => {
       },
     ],
     defaultStrategy: {
-      type: Strategy.Type.FIXED,
-      variation: 'variation-true-id',
+      type: 'FIXED',
+      fixedStrategy: { variation: 'variation-true-id' },
     },
     offVariation: 'variation-false-id',
   });
@@ -188,7 +197,7 @@ test.beforeEach((t) => {
     version: 0,
     name: 'feature4',
     enabled: false,
-    tagList: ['server'],
+    tags: ['server'],
     variations: [
       {
         id: 'variation-true-id',
@@ -204,8 +213,8 @@ test.beforeEach((t) => {
       },
     ],
     defaultStrategy: {
-      type: Strategy.Type.FIXED,
-      variation: 'variation-true-id',
+      type: 'FIXED',
+      fixedStrategy: { variation: 'variation-true-id' },
     },
     offVariation: 'variation-false-id',
   });
@@ -215,7 +224,7 @@ test.beforeEach((t) => {
     version: 0,
     name: 'feature5',
     enabled: true,
-    tagList: ['server'],
+    tags: ['server'],
     variations: [
       {
         id: feature5VariationFirstId,
@@ -233,15 +242,18 @@ test.beforeEach((t) => {
     rules: [
       {
         id: 'clause-id',
-        attribute: '',
-        operator: Clause.Operator.SEGMENT,
-        values: [segmentUsers2.getSegmentId()],
-        fixedVariation: 'variation-true-id',
+        strategy: { type: 'FIXED', fixedStrategy: { variation: 'variation-true-id' } },
+        clauses: [{
+          id: 'clause-id',
+          attribute: '',
+          operator: 'SEGMENT',
+          values: [segmentUsers2.getSegmentId()],
+        }],
       },
     ],
     defaultStrategy: {
-      type: Strategy.Type.FIXED,
-      variation: 'variation-true-id',
+      type: 'FIXED',
+      fixedStrategy: { variation: 'variation-true-id' },
     },
     offVariation: 'variation-false-id',
   });

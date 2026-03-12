@@ -1,5 +1,5 @@
 import test from 'ava';
-import { createFeature } from '../utils';
+import { createFeature } from '../utils/feature';
 import { NewFeatureCache } from '../../cache/features';
 import { InMemoryCache } from '../../cache/inMemoryCache';
 

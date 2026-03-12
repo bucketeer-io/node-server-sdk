@@ -9,7 +9,6 @@ import {
 import { Clock } from '../../../../utils/clock';
 import { ProcessorEventsEmitter } from '../../../../processorEventsEmitter';
 import { SourceId } from '../../../../objects/sourceId';
-import { Feature } from '../../../../objects/feature';
 import { GetFeatureFlagsResponse, GetSegmentUsersResponse } from '../../../../objects/response';
 import { APIClient } from '../../../../api/client';
 import { toProtoFeature } from '../../../../evaluator/converter';
