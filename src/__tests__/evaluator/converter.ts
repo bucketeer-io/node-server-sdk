@@ -14,6 +14,7 @@ import {
   toProtoRule,
   toProtoFeatureLastUsedInfo,
   toProtoPrerequisite,
+  toProtoUser,
 } from '../../evaluator/converter';
 import { Feature as ProtoFeature } from '@bucketeer/evaluation';
 
@@ -810,5 +811,33 @@ test('toProtoPrerequisite: parameterized cases', (t) => {
     const obj = toProtoPrerequisite(tc.input).toObject();
     t.is(obj.featureId, tc.expected.featureId, `${tc.name}: featureId`);
     t.is(obj.variationId, tc.expected.variationId, `${tc.name}: variationId`);
+  }
+});
+
+// ─── toProtoUser ─────────────────────────────────────────────────────────────
+
+test('toProtoUser: parameterized cases', (t) => {
+  const testCases = [
+    {
+      name: 'basic with data',
+      input: { id: 'u1', data: { key1: 'val1', key2: 'val2' } },
+      expected: { id: 'u1', dataMap: [['key1', 'val1'], ['key2', 'val2']] },
+    },
+    {
+      name: 'without data',
+      input: { id: 'u2' },
+      expected: { id: 'u2', dataMap: [] },
+    },
+    {
+      name: 'empty id and empty data',
+      input: { id: '', data: {} },
+      expected: { id: '', dataMap: [] },
+    },
+  ];
+
+  for (const tc of testCases) {
+    const obj = toProtoUser(tc.input as any).toObject();
+    t.is(obj.id, tc.expected.id, `${tc.name}: id`);
+    t.deepEqual(obj.dataMap, tc.expected.dataMap, `${tc.name}: dataMap`);
   }
 });

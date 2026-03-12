@@ -1,3 +1,4 @@
+import { User } from '../objects/user';
 import {
   Feature,
   Strategy as SDKStrategy,
@@ -25,6 +26,7 @@ import {
   FeatureLastUsedInfo as ProtoFeatureLastUsedInfo,
   RolloutStrategy as ProtoRolloutStrategy,
   FixedStrategy as ProtoFixedStrategy,
+  User as ProtoUser,
 } from '@bucketeer/evaluation';
 
 function mapVariationType(
@@ -265,4 +267,14 @@ export function toProtoSegmentUsers(segmentUsers: SegmentUsers): ProtoSegmentUse
   );
 
   return psu;
+}
+
+export function toProtoUser(user: User): ProtoUser {
+  const pu = new ProtoUser();
+  pu.setId(user.id);
+  const map = pu.getDataMap();
+  if (user.data) {
+    Object.entries(user.data).forEach(([key, value]) => map.set(key, value));
+  }
+  return pu;
 }
