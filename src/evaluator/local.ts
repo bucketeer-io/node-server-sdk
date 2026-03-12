@@ -1,5 +1,4 @@
 import {
-  createUser,
   Evaluator,
   Feature,
   SegmentUser,
@@ -16,6 +15,7 @@ import { User } from '../objects/user';
 import { Reason, ReasonType } from '../objects/reason';
 import { NodeEvaluator } from './evaluator';
 import { IllegalStateError, InvalidStatusError } from '../objects/errors';
+import { toProtoUser } from './converter';
 
 class LocalEvaluator implements NodeEvaluator {
   private tag: string;
@@ -88,7 +88,7 @@ class LocalEvaluator implements NodeEvaluator {
         }
       }
 
-      const protoUser = createUser(user.id, user.data);
+      const protoUser = toProtoUser(user);
       const userEvaluations = await evaluator.evaluateFeatures(
         targetFeatures,
         protoUser,
