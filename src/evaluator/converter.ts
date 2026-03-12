@@ -18,16 +18,14 @@ import {
   SegmentUser as ProtoSegmentUser,
   Clause as ProtoClause,
   Strategy as ProtoStrategy,
-} from '@bucketeer/evaluation';
-import { Rule as ProtoRule } from '@bucketeer/evaluation/lib/proto/feature/rule_pb';
-import { Target as ProtoTarget } from '@bucketeer/evaluation/lib/proto/feature/target_pb';
-import { Variation as ProtoVariation } from '@bucketeer/evaluation/lib/proto/feature/variation_pb';
-import { Prerequisite as ProtoPrerequisite } from '@bucketeer/evaluation/lib/proto/feature/prerequisite_pb';
-import { FeatureLastUsedInfo as ProtoFeatureLastUsedInfo } from '@bucketeer/evaluation/lib/proto/feature/feature_last_used_info_pb';
-import {
+  Rule as ProtoRule,
+  Target as ProtoTarget,
+  Variation as ProtoVariation,
+  Prerequisite as ProtoPrerequisite,
+  FeatureLastUsedInfo as ProtoFeatureLastUsedInfo,
   RolloutStrategy as ProtoRolloutStrategy,
   FixedStrategy as ProtoFixedStrategy,
-} from '@bucketeer/evaluation/lib/proto/feature/strategy_pb';
+} from '@bucketeer/evaluation';
 
 function mapVariationType(
   type: string,
