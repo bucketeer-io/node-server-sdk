@@ -32,7 +32,7 @@ There are two example entry points:
 - `example/src/index.ts`: Remote evaluation example.
 - `example/src/index-local-evaluation.ts`: Local evaluation example with `enableLocalEvaluation: true`.
 
-Use the local evaluation example when you want to evaluate users within SDK locally. 
+Use the local evaluation example when you want to evaluate users locally within the SDK.
 
 Use the remote evaluation example when you want to evaluate users on the Bucketeer service side.
 

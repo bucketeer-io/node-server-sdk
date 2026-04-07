@@ -33,8 +33,8 @@ const html = ({ label }: { label: string }) => `
     <body>
       <button id=btn type="button">${label}</button>
       <script>
-      async function butotnClick(event){
-          const response = await fetch('http://localhost:3000', {
+      async function buttonClick(event){
+          const response = await fetch('/', {
             method: 'POST',
             mode: 'cors',
             cache: 'no-cache',
@@ -49,7 +49,7 @@ const html = ({ label }: { label: string }) => `
           console.log(text);
       }
       let button = document.getElementById('btn');
-      button.addEventListener('click', function (e) { butotnClick(e) });
+      button.addEventListener('click', function (e) { buttonClick(e) });
       </script>
     </body>
   </html>
@@ -73,7 +73,7 @@ async function start() {
     console.log('Bucketeer SDK initialized successfully');
 
     /**
-     *  Useful for trouble shooting.
+     *  Useful for troubleshooting.
      */
     console.table(bucketeer.getBuildInfo());
 

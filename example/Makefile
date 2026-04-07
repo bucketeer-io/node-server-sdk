@@ -10,7 +10,7 @@ start: build-sdk build
 	node $(CURDIR)/__build/index.js
 
 .PHONY: start-local-evaluation
-start-local: build-sdk build
+start-local-evaluation: build-sdk build
 	node $(CURDIR)/__build/index-local-evaluation.js
 
 .PHONY: clean
