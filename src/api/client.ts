@@ -116,6 +116,9 @@ export class APIClient {
               res.statusCode,
             ),
           );
+          // Return early to prevent setting up response handlers and attempting to parse
+          // the response body for non-200 statuses.
+          return;
         }
         res.setEncoding('utf8');
         let rawData = '';
