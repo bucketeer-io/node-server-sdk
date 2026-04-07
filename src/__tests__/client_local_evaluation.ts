@@ -5,12 +5,9 @@ import {
   SegmentUser,
   SegmentUsers,
   User,
-  Strategy,
-  Clause,
 } from '@bucketeer/evaluation';
 import {
   createFeature,
-  createPrerequisite,
   createUser,
   createSegmentUser,
 } from './utils/feature';

@@ -6,8 +6,6 @@ import {
   SegmentUser,
   SegmentUsers,
   User,
-  Strategy,
-  Clause,
   createEvaluation,
   Reason,
   createReason,
@@ -16,7 +14,6 @@ import {
 
 import {
   createFeature,
-  createPrerequisite,
   createUser,
   createSegmentUser,
 } from '../utils/feature';
