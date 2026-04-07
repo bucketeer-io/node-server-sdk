@@ -49,7 +49,7 @@ make start
 Update `example/src/index-local-evaluation.ts`, then run:
 
 ```bash
-make start-local
+make start-local-evaluation
 ```
 
 If you want to use a published SDK instead of a local one, replace the line where it imports the library in the [example code](https://github.com/bucketeer-io/node-server-sdk/blob/master/example/src/index.ts#L7-L8)
