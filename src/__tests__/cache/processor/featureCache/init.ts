@@ -40,22 +40,22 @@ test.beforeEach((t) => {
   const sourceId = SourceId.NODE_SERVER;
   const sdkVersion = '5.3.1';
   const options = {
-    cache,
-    featureFlagCache,
+    cache: cache,
+    featureFlagCache: featureFlagCache,
     pollingInterval: 1000,
-    apiClient,
-    eventEmitter,
+    apiClient: apiClient,
+    eventEmitter: eventEmitter,
     featureTag: 'nodejs',
-    clock,
-    sourceId,
-    sdkVersion,
+    clock: clock,
+    sourceId: sourceId,
+    sdkVersion: sdkVersion,
   };
   const processor = new DefaultFeatureFlagProcessor(options);
   t.context = {
     featureTag: 'nodejs',
-    processor,
-    options,
-    sandbox,
+    processor: processor,
+    options: options,
+    sandbox: sandbox,
     feature: minimalFeature('feature-flag-id-2'),
     archivedFeatureIds: ['feature-flags-id-3', 'feature-flags-id-4'],
     clearIntervalSpy: sandbox.spy(global, 'clearInterval'),

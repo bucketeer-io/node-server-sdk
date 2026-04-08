@@ -36,14 +36,14 @@ test.beforeEach((t) => {
   const sourceId = SourceId.OPEN_FEATURE_NODE;
   const sdkVersion = '10.1.1';
   const options = {
-    cache,
-    segmentUsersCache,
+    cache: cache,
+    segmentUsersCache: segmentUsersCache,
     pollingInterval: 1000,
-    apiClient,
-    eventEmitter,
-    clock,
-    sourceId,
-    sdkVersion,
+    apiClient: apiClient,
+    eventEmitter: eventEmitter,
+    clock: clock,
+    sourceId: sourceId,
+    sdkVersion: sdkVersion,
   } satisfies SegementUsersCacheProcessorOptions;
 
   const singleSegementUsers: SegmentUsers = {
@@ -63,11 +63,11 @@ test.beforeEach((t) => {
   const deletedSegmentIDs = ['segment-id-3', 'segment-id-4'];
   const processor = new DefaultSegementUserCacheProcessor(options);
   t.context = {
-    processor,
-    options,
-    sandbox,
+    processor: processor,
+    options: options,
+    sandbox: sandbox,
     singleSegementUser: singleSegementUsers,
-    deletedSegmentIDs,
+    deletedSegmentIDs: deletedSegmentIDs,
     clearIntervalSpy: sandbox.spy(global, 'clearInterval'),
   };
 });
