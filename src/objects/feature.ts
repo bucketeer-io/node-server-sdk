@@ -36,8 +36,8 @@ export type Rule = {
 };
 
 export type Variation = {
-  id?: string;
-  value?: string;
+  id: string;
+  value: string;
   name?: string;
   description?: string;
 };
