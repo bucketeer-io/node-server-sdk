@@ -83,9 +83,28 @@ make build
 make test
 ```
 
+
 #### Run e2e tests
 
-Configure the `apiEndpoint` (with URL scheme) and the `apiKey` info in the [ava-e2e.config.mjs](./ava-e2e.config.mjs), then run the following command.
+Set the required secrets for E2E tests using environment variables or a `.env` file in the project root. The following variables are required:
+
+- `API_ENDPOINT` (e.g. api.example.com, without scheme)
+- `SCHEME` (e.g. https or http, defaults to https)
+- `CLIENT_API_KEY` (Client SDK role API key)
+- `SERVER_API_KEY` (Server SDK role API key for testing with local evaluate)
+
+You can create a `.env` file in the project root for local development:
+
+```
+API_ENDPOINT=your.api.endpoint
+SCHEME=https
+CLIENT_API_KEY=your-client-key
+SERVER_API_KEY=your-server-key
+```
+
+The E2E test config will automatically load these values.
+
+Then run:
 
 ```bash
 make e2e
