@@ -139,7 +139,7 @@ export class APIClient {
         'Content-Type': 'application/json',
         authorization: this.apiKey,
       },
-      timeout: 10000,
+      timeout: 5000,
       signal: signal as AbortSignal | undefined,
     };
     return new Promise((resolve, reject) => {
