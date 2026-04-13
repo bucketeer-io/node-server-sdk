@@ -138,7 +138,7 @@ interface BKTConfig {
 // MINIMUM_FLUSH_INTERVAL_MILLIS and DEFAULT_FLUSH_INTERVAL_MILLIS are currently set to the same value (10 seconds).
 // They are defined separately in case their values need to diverge in the future.
 const MINIMUM_FLUSH_INTERVAL_MILLIS = 10_000; // 10 seconds
-const DEFAULT_FLUSH_INTERVAL_MILLIS = 10_000; // 10 seconds
+const DEFAULT_FLUSH_INTERVAL_MILLIS = 30_000; // 30 seconds
 const DEFAULT_MAX_QUEUE_SIZE = 50;
 const MINIMUM_POLLING_INTERVAL_MILLIS = 60_000; // 60 seconds
 const DEFAULT_POLLING_INTERVAL_MILLIS = 60_000; // 60 seconds
@@ -206,6 +206,11 @@ const defineBKTConfig = (config: Partial<BKTConfig>): BKTConfig => {
   }
 
   // Validate eventsFlushInterval
+  //
+  // Note: The SDK enforces a deadline of 80% of the flush interval for retry operations.
+  // Very short intervals (e.g., <20s) may limit the number of actual retry attempts
+  // if requests fail, even when MaxRetries is set to 3. However, failed events are
+  // automatically re-queued and will be retried in the next flush cycle.
   if (baseConfig.eventsFlushInterval < MINIMUM_FLUSH_INTERVAL_MILLIS) {
     baseConfig.logger?.warn?.(
       `eventsFlushInterval (${baseConfig.eventsFlushInterval}) is less than the minimum allowed (${MINIMUM_FLUSH_INTERVAL_MILLIS}). Using default value (${DEFAULT_FLUSH_INTERVAL_MILLIS}).`,
