@@ -86,10 +86,10 @@ make test
 
 #### Run e2e tests
 
-Set the required secrets for E2E tests using environment variables or a `.env` file in the project root. The following variables are required:
+Set the required secrets for E2E tests using environment variables or a `.env` file in the project root. The following variables are required, except for `SCHEME`, which is optional and defaults to `https`:
 
 - `API_ENDPOINT` (e.g. api.example.com, without scheme)
-- `SCHEME` (e.g. https or http, defaults to https)
+- `SCHEME` (optional; e.g. https or http, defaults to https)
 - `CLIENT_API_KEY` (Client SDK role API key)
 - `SERVER_API_KEY` (Server SDK role API key for testing with local evaluate)
 
