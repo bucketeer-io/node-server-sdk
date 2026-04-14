@@ -86,7 +86,7 @@ export class APIClient {
         'Content-Type': 'application/json',
         authorization: this.apiKey,
       },
-      timeout: 10000,
+      timeout: 5000,
     };
     return new Promise((resolve, reject) => {
       const clientReq = https.request(url, opts, (res) => {
