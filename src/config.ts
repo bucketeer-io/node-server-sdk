@@ -160,8 +160,8 @@ interface BKTConfig {
   wrapperSdkSourceId?: number;
 }
 
-// MINIMUM_FLUSH_INTERVAL_MILLIS and DEFAULT_FLUSH_INTERVAL_MILLIS are currently set to the same value (10 seconds).
-// They are defined separately in case their values need to diverge in the future.
+// The minimum flush interval is 10 seconds, while the default flush interval is 30 seconds.
+// They are defined separately because the default must not be lower than the enforced minimum.
 const MINIMUM_FLUSH_INTERVAL_MILLIS = 10_000; // 10 seconds
 const DEFAULT_FLUSH_INTERVAL_MILLIS = 30_000; // 30 seconds
 const DEFAULT_MAX_QUEUE_SIZE = 50;
