@@ -23,6 +23,9 @@ const createTestConfig = (): InternalConfig => ({
   cachePollingInterval: 60000,
   sourceId: SourceId.NODE_SERVER,
   sdkVersion: '1.0.0',
+  maxRetries: 3,
+  retryInitialInterval: 1000,
+  retryMaxInterval: 10000,
 });
 
 // Helper to create a mock API client
