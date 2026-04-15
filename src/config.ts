@@ -112,6 +112,24 @@ interface BKTConfig {
   cachePollingInterval: number;
 
   /**
+   * Maximum number of retry attempts for HTTP requests. (Default: 3)
+   * Set to 0 to disable retries.
+   */
+  maxRetries: number;
+
+  /**
+   * Initial backoff interval between retries in milliseconds. (Default: 1000)
+   * Uses exponential backoff: interval = retryInitialInterval × (2 ^ attemptNumber) ±25% jitter.
+   */
+  retryInitialInterval: number;
+
+  /**
+   * Maximum backoff interval between retries in milliseconds. (Default: 10000)
+   * The exponential backoff is capped at this value. Set to 0 for no cap.
+   */
+  retryMaxInterval: number;
+
+  /**
    * Optional property. Scheme to use for API requests. (Default: 'https')
    * This is useful for local development when you want to use 'http' instead of 'https'.
    *
@@ -142,6 +160,9 @@ const DEFAULT_FLUSH_INTERVAL_MILLIS = 10_000; // 10 seconds
 const DEFAULT_MAX_QUEUE_SIZE = 50;
 const MINIMUM_POLLING_INTERVAL_MILLIS = 60_000; // 60 seconds
 const DEFAULT_POLLING_INTERVAL_MILLIS = 60_000; // 60 seconds
+const DEFAULT_MAX_RETRIES = 3;
+const DEFAULT_RETRY_INITIAL_INTERVAL_MILLIS = 1_000; // 1 second
+const DEFAULT_RETRY_MAX_INTERVAL_MILLIS = 10_000; // 10 seconds
 
 const defineBKTConfig = (config: Partial<BKTConfig>): BKTConfig => {
   let baseConfig: BKTConfig = {
@@ -154,6 +175,9 @@ const defineBKTConfig = (config: Partial<BKTConfig>): BKTConfig => {
     logger: config.logger ?? new DefaultLogger(),
     enableLocalEvaluation: config.enableLocalEvaluation ?? false,
     cachePollingInterval: config.cachePollingInterval ?? DEFAULT_POLLING_INTERVAL_MILLIS,
+    maxRetries: config.maxRetries ?? DEFAULT_MAX_RETRIES,
+    retryInitialInterval: config.retryInitialInterval ?? DEFAULT_RETRY_INITIAL_INTERVAL_MILLIS,
+    retryMaxInterval: config.retryMaxInterval ?? DEFAULT_RETRY_MAX_INTERVAL_MILLIS,
     scheme: config.scheme ?? 'https',
   };
 
@@ -229,6 +253,28 @@ const defineBKTConfig = (config: Partial<BKTConfig>): BKTConfig => {
     baseConfig.cachePollingInterval = DEFAULT_POLLING_INTERVAL_MILLIS;
   }
 
+  // Validate retry configuration
+  if (baseConfig.maxRetries < 0) {
+    baseConfig.logger?.warn?.(
+      `maxRetries (${baseConfig.maxRetries}) must be >= 0. Using default value (${DEFAULT_MAX_RETRIES}).`,
+    );
+    baseConfig.maxRetries = DEFAULT_MAX_RETRIES;
+  }
+
+  if (baseConfig.retryInitialInterval < 0) {
+    baseConfig.logger?.warn?.(
+      `retryInitialInterval (${baseConfig.retryInitialInterval}) must be >= 0. Using default value (${DEFAULT_RETRY_INITIAL_INTERVAL_MILLIS}).`,
+    );
+    baseConfig.retryInitialInterval = DEFAULT_RETRY_INITIAL_INTERVAL_MILLIS;
+  }
+
+  if (baseConfig.retryMaxInterval > 0 && baseConfig.retryMaxInterval < baseConfig.retryInitialInterval) {
+    baseConfig.logger?.warn?.(
+      `retryMaxInterval (${baseConfig.retryMaxInterval}) must be >= retryInitialInterval (${baseConfig.retryInitialInterval}). Using default value (${DEFAULT_RETRY_MAX_INTERVAL_MILLIS}).`,
+    );
+    baseConfig.retryMaxInterval = DEFAULT_RETRY_MAX_INTERVAL_MILLIS;
+  }
+
   // Resolve SDK version and sourceId without exposing SourceId to outside
   const sourceId = resolveSourceId(baseConfig);
   const sdkVersion = resolveSDKVersion(baseConfig, sourceId);
@@ -256,6 +302,9 @@ const convertConfigToBKTConfig = (config: Config): InternalConfig => {
     logger: config.logger ?? new DefaultLogger(),
     enableLocalEvaluation: config.enableLocalEvaluation ?? false,
     cachePollingInterval: config.cachePollingInterval ?? DEFAULT_POLLING_INTERVAL_MILLIS,
+    maxRetries: DEFAULT_MAX_RETRIES,
+    retryInitialInterval: DEFAULT_RETRY_INITIAL_INTERVAL_MILLIS,
+    retryMaxInterval: DEFAULT_RETRY_MAX_INTERVAL_MILLIS,
     // Advanced properties
     wrapperSdkVersion: undefined, // Not applicable in Config
     wrapperSdkSourceId: undefined, // Not applicable in Config
