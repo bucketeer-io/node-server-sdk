@@ -18,9 +18,8 @@ export interface RetryDecision {
 
 /**
  * Function to determine if an error should trigger a retry.
- * May return a plain boolean or a RetryDecision with an optional delay override.
  */
-export type ShouldRetryFn = (error: Error) => boolean | RetryDecision
+export type ShouldRetryFn = (error: Error) => RetryDecision
 
 const RETRYABLE_CODES = new Set<string>([
   'ECONNREFUSED',
@@ -38,15 +37,15 @@ const RETRYABLE_STATUS_CODES = new Set<number>([500, 502, 503, 504, 499])
  * retryable HTTP status codes. For InvalidStatusError with a Retry-After
  * header the delay override is threaded back via RetryDecision.
  */
-export function isRetryable(error: Error): boolean | RetryDecision {
+export function isRetryable(error: Error): RetryDecision {
   const code = (error as NodeJS.ErrnoException).code
-  if (RETRYABLE_CODES.has(code ?? '')) return true
+  if (RETRYABLE_CODES.has(code ?? '')) return { retry: true }
 
   if (error instanceof InvalidStatusError && RETRYABLE_STATUS_CODES.has(error.code ?? 0)) {
     return { retry: true, delayOverrideMs: error.retryAfterMs }
   }
 
-  return false
+  return { retry: false }
 }
 
 /**
@@ -131,17 +130,15 @@ export async function promiseRetriable<T>(
       }
 
       const decision = shouldRetry(lastError)
-      const doRetry = typeof decision === 'boolean' ? decision : decision.retry
-      if (!doRetry) {
+      if (!decision.retry) {
         throw lastError
       }
 
-      const delayOverride = typeof decision === 'object' ? decision.delayOverrideMs : undefined
       const waitTime =
-        delayOverride !== undefined
+        decision.delayOverrideMs !== undefined
           ? retryPolicy.maxInterval > 0
-            ? Math.min(delayOverride, retryPolicy.maxInterval)
-            : delayOverride
+            ? Math.min(decision.delayOverrideMs, retryPolicy.maxInterval)
+            : decision.delayOverrideMs
           : calculateBackoff(attempts - 1, retryPolicy)
 
       if (waitTime > 0) {

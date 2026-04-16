@@ -34,12 +34,12 @@ test.serial('resolves when fn eventually succeeds', async (t) => {
   const fn = sinon.stub<[], Promise<string>>();
   fn.onCall(0).rejects(new Error('temporary'));
   fn.onCall(1).resolves('success');
-  const shouldRetry = sinon.stub<[Error], boolean>().returns(true);
+  const shouldRetry = sinon.stub<[Error], RetryDecision>().returns({ retry: true });
 
   const resultPromise = promiseRetriable(
     fn as () => Promise<string>,
     policy,
-    shouldRetry as unknown as ShouldRetryFn,
+    shouldRetry as ShouldRetryFn,
   );
 
   await t.context.clock.tickAsync(200);
@@ -53,13 +53,13 @@ test.serial('waits for configured delay before retrying', async (t) => {
   const fn = sinon.stub<[], Promise<string>>();
   fn.onCall(0).rejects(new Error('temporary'));
   fn.onCall(1).resolves('success');
-  const shouldRetry = sinon.stub<[Error], boolean>().returns(true);
+  const shouldRetry = sinon.stub<[Error], RetryDecision>().returns({ retry: true });
   const initialInterval = 250;
 
   const resultPromise = promiseRetriable(
     fn as () => Promise<string>,
     { ...policy, maxRetries: 2, initialInterval },
-    shouldRetry as unknown as ShouldRetryFn,
+    shouldRetry as ShouldRetryFn,
   );
 
   await Promise.resolve();
@@ -78,12 +78,12 @@ test.serial('waits for configured delay before retrying', async (t) => {
 test.serial('throws the last error after exceeding max retries', async (t) => {
   const error = new Error('permanent failure');
   const fn = sinon.stub<[], Promise<never>>().rejects(error);
-  const shouldRetry = sinon.stub<[Error], boolean>().returns(true);
+  const shouldRetry = sinon.stub<[Error], RetryDecision>().returns({ retry: true });
 
   const resultPromise = promiseRetriable(
     fn as () => Promise<never>,
     { ...policy, maxRetries: 2, initialInterval: 10 },
-    shouldRetry as unknown as ShouldRetryFn,
+    shouldRetry as ShouldRetryFn,
   );
 
   await t.context.clock.tickAsync(100);
@@ -97,12 +97,12 @@ test.serial('throws the last error after exceeding max retries', async (t) => {
 test.serial('does not retry when shouldRetry returns false', async (t) => {
   const error = new Error('do not retry');
   const fn = sinon.stub<[], Promise<never>>().rejects(error);
-  const shouldRetry = sinon.stub<[Error], boolean>().returns(false);
+  const shouldRetry = sinon.stub<[Error], RetryDecision>().returns({ retry: false });
 
   const resultPromise = promiseRetriable(
     fn as () => Promise<never>,
     policy,
-    shouldRetry as unknown as ShouldRetryFn,
+    shouldRetry as ShouldRetryFn,
   );
 
   const thrownError = await t.throwsAsync(resultPromise);
@@ -117,15 +117,15 @@ test.serial(
     const error = new Error('stop retrying');
     const initialInterval = 150;
     const fn = sinon.stub<[], Promise<never>>().rejects(error);
-    const shouldRetry = sinon.stub<[Error], boolean>();
-    shouldRetry.onCall(0).returns(true);
-    shouldRetry.onCall(1).returns(true);
-    shouldRetry.returns(false);
+    const shouldRetry = sinon.stub<[Error], RetryDecision>();
+    shouldRetry.onCall(0).returns({ retry: true });
+    shouldRetry.onCall(1).returns({ retry: true });
+    shouldRetry.returns({ retry: false });
 
     const resultPromise = promiseRetriable(
       fn as () => Promise<never>,
       { ...policy, maxRetries: 4, initialInterval },
-      shouldRetry as unknown as ShouldRetryFn,
+      shouldRetry as ShouldRetryFn,
     );
 
     await Promise.resolve();
@@ -157,15 +157,15 @@ test.serial(
     const error = new Error('exponential backoff');
     const initialInterval = 75;
     const fn = sinon.stub<[], Promise<never>>().rejects(error);
-    const shouldRetry = sinon.stub<[Error], boolean>();
-    shouldRetry.onCall(0).returns(true);
-    shouldRetry.onCall(1).returns(true);
-    shouldRetry.returns(false);
+    const shouldRetry = sinon.stub<[Error], RetryDecision>();
+    shouldRetry.onCall(0).returns({ retry: true });
+    shouldRetry.onCall(1).returns({ retry: true });
+    shouldRetry.returns({ retry: false });
 
     const resultPromise = promiseRetriable(
       fn as () => Promise<never>,
       { ...policy, maxRetries: 4, initialInterval },
-      shouldRetry as unknown as ShouldRetryFn,
+      shouldRetry as ShouldRetryFn,
     );
 
     await Promise.resolve();
@@ -244,41 +244,41 @@ test.serial('calculateBackoff - uses default multiplier 2.0 when multiplier is u
 
 test.serial('isRetryable - returns true for ECONNREFUSED', (t) => {
   const err = Object.assign(new Error('connect ECONNREFUSED'), { code: 'ECONNREFUSED' });
-  t.true(isRetryable(err));
+  t.true(isRetryable(err).retry);
 });
 
 test.serial('isRetryable - returns true for ECONNRESET', (t) => {
   const err = Object.assign(new Error('read ECONNRESET'), { code: 'ECONNRESET' });
-  t.true(isRetryable(err));
+  t.true(isRetryable(err).retry);
 });
 
 test.serial('isRetryable - returns true for ETIMEDOUT', (t) => {
   const err = Object.assign(new Error('connect ETIMEDOUT'), { code: 'ETIMEDOUT' });
-  t.true(isRetryable(err));
+  t.true(isRetryable(err).retry);
 });
 
 test.serial('isRetryable - returns true for ENOTFOUND', (t) => {
   const err = Object.assign(new Error('getaddrinfo ENOTFOUND'), { code: 'ENOTFOUND' });
-  t.true(isRetryable(err));
+  t.true(isRetryable(err).retry);
 });
 
 test.serial('isRetryable - returns true for EAI_AGAIN', (t) => {
   const err = Object.assign(new Error('getaddrinfo EAI_AGAIN'), { code: 'EAI_AGAIN' });
-  t.true(isRetryable(err));
+  t.true(isRetryable(err).retry);
 });
 
 test.serial('isRetryable - returns true for ECONNABORTED', (t) => {
   const err = Object.assign(new Error('socket hang up'), { code: 'ECONNABORTED' });
-  t.true(isRetryable(err));
+  t.true(isRetryable(err).retry);
 });
 
 test.serial('isRetryable - returns false for generic Error', (t) => {
-  t.false(isRetryable(new Error('something went wrong')));
+  t.false(isRetryable(new Error('something went wrong')).retry);
 });
 
 test.serial('isRetryable - returns false for Error without code', (t) => {
   const err = new Error('some error');
-  t.false(isRetryable(err));
+  t.false(isRetryable(err).retry);
 });
 
 // promiseRetriable default shouldRetry tests
@@ -401,48 +401,42 @@ test.serial('RetryDecision delayOverrideMs is not capped when maxInterval is 0',
 
 test.serial('isRetryable returns RetryDecision for 503 with retryAfterMs', (t) => {
   const err = new InvalidStatusError('service unavailable', 503, 30_000);
-  const result = isRetryable(err) as RetryDecision;
-  t.deepEqual(result, { retry: true, delayOverrideMs: 30_000 });
+  t.deepEqual(isRetryable(err), { retry: true, delayOverrideMs: 30_000 });
 });
 
 test.serial('isRetryable returns RetryDecision for 503 without retryAfterMs', (t) => {
   const err = new InvalidStatusError('service unavailable', 503);
-  const result = isRetryable(err) as RetryDecision;
-  t.deepEqual(result, { retry: true, delayOverrideMs: undefined });
+  t.deepEqual(isRetryable(err), { retry: true, delayOverrideMs: undefined });
 });
 
 test.serial('isRetryable returns RetryDecision for 500', (t) => {
   const err = new InvalidStatusError('internal error', 500);
-  const result = isRetryable(err) as RetryDecision;
-  t.deepEqual(result, { retry: true, delayOverrideMs: undefined });
+  t.deepEqual(isRetryable(err), { retry: true, delayOverrideMs: undefined });
 });
 
 test.serial('isRetryable returns RetryDecision for 502', (t) => {
   const err = new InvalidStatusError('bad gateway', 502);
-  const result = isRetryable(err) as RetryDecision;
-  t.deepEqual(result, { retry: true, delayOverrideMs: undefined });
+  t.deepEqual(isRetryable(err), { retry: true, delayOverrideMs: undefined });
 });
 
 test.serial('isRetryable returns RetryDecision for 504', (t) => {
   const err = new InvalidStatusError('gateway timeout', 504);
-  const result = isRetryable(err) as RetryDecision;
-  t.deepEqual(result, { retry: true, delayOverrideMs: undefined });
+  t.deepEqual(isRetryable(err), { retry: true, delayOverrideMs: undefined });
 });
 
 test.serial('isRetryable returns RetryDecision for 499', (t) => {
   const err = new InvalidStatusError('client closed request', 499);
-  const result = isRetryable(err) as RetryDecision;
-  t.deepEqual(result, { retry: true, delayOverrideMs: undefined });
+  t.deepEqual(isRetryable(err), { retry: true, delayOverrideMs: undefined });
 });
 
 test.serial('isRetryable returns false for 404', (t) => {
   const err = new InvalidStatusError('not found', 404);
-  t.false(isRetryable(err));
+  t.false(isRetryable(err).retry);
 });
 
 test.serial('isRetryable returns false for 401', (t) => {
   const err = new InvalidStatusError('unauthorized', 401);
-  t.false(isRetryable(err));
+  t.false(isRetryable(err).retry);
 });
 
 // AbortSignal support
@@ -455,7 +449,7 @@ test.serial('throws immediately if signal is already aborted', async (t) => {
   const fn = sinon.stub<[AbortSignal | undefined], Promise<string>>().resolves('should not reach');
 
   const thrownError = await t.throwsAsync(
-    promiseRetriable(fn as (signal: AbortSignal | undefined) => Promise<string>, policy, () => true, controller.signal),
+    promiseRetriable(fn as (signal: AbortSignal | undefined) => Promise<string>, policy, () => ({ retry: true }), controller.signal),
   );
   t.is(thrownError, abortReason);
   t.is(fn.callCount, 0);
@@ -470,7 +464,7 @@ test.serial('signal firing mid-backoff cancels sleep and rejects', async (t) => 
   const resultPromise = promiseRetriable(
     fn as (signal: AbortSignal | undefined) => Promise<never>,
     { ...policy, maxRetries: 3, initialInterval: 5_000 },
-    () => true,
+    () => ({ retry: true }),
     controller.signal,
   );
 
@@ -496,7 +490,7 @@ test.serial('signal is forwarded to fn on each attempt', async (t) => {
     return 'success';
   };
 
-  await promiseRetriable(fn, policy, () => false, controller.signal);
+  await promiseRetriable(fn, policy, () => ({ retry: false }), controller.signal);
 
   t.is(receivedSignals.length, 1);
   t.is(receivedSignals[0], controller.signal);
