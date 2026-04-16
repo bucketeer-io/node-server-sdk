@@ -4,10 +4,12 @@ import sinon from 'sinon';
 import {
   promiseRetriable,
   RetryPolicy,
+  RetryDecision,
   ShouldRetryFn,
   calculateBackoff,
   isRetryable,
 } from '../utils/promiseRetriable';
+import { InvalidStatusError } from '../objects/errors';
 
 const test = anyTest as TestFn<{ clock: sinon.SinonFakeTimers; mathRandom: sinon.SinonStub }>;
 
@@ -187,7 +189,7 @@ test.serial(
   },
 );
 
-// ── calculateBackoff unit tests ──────────────────────────────────────────────
+// calculateBackoff unit tests
 
 test.serial('calculateBackoff - returns initialInterval for attempt 0 (no jitter)', (t) => {
   const p: RetryPolicy = { maxRetries: 3, initialInterval: 1000, maxInterval: 10_000 };
@@ -238,7 +240,7 @@ test.serial('calculateBackoff - uses default multiplier 2.0 when multiplier is u
   t.is(calculateBackoff(1, p), 2000);
 });
 
-// ── isRetryable unit tests ───────────────────────────────────────────────────
+// isRetryable unit tests
 
 test.serial('isRetryable - returns true for ECONNREFUSED', (t) => {
   const err = Object.assign(new Error('connect ECONNREFUSED'), { code: 'ECONNREFUSED' });
@@ -279,7 +281,7 @@ test.serial('isRetryable - returns false for Error without code', (t) => {
   t.false(isRetryable(err));
 });
 
-// ── promiseRetriable default shouldRetry tests ───────────────────────────────
+// promiseRetriable default shouldRetry tests
 
 test.serial('promiseRetriable - uses isRetryable as default shouldRetry for network errors', async (t) => {
   const fn = sinon.stub<[], Promise<string>>();
@@ -303,4 +305,199 @@ test.serial('promiseRetriable - does not retry non-network errors by default', a
   const thrownError = await t.throwsAsync(resultPromise);
   t.is(thrownError, error);
   t.is(fn.callCount, 1);
+});
+
+// RetryDecision support
+
+test.serial('RetryDecision { retry: false } stops retrying immediately', async (t) => {
+  const error = new Error('stop');
+  const fn = sinon.stub<[], Promise<never>>().rejects(error);
+  const shouldRetry: ShouldRetryFn = () => ({ retry: false });
+
+  const thrownError = await t.throwsAsync(
+    promiseRetriable(fn as () => Promise<never>, policy, shouldRetry),
+  );
+  t.is(thrownError, error);
+  t.is(fn.callCount, 1);
+});
+
+test.serial('RetryDecision { retry: true, delayOverrideMs } uses the override delay', async (t) => {
+  const overrideMs = 5_000;
+  const error = new Error('override delay');
+  const fn = sinon.stub<[], Promise<string>>();
+  fn.onCall(0).rejects(error);
+  fn.onCall(1).resolves('success');
+
+  const shouldRetry: ShouldRetryFn = () => ({ retry: true, delayOverrideMs: overrideMs });
+
+  const resultPromise = promiseRetriable(fn as () => Promise<string>, policy, shouldRetry);
+
+  await Promise.resolve();
+  t.is(fn.callCount, 1);
+
+  // Should NOT retry before the override delay elapses
+  await t.context.clock.tickAsync(overrideMs - 1);
+  t.is(fn.callCount, 1);
+
+  // Should retry after the override delay elapses
+  await t.context.clock.tickAsync(1);
+  t.is(fn.callCount, 2);
+
+  t.is(await resultPromise, 'success');
+});
+
+test.serial('RetryDecision delayOverrideMs is capped at maxInterval', async (t) => {
+  const overrideMs = 30_000;
+  const maxInterval = 10_000;
+  const error = new Error('capped override');
+  const fn = sinon.stub<[], Promise<string>>();
+  fn.onCall(0).rejects(error);
+  fn.onCall(1).resolves('success');
+
+  const shouldRetry: ShouldRetryFn = () => ({ retry: true, delayOverrideMs: overrideMs });
+  const cappedPolicy: RetryPolicy = { ...policy, maxInterval };
+
+  const resultPromise = promiseRetriable(fn as () => Promise<string>, cappedPolicy, shouldRetry);
+
+  await Promise.resolve();
+  t.is(fn.callCount, 1);
+
+  // Should not fire before maxInterval
+  await t.context.clock.tickAsync(maxInterval - 1);
+  t.is(fn.callCount, 1);
+
+  // Should fire at maxInterval (capped), not at overrideMs (30s)
+  await t.context.clock.tickAsync(1);
+  t.is(fn.callCount, 2);
+
+  t.is(await resultPromise, 'success');
+});
+
+test.serial('RetryDecision delayOverrideMs is not capped when maxInterval is 0', async (t) => {
+  const overrideMs = 7_000;
+  const error = new Error('uncapped override');
+  const fn = sinon.stub<[], Promise<string>>();
+  fn.onCall(0).rejects(error);
+  fn.onCall(1).resolves('success');
+
+  const shouldRetry: ShouldRetryFn = () => ({ retry: true, delayOverrideMs: overrideMs });
+  const uncappedPolicy: RetryPolicy = { ...policy, maxInterval: 0 };
+
+  const resultPromise = promiseRetriable(fn as () => Promise<string>, uncappedPolicy, shouldRetry);
+
+  await Promise.resolve();
+  t.is(fn.callCount, 1);
+
+  await t.context.clock.tickAsync(overrideMs - 1);
+  t.is(fn.callCount, 1);
+
+  await t.context.clock.tickAsync(1);
+  t.is(fn.callCount, 2);
+
+  t.is(await resultPromise, 'success');
+});
+
+//  isRetryable HTTP 5xx (Step 5) ────────────────────────────────────────────
+
+test.serial('isRetryable returns RetryDecision for 503 with retryAfterMs', (t) => {
+  const err = new InvalidStatusError('service unavailable', 503, 30_000);
+  const result = isRetryable(err) as RetryDecision;
+  t.deepEqual(result, { retry: true, delayOverrideMs: 30_000 });
+});
+
+test.serial('isRetryable returns RetryDecision for 503 without retryAfterMs', (t) => {
+  const err = new InvalidStatusError('service unavailable', 503);
+  const result = isRetryable(err) as RetryDecision;
+  t.deepEqual(result, { retry: true, delayOverrideMs: undefined });
+});
+
+test.serial('isRetryable returns RetryDecision for 500', (t) => {
+  const err = new InvalidStatusError('internal error', 500);
+  const result = isRetryable(err) as RetryDecision;
+  t.deepEqual(result, { retry: true, delayOverrideMs: undefined });
+});
+
+test.serial('isRetryable returns RetryDecision for 502', (t) => {
+  const err = new InvalidStatusError('bad gateway', 502);
+  const result = isRetryable(err) as RetryDecision;
+  t.deepEqual(result, { retry: true, delayOverrideMs: undefined });
+});
+
+test.serial('isRetryable returns RetryDecision for 504', (t) => {
+  const err = new InvalidStatusError('gateway timeout', 504);
+  const result = isRetryable(err) as RetryDecision;
+  t.deepEqual(result, { retry: true, delayOverrideMs: undefined });
+});
+
+test.serial('isRetryable returns RetryDecision for 499', (t) => {
+  const err = new InvalidStatusError('client closed request', 499);
+  const result = isRetryable(err) as RetryDecision;
+  t.deepEqual(result, { retry: true, delayOverrideMs: undefined });
+});
+
+test.serial('isRetryable returns false for 404', (t) => {
+  const err = new InvalidStatusError('not found', 404);
+  t.false(isRetryable(err));
+});
+
+test.serial('isRetryable returns false for 401', (t) => {
+  const err = new InvalidStatusError('unauthorized', 401);
+  t.false(isRetryable(err));
+});
+
+// AbortSignal support
+
+test.serial('throws immediately if signal is already aborted', async (t) => {
+  const controller = new AbortController();
+  const abortReason = new Error('pre-aborted');
+  controller.abort(abortReason);
+
+  const fn = sinon.stub<[AbortSignal | undefined], Promise<string>>().resolves('should not reach');
+
+  const thrownError = await t.throwsAsync(
+    promiseRetriable(fn as (signal: AbortSignal | undefined) => Promise<string>, policy, () => true, controller.signal),
+  );
+  t.is(thrownError, abortReason);
+  t.is(fn.callCount, 0);
+});
+
+test.serial('signal firing mid-backoff cancels sleep and rejects', async (t) => {
+  const controller = new AbortController();
+  const abortReason = new Error('aborted mid-backoff');
+  const error = new Error('temporary');
+  const fn = sinon.stub<[AbortSignal | undefined], Promise<never>>().rejects(error);
+
+  const resultPromise = promiseRetriable(
+    fn as (signal: AbortSignal | undefined) => Promise<never>,
+    { ...policy, maxRetries: 3, initialInterval: 5_000 },
+    () => true,
+    controller.signal,
+  );
+
+  // First call fails; backoff sleep begins (5000ms)
+  await Promise.resolve();
+  t.is(fn.callCount, 1);
+
+  // Abort during the sleep
+  controller.abort(abortReason);
+
+  const thrownError = await t.throwsAsync(resultPromise);
+  t.is(thrownError, abortReason);
+  // fn should not have been called again after abort
+  t.is(fn.callCount, 1);
+});
+
+test.serial('signal is forwarded to fn on each attempt', async (t) => {
+  const controller = new AbortController();
+  const receivedSignals: (AbortSignal | undefined)[] = [];
+
+  const fn = async (signal: AbortSignal | undefined) => {
+    receivedSignals.push(signal);
+    return 'success';
+  };
+
+  await promiseRetriable(fn, policy, () => false, controller.signal);
+
+  t.is(receivedSignals.length, 1);
+  t.is(receivedSignals[0], controller.signal);
 });

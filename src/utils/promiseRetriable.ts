@@ -1,3 +1,5 @@
+import { InvalidStatusError } from '../objects/errors'
+
 export interface RetryPolicy {
   /** Maximum number of retry attempts */
   maxRetries: number
@@ -9,10 +11,16 @@ export interface RetryPolicy {
   multiplier?: number
 }
 
+export interface RetryDecision {
+  retry: boolean
+  delayOverrideMs?: number
+}
+
 /**
- * Function to determine if an error should trigger a retry
+ * Function to determine if an error should trigger a retry.
+ * May return a plain boolean or a RetryDecision with an optional delay override.
  */
-export type ShouldRetryFn = (error: Error) => boolean
+export type ShouldRetryFn = (error: Error) => boolean | RetryDecision
 
 const RETRYABLE_CODES = new Set<string>([
   'ECONNREFUSED',
@@ -23,13 +31,22 @@ const RETRYABLE_CODES = new Set<string>([
   'ECONNABORTED',
 ])
 
+const RETRYABLE_STATUS_CODES = new Set<number>([500, 502, 503, 504, 499])
+
 /**
- * Checks if an error is retryable based on Node.js network error codes.
- * Returns true for known transient network errors.
+ * Checks if an error is retryable based on Node.js network error codes or
+ * retryable HTTP status codes. For InvalidStatusError with a Retry-After
+ * header the delay override is threaded back via RetryDecision.
  */
-export function isRetryable(error: Error): boolean {
+export function isRetryable(error: Error): boolean | RetryDecision {
   const code = (error as NodeJS.ErrnoException).code
-  return RETRYABLE_CODES.has(code ?? '')
+  if (RETRYABLE_CODES.has(code ?? '')) return true
+
+  if (error instanceof InvalidStatusError && RETRYABLE_STATUS_CODES.has(error.code ?? 0)) {
+    return { retry: true, delayOverrideMs: error.retryAfterMs }
+  }
+
+  return false
 }
 
 /**
@@ -65,48 +82,74 @@ export function calculateBackoff(attempt: number, policy: RetryPolicy): number {
   return Math.floor(backoff)
 }
 
+function abortableSleep(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) return reject(signal.reason)
+    const timer = setTimeout(resolve, ms)
+    signal?.addEventListener(
+      'abort',
+      () => {
+        clearTimeout(timer)
+        reject(signal.reason)
+      },
+      { once: true },
+    )
+  })
+}
+
 /**
  * A generic retry utility that executes a function with configurable retry logic.
  * Uses exponential backoff with ±25% jitter between retries.
- * @param fn The function to execute
+ * @param fn The function to execute. Receives an optional AbortSignal.
  * @param retryPolicy The retry configuration
  * @param shouldRetry Function to determine if error should trigger retry. Defaults to isRetryable.
+ * @param signal Optional AbortSignal to cancel the operation at any point.
  * @returns Promise resolving to the result or throwing the last error
  */
 export async function promiseRetriable<T>(
-  fn: () => Promise<T>,
+  fn: (signal: AbortSignal | undefined) => Promise<T>,
   retryPolicy: RetryPolicy,
-  shouldRetry: ShouldRetryFn = isRetryable
-  // Future improvement: Allow cancellation in the future by adding an AbortSignal parameter
+  shouldRetry: ShouldRetryFn = isRetryable,
+  signal?: AbortSignal,
 ): Promise<T> {
   const { maxRetries } = retryPolicy
   let attempts = 0
 
   while (attempts <= maxRetries) {
+    if (signal?.aborted) throw signal.reason
+
     attempts++
 
     try {
-      return await fn()
+      return await fn(signal)
     } catch (error) {
       const lastError = error instanceof Error ? error : new Error(String(error))
 
       // If this was the last attempt or we shouldn't retry this error, throw
-      if (attempts > maxRetries || !shouldRetry(lastError)) {
+      if (attempts > maxRetries) {
         throw lastError
       }
 
-      // Wait before next attempt using exponential backoff (0-indexed attempt)
-      const waitTime = calculateBackoff(attempts - 1, retryPolicy)
+      const decision = shouldRetry(lastError)
+      const doRetry = typeof decision === 'boolean' ? decision : decision.retry
+      if (!doRetry) {
+        throw lastError
+      }
+
+      const delayOverride = typeof decision === 'object' ? decision.delayOverrideMs : undefined
+      const waitTime =
+        delayOverride !== undefined
+          ? retryPolicy.maxInterval > 0
+            ? Math.min(delayOverride, retryPolicy.maxInterval)
+            : delayOverride
+          : calculateBackoff(attempts - 1, retryPolicy)
+
       if (waitTime > 0) {
-        await sleep(waitTime)
+        await abortableSleep(waitTime, signal)
       }
     }
   }
 
   // This should never be reached due to the logic above
   throw new Error('Unexpected end of retry loop')
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms))
 }

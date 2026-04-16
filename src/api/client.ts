@@ -4,7 +4,7 @@ import { Event } from '../objects/event';
 import { SourceId } from '../objects/sourceId';
 import { GetEvaluationRequest, RegisterEventsRequest } from '../objects/request';
 import { GetEvaluationResponse, RegisterEventsResponse } from '../objects/response';
-import { InvalidStatusError } from '../objects/errors';
+import { InvalidStatusError, parseRetryAfter } from '../objects/errors';
 
 const scheme = 'https://';
 const evaluationAPI = '/get_evaluation';
@@ -90,22 +90,24 @@ export class APIClient {
     };
     return new Promise((resolve, reject) => {
       const clientReq = https.request(url, opts, (res) => {
-        if (res.statusCode != 200) {
-          reject(
-            new InvalidStatusError(
-              `bucketeer/api: send HTTP request failed: ${res.statusCode}`,
-              res.statusCode,
-            ),
-          );
-        }
         res.setEncoding('utf8');
         let rawData = '';
         res.on('data', (chunk: Buffer) => {
           rawData += chunk.toString();
         });
         res.on('end', () => {
-          const header = res.headers['content-length'];
-          resolve([rawData, Number(header || 0)]);
+          if (res.statusCode !== 200) {
+            const retryAfterMs = parseRetryAfter(res.headers['retry-after'] as string | undefined)
+            reject(
+              new InvalidStatusError(
+                `bucketeer/api: send HTTP request failed: ${res.statusCode}`,
+                res.statusCode,
+                retryAfterMs,
+              ),
+            )
+            return
+          }
+          resolve([rawData, Number(res.headers['content-length'] || 0)]);
         });
       });
       clientReq.on('error', (e) => {
