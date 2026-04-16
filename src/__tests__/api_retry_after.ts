@@ -27,6 +27,8 @@ test.before((t) => {
   t.context = {
     server: https
       .createServer(opts, (_req, res) => {
+        // 'Retry-After' or 'retry-after' are both valid header keys because
+        // in Node.js (http / https), header names are normalized to lowercase
         res.writeHead(503, { 'Retry-After': '60' });
         res.end();
       })
