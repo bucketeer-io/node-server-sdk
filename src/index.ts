@@ -232,6 +232,7 @@ function defaultInitialize(resolvedConfig: InternalConfig): Bucketeer {
     maxRetries: resolvedConfig.maxRetries,
     initialInterval: resolvedConfig.retryInitialInterval,
     maxInterval: resolvedConfig.retryMaxInterval,
+    multiplier: resolvedConfig.retryMultiplier,
   };
   const apiClient = new APIClient(resolvedConfig.apiEndpoint, resolvedConfig.apiKey, retryPolicy);
   const eventStore = new EventStore();

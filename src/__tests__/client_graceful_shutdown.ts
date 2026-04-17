@@ -26,6 +26,7 @@ const createTestConfig = (): InternalConfig => ({
   maxRetries: 3,
   retryInitialInterval: 1000,
   retryMaxInterval: 10000,
+  retryMultiplier: 2.0,
 });
 
 // Helper to create a mock API client
