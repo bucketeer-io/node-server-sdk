@@ -242,35 +242,24 @@ test.serial('calculateBackoff - uses default multiplier 2.0 when multiplier is u
 
 // isRetryable unit tests
 
-test.serial('isRetryable - returns true for ECONNREFUSED', (t) => {
-  const err = Object.assign(new Error('connect ECONNREFUSED'), { code: 'ECONNREFUSED' });
-  t.true(isRetryable(err).retry);
-});
+const RETRYABLE_TEST_CASES = [
+  { code: 'ECONNREFUSED', msg: 'connect ECONNREFUSED' },
+  { code: 'ECONNRESET', msg: 'read ECONNRESET' },
+  { code: 'ETIMEDOUT', msg: 'connect ETIMEDOUT' },
+  { code: 'ENOTFOUND', msg: 'getaddrinfo ENOTFOUND' },
+  { code: 'EAI_AGAIN', msg: 'getaddrinfo EAI_AGAIN' },
+  { code: 'ECONNABORTED', msg: 'socket hang up' },
+  { code: 'EHOSTUNREACH', msg: 'connect EHOSTUNREACH' },
+  { code: 'ENETUNREACH', msg: 'connect ENETUNREACH' },
+  { code: 'EPIPE', msg: 'write EPIPE' },
+];
 
-test.serial('isRetryable - returns true for ECONNRESET', (t) => {
-  const err = Object.assign(new Error('read ECONNRESET'), { code: 'ECONNRESET' });
-  t.true(isRetryable(err).retry);
-});
-
-test.serial('isRetryable - returns true for ETIMEDOUT', (t) => {
-  const err = Object.assign(new Error('connect ETIMEDOUT'), { code: 'ETIMEDOUT' });
-  t.true(isRetryable(err).retry);
-});
-
-test.serial('isRetryable - returns true for ENOTFOUND', (t) => {
-  const err = Object.assign(new Error('getaddrinfo ENOTFOUND'), { code: 'ENOTFOUND' });
-  t.true(isRetryable(err).retry);
-});
-
-test.serial('isRetryable - returns true for EAI_AGAIN', (t) => {
-  const err = Object.assign(new Error('getaddrinfo EAI_AGAIN'), { code: 'EAI_AGAIN' });
-  t.true(isRetryable(err).retry);
-});
-
-test.serial('isRetryable - returns true for ECONNABORTED', (t) => {
-  const err = Object.assign(new Error('socket hang up'), { code: 'ECONNABORTED' });
-  t.true(isRetryable(err).retry);
-});
+for (const { code, msg } of RETRYABLE_TEST_CASES) {
+  test.serial(`isRetryable - returns true for ${code}`, (t) => {
+    const err = Object.assign(new Error(msg), { code });
+    t.true(isRetryable(err).retry);
+  });
+}
 
 test.serial('isRetryable - returns false for generic Error', (t) => {
   t.false(isRetryable(new Error('something went wrong')).retry);
@@ -399,34 +388,25 @@ test.serial('RetryDecision delayOverrideMs is not capped when maxInterval is 0',
 
 //  isRetryable HTTP 5xx (Step 5) ────────────────────────────────────────────
 
+const RETRYABLE_STATUS_CASES = [
+  { code: 429, name: 'Too Many Requests' },
+  { code: 499, name: 'Client Closed Request' },
+  { code: 500, name: 'Internal Server Error' },
+  { code: 502, name: 'Bad Gateway' },
+  { code: 503, name: 'Service Unavailable' },
+  { code: 504, name: 'Gateway Timeout' },
+];
+
+for (const { code, name } of RETRYABLE_STATUS_CASES) {
+  test.serial(`isRetryable returns RetryDecision for ${code} (${name})`, (t) => {
+    const err = new InvalidStatusError(name.toLowerCase(), code);
+    t.deepEqual(isRetryable(err), { retry: true, delayOverrideMs: undefined });
+  });
+}
+
 test.serial('isRetryable returns RetryDecision for 503 with retryAfterMs', (t) => {
   const err = new InvalidStatusError('service unavailable', 503, 30_000);
   t.deepEqual(isRetryable(err), { retry: true, delayOverrideMs: 30_000 });
-});
-
-test.serial('isRetryable returns RetryDecision for 503 without retryAfterMs', (t) => {
-  const err = new InvalidStatusError('service unavailable', 503);
-  t.deepEqual(isRetryable(err), { retry: true, delayOverrideMs: undefined });
-});
-
-test.serial('isRetryable returns RetryDecision for 500', (t) => {
-  const err = new InvalidStatusError('internal error', 500);
-  t.deepEqual(isRetryable(err), { retry: true, delayOverrideMs: undefined });
-});
-
-test.serial('isRetryable returns RetryDecision for 502', (t) => {
-  const err = new InvalidStatusError('bad gateway', 502);
-  t.deepEqual(isRetryable(err), { retry: true, delayOverrideMs: undefined });
-});
-
-test.serial('isRetryable returns RetryDecision for 504', (t) => {
-  const err = new InvalidStatusError('gateway timeout', 504);
-  t.deepEqual(isRetryable(err), { retry: true, delayOverrideMs: undefined });
-});
-
-test.serial('isRetryable returns RetryDecision for 499', (t) => {
-  const err = new InvalidStatusError('client closed request', 499);
-  t.deepEqual(isRetryable(err), { retry: true, delayOverrideMs: undefined });
 });
 
 test.serial('isRetryable returns false for 404', (t) => {
