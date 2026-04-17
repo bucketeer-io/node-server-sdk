@@ -22,15 +22,25 @@ export interface RetryDecision {
 export type ShouldRetryFn = (error: Error) => RetryDecision
 
 const RETRYABLE_CODES = new Set<string>([
-  'ECONNREFUSED',
-  'ECONNRESET',
-  'ETIMEDOUT',
-  'ENOTFOUND',
-  'EAI_AGAIN',
-  'ECONNABORTED',
+  'ECONNREFUSED', // Connection refused
+  'ECONNRESET', // Connection reset by peer
+  'ETIMEDOUT', // Operation timed out
+  'ENOTFOUND', // DNS lookup failed
+  'EAI_AGAIN', // DNS lookup temporary failure
+  'ECONNABORTED', // Connection aborted
+  'EHOSTUNREACH', // Host unreachable
+  'ENETUNREACH', // Network unreachable
+  'EPIPE', // Broken pipe
 ])
 
-const RETRYABLE_STATUS_CODES = new Set<number>([500, 502, 503, 504, 499])
+const RETRYABLE_STATUS_CODES = new Set<number>([
+  429, // Too Many Requests
+  499, // Client Closed Request
+  500, // Internal Server Error
+  502, // Bad Gateway
+  503, // Service Unavailable
+  504, // Gateway Timeout
+])
 
 /**
  * Checks if an error is retryable based on Node.js network error codes or
