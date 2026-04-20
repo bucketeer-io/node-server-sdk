@@ -228,13 +228,13 @@ export function initializeBKTClient(config: BKTConfig): Bucketeer {
 }
 
 function defaultInitialize(resolvedConfig: InternalConfig): Bucketeer {
-  const retryPolicy: RetryPolicy = {
-    maxRetries: resolvedConfig.maxRetries,
-    initialInterval: resolvedConfig.retryInitialInterval,
-    maxInterval: resolvedConfig.retryMaxInterval,
-    multiplier: resolvedConfig.retryMultiplier,
-  };
-  const apiClient = new APIClient(resolvedConfig.apiEndpoint, resolvedConfig.apiKey, retryPolicy);
+  // const retryPolicy: RetryPolicy = {
+  //   maxRetries: resolvedConfig.maxRetries,
+  //   initialInterval: resolvedConfig.retryInitialInterval,
+  //   maxInterval: resolvedConfig.retryMaxInterval,
+  //   multiplier: resolvedConfig.retryMultiplier,
+  // };
+  const apiClient = new APIClient(resolvedConfig.apiEndpoint, resolvedConfig.apiKey);
   const eventStore = new EventStore();
   const eventEmitter = new ProcessorEventsEmitter();
 

@@ -1,25 +1,25 @@
-import { InvalidStatusError } from '../objects/errors'
+import { InvalidStatusError } from '../objects/errors';
 
 export interface RetryPolicy {
   /** Maximum number of retry attempts */
-  maxRetries: number
+  maxRetries: number;
   /** Initial backoff interval in milliseconds */
-  initialInterval: number
+  initialInterval: number;
   /** Maximum backoff interval in milliseconds. Set to 0 for no cap. */
-  maxInterval: number
+  maxInterval: number;
   /** Exponential backoff multiplier. Defaults to 2.0. (internal) */
-  multiplier?: number
+  multiplier?: number;
 }
 
 export interface RetryDecision {
-  retry: boolean
-  delayOverrideMs?: number
+  retry: boolean;
+  delayOverrideMs?: number;
 }
 
 /**
  * Function to determine if an error should trigger a retry.
  */
-export type ShouldRetryFn = (error: Error) => RetryDecision
+export type ShouldRetryFn = (error: Error) => RetryDecision;
 
 const RETRYABLE_CODES = new Set<string>([
   'ECONNREFUSED', // Connection refused
@@ -31,7 +31,7 @@ const RETRYABLE_CODES = new Set<string>([
   'EHOSTUNREACH', // Host unreachable
   'ENETUNREACH', // Network unreachable
   'EPIPE', // Broken pipe
-])
+]);
 
 const RETRYABLE_STATUS_CODES = new Set<number>([
   429, // Too Many Requests
@@ -40,7 +40,7 @@ const RETRYABLE_STATUS_CODES = new Set<number>([
   502, // Bad Gateway
   503, // Service Unavailable
   504, // Gateway Timeout
-])
+]);
 
 /**
  * Checks if an error is retryable based on Node.js network error codes or
@@ -48,14 +48,14 @@ const RETRYABLE_STATUS_CODES = new Set<number>([
  * header the delay override is threaded back via RetryDecision.
  */
 export function isRetryable(error: Error): RetryDecision {
-  const code = (error as NodeJS.ErrnoException).code
-  if (RETRYABLE_CODES.has(code ?? '')) return { retry: true }
+  const code = (error as NodeJS.ErrnoException).code;
+  if (RETRYABLE_CODES.has(code ?? '')) return { retry: true };
 
   if (error instanceof InvalidStatusError && RETRYABLE_STATUS_CODES.has(error.code ?? 0)) {
-    return { retry: true, delayOverrideMs: error.retryAfterMs }
+    return { retry: true, delayOverrideMs: error.retryAfterMs };
   }
 
-  return { retry: false }
+  return { retry: false };
 }
 
 /**
@@ -64,46 +64,46 @@ export function isRetryable(error: Error): RetryDecision {
  * Exported for testing purposes.
  */
 export function calculateBackoff(attempt: number, policy: RetryPolicy): number {
-  const initialInterval = Math.max(0, policy.initialInterval)
+  const initialInterval = Math.max(0, policy.initialInterval);
   if (initialInterval === 0) {
-    return 0
+    return 0;
   }
 
-  const multiplier = policy.multiplier && policy.multiplier > 0 ? policy.multiplier : 2.0
+  const multiplier = policy.multiplier && policy.multiplier > 0 ? policy.multiplier : 2.0;
 
   // Exponential backoff: initialInterval * (multiplier ^ attempt)
-  let backoff = initialInterval * Math.pow(multiplier, attempt)
+  let backoff = initialInterval * Math.pow(multiplier, attempt);
 
   // Add ±25% jitter to prevent thundering herd
-  const jitter = backoff * 0.25 * (Math.random() * 2 - 1)
-  backoff += jitter
+  const jitter = backoff * 0.25 * (Math.random() * 2 - 1);
+  backoff += jitter;
 
   // Cap at maxInterval
   if (policy.maxInterval > 0 && backoff > policy.maxInterval) {
-    backoff = policy.maxInterval
+    backoff = policy.maxInterval;
   }
 
   // Ensure non-negative (edge case with jitter on very small values)
   if (backoff < 0) {
-    backoff = initialInterval
+    backoff = initialInterval;
   }
 
-  return Math.floor(backoff)
+  return Math.floor(backoff);
 }
 
 function abortableSleep(ms: number, signal?: AbortSignal): Promise<void> {
   return new Promise((resolve, reject) => {
-    if (signal?.aborted) return reject(signal.reason)
-    const timer = setTimeout(resolve, ms)
+    if (signal?.aborted) return reject(signal.reason);
+    const timer = setTimeout(resolve, ms);
     signal?.addEventListener(
       'abort',
       () => {
-        clearTimeout(timer)
-        reject(signal.reason)
+        clearTimeout(timer);
+        reject(signal.reason);
       },
       { once: true },
-    )
-  })
+    );
+  });
 }
 
 /**
@@ -121,42 +121,41 @@ export async function promiseRetriable<T>(
   shouldRetry: ShouldRetryFn = isRetryable,
   signal?: AbortSignal,
 ): Promise<T> {
-  const { maxRetries } = retryPolicy
-  let attempts = 0
+  const { maxRetries } = retryPolicy;
+  let retriesPerformed = 0;
 
-  while (attempts <= maxRetries) {
-    if (signal?.aborted) throw signal.reason
-
-    attempts++
+  while (true) {
+    if (signal?.aborted) throw signal.reason;
 
     try {
-      return await fn(signal)
+      return await fn(signal);
     } catch (error) {
-      const lastError = error instanceof Error ? error : new Error(String(error))
+      const lastError = error instanceof Error ? error : new Error(String(error));
 
-      // If this was the last attempt or we shouldn't retry this error, throw
-      if (attempts > maxRetries) {
-        throw lastError
-      }
-
-      const decision = shouldRetry(lastError)
+      // Check if the error itself allows a retry
+      const decision = shouldRetry(lastError);
       if (!decision.retry) {
-        throw lastError
+        throw lastError;
       }
 
+      // If we have no more retries allowed, throw immediately
+      if (retriesPerformed >= maxRetries) {
+        throw lastError;
+      }
+
+      // Calculate delay based on the retry index (0, 1, 2...)
       const waitTime =
         decision.delayOverrideMs !== undefined
           ? retryPolicy.maxInterval > 0
             ? Math.min(decision.delayOverrideMs, retryPolicy.maxInterval)
             : decision.delayOverrideMs
-          : calculateBackoff(attempts - 1, retryPolicy)
+          : calculateBackoff(retriesPerformed, retryPolicy);
 
       if (waitTime > 0) {
-        await abortableSleep(waitTime, signal)
+        await abortableSleep(waitTime, signal);
       }
+
+      retriesPerformed++;
     }
   }
-
-  // This should never be reached due to the logic above
-  throw new Error('Unexpected end of retry loop')
 }

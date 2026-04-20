@@ -75,6 +75,24 @@ test.serial('waits for configured delay before retrying', async (t) => {
   t.is(await resultPromise, 'success');
 });
 
+test.serial('does not retry when maxRetries is 0', async (t) => {
+  const error = new Error('fail immediately');
+  const fn = sinon.stub<[], Promise<never>>().rejects(error);
+  const shouldRetry = sinon.stub<[Error], RetryDecision>().returns({ retry: true });
+
+  const resultPromise = promiseRetriable(
+    fn as () => Promise<never>,
+    { ...policy, maxRetries: 0 },
+    shouldRetry as ShouldRetryFn,
+  );
+
+  const thrownError = await t.throwsAsync(resultPromise);
+  t.is(thrownError, error);
+  t.is(fn.callCount, 1);
+  // Optional: shouldRetry might still be called once for the first failure
+  t.is(shouldRetry.callCount, 1);
+});
+
 test.serial('throws the last error after exceeding max retries', async (t) => {
   const error = new Error('permanent failure');
   const fn = sinon.stub<[], Promise<never>>().rejects(error);
@@ -91,7 +109,7 @@ test.serial('throws the last error after exceeding max retries', async (t) => {
   const thrownError = await t.throwsAsync(resultPromise);
   t.is(thrownError, error);
   t.is(fn.callCount, 3);
-  t.is(shouldRetry.callCount, 2);
+  t.is(shouldRetry.callCount, 3);
 });
 
 test.serial('does not retry when shouldRetry returns false', async (t) => {

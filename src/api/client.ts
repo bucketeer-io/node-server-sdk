@@ -12,7 +12,7 @@ const evaluationAPI = '/get_evaluation';
 const eventsAPI = '/register_events';
 
 const DEFAULT_RETRY_POLICY: RetryPolicy = {
-  maxRetries: 3,
+  maxRetries: 0,
   initialInterval: 1000,
   maxInterval: 10000,
   multiplier: 2.0,
