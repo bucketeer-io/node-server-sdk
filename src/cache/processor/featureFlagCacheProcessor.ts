@@ -7,6 +7,7 @@ import { Feature } from '@bucketeer/evaluation';
 import { ApiId } from '../../objects/apiId';
 import { Clock } from '../../utils/clock';
 import { SourceId } from '../../objects/sourceId';
+import { latencySecondsSince, latencyStart } from '../../utils/time';
 
 interface FeatureFlagProcessor {
   start(): Promise<void>;
@@ -95,7 +96,7 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
   private async getFeatureFlags() {
     const featureFlagsId = await this.getFeatureFlagId();
     const requestedAt = await this.getFeatureFlagRequestedAt();
-    const startTime: number = this.clock.getTime();
+    const startMark = latencyStart();
     const featureFlags = await this.grpc.getFeatureFlags({
       requestedAt: requestedAt,
       tag: this.featureTag,
@@ -104,8 +105,7 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
       sdkVersion: this.sdkVersion,
     });
 
-    const endTime = this.clock.getTime();
-    const latency = (endTime - startTime) / 1000;
+    const latency = latencySecondsSince(startMark);
 
     this.pushLatencyMetricsEvent(latency);
     this.pushSizeMetricsEvent(featureFlags.serializeBinary().length);

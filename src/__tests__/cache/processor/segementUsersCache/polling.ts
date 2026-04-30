@@ -42,13 +42,12 @@ test('polling cache', async (t) => {
   };
 
   const mockClock = sino.mock(clock);
-  const mockClockExpected = mockClock.expects('getTime').atLeast(5);
-  mockClockExpected.onFirstCall().returns(0);
-  mockClockExpected.onSecondCall().returns(2210);
-  mockClockExpected.onThirdCall().returns(4200);
-  mockClockExpected.onCall(3).returns(7000);
-  mockClockExpected.onCall(4).returns(8700);
-  mockClockExpected.onCall(5).returns(9700);
+  // The processor no longer calls clock.getTime() to measure latency
+  // (it uses process.hrtime.bigint() so sub-millisecond local-evaluation
+  // latencies don't round to 0). The clock dependency is kept on the
+  // processor options for source compatibility but is unused, so the mock
+  // intentionally has no expectations.
+  void mockClock;
 
   const mockCache = sino.mock(cache);
   const mockCacheGetAllExpect = mockCache
@@ -93,18 +92,16 @@ test('polling cache', async (t) => {
     .withArgs(`${SEGMENT_USERS_CACHE_NAME_SPACE}segmentId2`, segementUser2);
 
   const mockEventEmitter = sino.mock(eventEmitter);
-  mockEventEmitter.expects('emit').once().withArgs('pushLatencyMetricsEvent', {
-    latency: 2.21,
-    apiId: ApiId.GET_SEGMENT_USERS,
-  });
-  mockEventEmitter.expects('emit').once().withArgs('pushLatencyMetricsEvent', {
-    latency: 2.8,
-    apiId: ApiId.GET_SEGMENT_USERS,
-  });
-  mockEventEmitter.expects('emit').once().withArgs('pushLatencyMetricsEvent', {
-    latency: 1.0,
-    apiId: ApiId.GET_SEGMENT_USERS,
-  });
+  // Latency is now measured from process.hrtime.bigint() (real elapsed
+  // time), so we can no longer assert specific latency values; we only
+  // verify that the event is emitted thrice with a numeric latency.
+  mockEventEmitter
+    .expects('emit')
+    .thrice()
+    .withArgs(
+      'pushLatencyMetricsEvent',
+      sino.match({ apiId: ApiId.GET_SEGMENT_USERS, latency: sino.match.number }),
+    );
   mockEventEmitter
     .expects('emit')
     .thrice()

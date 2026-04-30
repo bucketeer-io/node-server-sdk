@@ -8,6 +8,7 @@ import { createSchedule, removeSchedule } from '../../schedule';
 import { Clock } from '../../utils/clock';
 import { InvalidStatusError } from '../../objects/errors';
 import { SourceId } from '../../objects/sourceId';
+import { latencySecondsSince, latencyStart } from '../../utils/time';
 
 interface SegementUsersCacheProcessor {
   start(): Promise<void>;
@@ -97,7 +98,7 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
     const sourceId = this.sourceId;
     const sdkVersion = this.sdkVersion;
 
-    const startTime: number = this.clock.getTime();
+    const startMark = latencyStart();
 
     const resp = await this.grpc.getSegmentUsers({
       segmentIdsList: segmentIds,
@@ -106,8 +107,7 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
       sdkVersion: sdkVersion,
     });
 
-    const endTime: number = this.clock.getTime();
-    const latency = (endTime - startTime) / 1000;
+    const latency = latencySecondsSince(startMark);
 
     this.pushLatencyMetricsEvent(latency);
     this.pushSizeMetricsEvent(resp.serializeBinary().length);
