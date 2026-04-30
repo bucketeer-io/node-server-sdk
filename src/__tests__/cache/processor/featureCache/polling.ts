@@ -19,15 +19,20 @@ import { minimalFeature } from '../../../utils/feature';
 
 
 test('polling cache', async (t) => {
+  const firstStartMark = BigInt(100);
+  const secondStartMark = BigInt(200);
+  const thirdStartMark = BigInt(300);
+
   const clock = new Clock();
-  const mockClock = sino.mock(clock);
-  const mockClockExpected = mockClock.expects('getTime').atLeast(5);
-  mockClockExpected.onFirstCall().returns(0);
-  mockClockExpected.onSecondCall().returns(3210);
-  mockClockExpected.onThirdCall().returns(4200);
-  mockClockExpected.onCall(3).returns(6000);
-  mockClockExpected.onCall(4).returns(8700);
-  mockClockExpected.onCall(5).returns(9700);
+  const latencyStartStub = sino.stub(clock, 'latencyStart');
+  latencyStartStub.onFirstCall().returns(firstStartMark);
+  latencyStartStub.onSecondCall().returns(secondStartMark);
+  latencyStartStub.onThirdCall().returns(thirdStartMark);
+
+  const latencySecondsSinceStub = sino.stub(clock, 'latencySecondsSince');
+  latencySecondsSinceStub.withArgs(firstStartMark).returns(3.21);
+  latencySecondsSinceStub.withArgs(secondStartMark).returns(1.8);
+  latencySecondsSinceStub.withArgs(thirdStartMark).returns(1.0);
 
   const cache = new MockCache();
   const mockCache = sino.mock(cache);
@@ -126,7 +131,8 @@ test('polling cache', async (t) => {
   await new Promise((resolve) => setTimeout(resolve, 3000));
   await processor.stop();
 
-  mockClock.verify();
+  t.true(latencyStartStub.calledThrice);
+  t.true(latencySecondsSinceStub.calledThrice);
   mockCache.verify();
   mockProcessorEventsEmitter.verify();
   mockAPIClient.verify();

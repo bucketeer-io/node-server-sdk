@@ -14,6 +14,7 @@ import { Evaluation } from './objects/evaluation';
 import { Event } from './objects/event';
 import { GetEvaluationResponse } from './objects/response';
 import { ApiId, NodeApiIds } from './objects/apiId';
+import { Clock } from './utils/clock';
 import { BKTEvaluationDetails, newDefaultBKTEvaluationDetails } from './evaluationDetails';
 import { BKTValue } from './types';
 import {
@@ -46,6 +47,7 @@ export class BKTClientImpl implements Bucketeer {
   featureFlagProcessor: FeatureFlagProcessor | null = null;
   segementUsersCacheProcessor: SegementUsersCacheProcessor | null = null;
   localEvaluator: NodeEvaluator | null = null;
+  clock: Clock;
 
   initializationAsync: Promise<any[]> | undefined;
 
@@ -71,11 +73,13 @@ export class BKTClientImpl implements Bucketeer {
       featureFlagProcessor: FeatureFlagProcessor | null;
       segementUsersCacheProcessor: SegementUsersCacheProcessor | null;
       eventEmitter: ProcessorEventsEmitter;
+      clock: Clock;
     },
   ) {
     this.config = config;
     this.apiClient = options.apiClient;
     this.eventStore = options.eventStore;
+    this.clock = options.clock;
     this.registerEventsScheduleID = createSchedule(() => {
       // Flush events in batches to avoid large payloads
       while (this.eventStore.size() > 0) {
@@ -381,7 +385,7 @@ export class BKTClientImpl implements Bucketeer {
   }
 
   private async getEvaluationRemotely(user: User, featureId: string): Promise<Evaluation | null> {
-    const startTime: number = Date.now();
+    const startMark = this.clock.latencyStart();
     let res: GetEvaluationResponse;
     let size: number;
     try {
@@ -392,7 +396,7 @@ export class BKTClientImpl implements Bucketeer {
         this.config.sourceId,
         this.config.sdkVersion,
       );
-      const second = (Date.now() - startTime) / 1000;
+      const second = this.clock.latencySecondsSince(startMark);
       this.eventEmitter.emit('pushLatencyMetricsEvent', {
         latency: second,
         apiId: ApiId.GET_EVALUATION,
@@ -418,12 +422,12 @@ export class BKTClientImpl implements Bucketeer {
   }
 
   private async getEvaluationLocally(user: User, featureId: string): Promise<Evaluation | null> {
-    const startTime: number = Date.now();
+    const startMark = this.clock.latencyStart();
     try {
       if (this.localEvaluator) {
         let evaluation = await this.localEvaluator.evaluate(user, featureId);
 
-        const second = (Date.now() - startTime) / 1000;
+        const second = this.clock.latencySecondsSince(startMark);
         // don't log size of the local evaluation because it will log from
         // the feature flag processor
         this.eventEmitter.emit('pushLatencyMetricsEvent', {

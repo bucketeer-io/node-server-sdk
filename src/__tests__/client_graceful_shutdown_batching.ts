@@ -9,6 +9,7 @@ import { DefaultLogger } from '../logger';
 import { Event, createEvent } from '../objects/event';
 import { createGoalEvent } from '../objects/goalEvent';
 import { Bucketeer } from '../index';
+import { Clock } from '../utils/clock';
 
 // Helper to create a basic internal config
 const createTestConfig = (): InternalConfig => ({
@@ -53,6 +54,7 @@ test('destroy() should flush events in batches to avoid gRPC size limit', async 
     featureFlagProcessor: null,
     segementUsersCacheProcessor: null,
     eventEmitter: eventEmitter,
+    clock: new Clock(),
   });
 
   // Add 250 events directly to store (should be split into 3 batches: 100, 100, 50)
@@ -104,6 +106,7 @@ test('destroy() should handle large event queues (10k events)', async (t) => {
     featureFlagProcessor: null,
     segementUsersCacheProcessor: null,
     eventEmitter: eventEmitter,
+    clock: new Clock(),
   });
 
   // Simulate high-traffic scenario: 10,000 events
@@ -161,6 +164,7 @@ test('destroy() should continue flushing even if one batch fails', async (t) => 
     featureFlagProcessor: null,
     segementUsersCacheProcessor: null,
     eventEmitter: eventEmitter,
+    clock: new Clock(),
   });
 
   // Add 250 events
@@ -203,6 +207,7 @@ test('scheduled flush should also batch events', async (t) => {
     featureFlagProcessor: null,
     segementUsersCacheProcessor: null,
     eventEmitter: eventEmitter,
+    clock: new Clock(),
   });
 
   // Add 250 events directly to the store (bypassing track which also flushes)
@@ -247,6 +252,7 @@ test('batching should respect exact eventsMaxQueueSize limit', async (t) => {
     featureFlagProcessor: null,
     segementUsersCacheProcessor: null,
     eventEmitter: eventEmitter,
+    clock: new Clock(),
   });
 
   // Add exactly 300 events (should be 3 batches of 100)
