@@ -88,15 +88,14 @@ test('latencySecondsSince has sub-millisecond resolution (proves the fix)', asyn
 test('latencySecondsSince matches process.hrtime.bigint diff in seconds', (t) => {
   // Sanity: the helper actually divides the bigint diff by 1e9.
   const start = latencyStart();
-  const hrtimeStart = process.hrtime.bigint();
   // burn a tiny amount of work
   for (let i = 0; i < 1000; i++) {
     Math.sqrt(i);
   }
   const second = latencySecondsSince(start);
-  const hrtimeDiffSec = Number(process.hrtime.bigint() - hrtimeStart) / 1e9;
-  // helper measured BEFORE the second hrtime read, so it must be <= the
-  // independently-computed value.
+  const hrtimeDiffSec = Number(process.hrtime.bigint() - start) / 1e9;
+  // Both values use the same start mark, and the helper is measured before
+  // the second hrtime read, so it must be <= the independently-computed value.
   t.true(second > 0);
   t.true(second <= hrtimeDiffSec + 1e-6);
 });
