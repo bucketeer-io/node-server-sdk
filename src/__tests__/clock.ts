@@ -2,17 +2,6 @@ import test from 'ava';
 import sinon from 'sinon';
 import { Clock } from '../utils/clock';
 
-test('Clock.getTime delegates to Date.now', (t) => {
-  const dateNowStub = sinon.stub(Date, 'now').returns(1234);
-  t.teardown(() => {
-    dateNowStub.restore();
-  });
-
-  const clock = new Clock();
-
-  t.is(clock.getTime(), 1234);
-});
-
 test('Clock.latencyStart returns the current hrtime bigint mark', (t) => {
   const expectedStartMark = BigInt(456);
   const hrtimeBigintStub = sinon.stub(process.hrtime, 'bigint').returns(expectedStartMark);

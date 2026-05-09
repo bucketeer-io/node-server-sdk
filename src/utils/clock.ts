@@ -4,10 +4,6 @@ import {
 } from './time';
 
 class Clock {
-  getTime(): number {
-    return Date.now();
-  }
-
   latencyStart(): bigint {
     return monotonicLatencyStart();
   }
