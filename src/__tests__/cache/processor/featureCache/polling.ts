@@ -19,14 +19,20 @@ import { MockGRPCClient } from '../../../mocks/gprc';
 import { SourceId } from '../../../../objects/sourceId';
 
 test('polling cache', async (t) => {
+  const firstStartMark = BigInt(100);
+  const secondStartMark = BigInt(200);
+  const thirdStartMark = BigInt(300);
 
   const clock = new Clock();
-  const mockClock = sino.mock(clock);
-  // The processor no longer calls clock.getTime() to measure latency
-  // (it uses process.hrtime.bigint() so sub-millisecond local-evaluation
-  // latencies don't round to 0). The clock dependency is kept on the
-  // processor options for source compatibility but is unused, so the mock
-  // intentionally has no expectations.
+  const latencyStartStub = sino.stub(clock, 'latencyStart');
+  latencyStartStub.onFirstCall().returns(firstStartMark);
+  latencyStartStub.onSecondCall().returns(secondStartMark);
+  latencyStartStub.onThirdCall().returns(thirdStartMark);
+
+  const latencySecondsSinceStub = sino.stub(clock, 'latencySecondsSince');
+  latencySecondsSinceStub.withArgs(firstStartMark).returns(3.21);
+  latencySecondsSinceStub.withArgs(secondStartMark).returns(1.8);
+  latencySecondsSinceStub.withArgs(thirdStartMark).returns(1.0);
 
   const cache = new MockCache();
   const mockCache = sino.mock(cache);
@@ -91,13 +97,18 @@ test('polling cache', async (t) => {
 
   const eventEmitter = new ProcessorEventsEmitter();
   const mockProcessorEventsEmitter = sino.mock(eventEmitter);
-  // Latency is now measured from process.hrtime.bigint() (real elapsed
-  // time), so we can no longer assert specific latency values; we only
-  // verify that the event is emitted thrice with a numeric latency.
   mockProcessorEventsEmitter
     .expects('emit')
-    .thrice()
-    .withArgs('pushLatencyMetricsEvent', sino.match({ apiId: 4, latency: sino.match.number }));
+    .once()
+    .withArgs('pushLatencyMetricsEvent', { latency: 3.21, apiId: 4 });
+  mockProcessorEventsEmitter
+    .expects('emit')
+    .once()
+    .withArgs('pushLatencyMetricsEvent', { latency: 1.8, apiId: 4 });
+  mockProcessorEventsEmitter
+    .expects('emit')
+    .once()
+    .withArgs('pushLatencyMetricsEvent', { latency: 1.0, apiId: 4 });
   mockProcessorEventsEmitter
     .expects('emit')
     .thrice()
@@ -121,7 +132,8 @@ test('polling cache', async (t) => {
   await new Promise((resolve) => setTimeout(resolve, 3000));
 
   await processor.stop();
-  mockClock.verify();
+  t.true(latencyStartStub.calledThrice);
+  t.true(latencySecondsSinceStub.calledThrice);
   mockCache.verify();
   mockProcessorEventsEmitter.verify();
   mockGRPCClient.verify();

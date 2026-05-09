@@ -1,4 +1,5 @@
 import test from 'ava';
+import sinon from 'sinon';
 import {
   createTimestamp,
   latencySecondsSince,
@@ -26,6 +27,18 @@ test('latencySecondsSince returns a finite, non-negative number', (t) => {
   t.is(typeof elapsed, 'number');
   t.true(Number.isFinite(elapsed));
   t.true(elapsed >= 0);
+});
+
+test('latencySecondsSince divides the bigint diff by 1e9', (t) => {
+  const startMark = BigInt(100);
+  const hrtimeBigintStub = sinon
+    .stub(process.hrtime, 'bigint')
+    .returns(BigInt(1_500_000_100));
+  t.teardown(() => {
+    hrtimeBigintStub.restore();
+  });
+
+  t.is(latencySecondsSince(startMark), 1.5);
 });
 
 test('latencySecondsSince > 0 for an awaited microtask (regression for "latencySecond is 0")', async (t) => {

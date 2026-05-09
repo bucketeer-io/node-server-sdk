@@ -21,6 +21,10 @@ import { ProcessorEventsEmitter } from '../../../../processorEventsEmitter';
 import { SourceId } from '../../../../objects/sourceId';
 
 test('polling cache', async (t) => {
+  const firstStartMark = BigInt(10);
+  const secondStartMark = BigInt(20);
+  const thirdStartMark = BigInt(30);
+
   const cache = new MockCache();
   const grpc = new MockGRPCClient();
   const eventEmitter = new ProcessorEventsEmitter();
@@ -41,13 +45,15 @@ test('polling cache', async (t) => {
     sdkVersion: sdkVersion,
   };
 
-  const mockClock = sino.mock(clock);
-  // The processor no longer calls clock.getTime() to measure latency
-  // (it uses process.hrtime.bigint() so sub-millisecond local-evaluation
-  // latencies don't round to 0). The clock dependency is kept on the
-  // processor options for source compatibility but is unused, so the mock
-  // intentionally has no expectations.
-  void mockClock;
+  const latencyStartStub = sino.stub(clock, 'latencyStart');
+  latencyStartStub.onFirstCall().returns(firstStartMark);
+  latencyStartStub.onSecondCall().returns(secondStartMark);
+  latencyStartStub.onThirdCall().returns(thirdStartMark);
+
+  const latencySecondsSinceStub = sino.stub(clock, 'latencySecondsSince');
+  latencySecondsSinceStub.withArgs(firstStartMark).returns(2.21);
+  latencySecondsSinceStub.withArgs(secondStartMark).returns(2.8);
+  latencySecondsSinceStub.withArgs(thirdStartMark).returns(1.0);
 
   const mockCache = sino.mock(cache);
   const mockCacheGetAllExpect = mockCache
@@ -92,16 +98,18 @@ test('polling cache', async (t) => {
     .withArgs(`${SEGMENT_USERS_CACHE_NAME_SPACE}segmentId2`, segementUser2);
 
   const mockEventEmitter = sino.mock(eventEmitter);
-  // Latency is now measured from process.hrtime.bigint() (real elapsed
-  // time), so we can no longer assert specific latency values; we only
-  // verify that the event is emitted thrice with a numeric latency.
-  mockEventEmitter
-    .expects('emit')
-    .thrice()
-    .withArgs(
-      'pushLatencyMetricsEvent',
-      sino.match({ apiId: ApiId.GET_SEGMENT_USERS, latency: sino.match.number }),
-    );
+  mockEventEmitter.expects('emit').once().withArgs('pushLatencyMetricsEvent', {
+    latency: 2.21,
+    apiId: ApiId.GET_SEGMENT_USERS,
+  });
+  mockEventEmitter.expects('emit').once().withArgs('pushLatencyMetricsEvent', {
+    latency: 2.8,
+    apiId: ApiId.GET_SEGMENT_USERS,
+  });
+  mockEventEmitter.expects('emit').once().withArgs('pushLatencyMetricsEvent', {
+    latency: 1.0,
+    apiId: ApiId.GET_SEGMENT_USERS,
+  });
   mockEventEmitter
     .expects('emit')
     .thrice()
@@ -115,7 +123,10 @@ test('polling cache', async (t) => {
 
   await processor.stop();
 
+  t.true(latencyStartStub.calledThrice);
+  t.true(latencySecondsSinceStub.calledThrice);
   mockCache.verify();
+  mockEventEmitter.verify();
   mockGRPCClient.verify();
   t.pass();
 });
