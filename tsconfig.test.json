@@ -12,7 +12,7 @@
     "skipLibCheck": true,
     "outDir": "./__test/",
     "types": [
-      "@types/node",
+      "node",
     ]
   },
   "exclude": [],
