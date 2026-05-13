@@ -9,6 +9,7 @@ import { DefaultLogger } from '../logger';
 import { Event, createEvent } from '../objects/event';
 import { createGoalEvent } from '../objects/goalEvent';
 import { Bucketeer } from '../index';
+import { Clock } from '../utils/clock';
 
 // Helper to create a basic internal config
 const createTestConfig = (): InternalConfig => ({
@@ -52,6 +53,7 @@ test('destroy() should flush all remaining events', async (t) => {
     featureFlagProcessor: null,
     segementUsersCacheProcessor: null,
     eventEmitter: eventEmitter,
+    clock: new Clock(),
   });
 
   // Add some events to the store
@@ -90,6 +92,7 @@ test('destroy() should stop the scheduled flush', async (t) => {
     featureFlagProcessor: null,
     segementUsersCacheProcessor: null,
     eventEmitter: eventEmitter,
+    clock: new Clock(),
   });
 
   const initialFlushCount = flushCount;
@@ -141,6 +144,7 @@ test('destroy() should handle empty event store', async (t) => {
     featureFlagProcessor: null,
     segementUsersCacheProcessor: null,
     eventEmitter: eventEmitter,
+    clock: new Clock(),
   });
 
   // Destroy without any events
@@ -168,6 +172,7 @@ test('destroy() should handle API errors gracefully', async (t) => {
     featureFlagProcessor: null,
     segementUsersCacheProcessor: null,
     eventEmitter: eventEmitter,
+    clock: new Clock(),
   });
 
   // Add an event
@@ -220,6 +225,7 @@ test('destroy() should stop processors when local evaluation is enabled', async 
     featureFlagProcessor: mockFeatureFlagProcessor as any,
     segementUsersCacheProcessor: mockSegmentProcessor as any,
     eventEmitter: eventEmitter,
+    clock: new Clock(),
   });
 
   // Destroy the client
@@ -248,6 +254,7 @@ test('destroy() should be idempotent', async (t) => {
     featureFlagProcessor: null,
     segementUsersCacheProcessor: null,
     eventEmitter: eventEmitter,
+    clock: new Clock(),
   });
 
   // Add an event
@@ -283,6 +290,7 @@ test('destroy() should flush events with correct order', async (t) => {
     featureFlagProcessor: null,
     segementUsersCacheProcessor: null,
     eventEmitter: eventEmitter,
+    clock: new Clock(),
   });
 
   // Add events in order
@@ -317,6 +325,7 @@ test('destroy() should timeout if shutdown takes too long', async (t) => {
     featureFlagProcessor: null,
     segementUsersCacheProcessor: null,
     eventEmitter: eventEmitter,
+    clock: new Clock(),
   });
 
   // Add an event
@@ -354,6 +363,7 @@ test('destroy() should succeed with sufficient timeout', async (t) => {
     featureFlagProcessor: null,
     segementUsersCacheProcessor: null,
     eventEmitter: eventEmitter,
+    clock: new Clock(),
   });
 
   // Add events
@@ -388,6 +398,7 @@ test('destroy() should not save error metrics during shutdown', async (t) => {
     featureFlagProcessor: null,
     segementUsersCacheProcessor: null,
     eventEmitter: eventEmitter,
+    clock: new Clock(),
   });
 
   // Add an event
@@ -434,6 +445,7 @@ test('destroy() should handle processor stop errors gracefully', async (t) => {
     featureFlagProcessor: mockFeatureFlagProcessor as any,
     segementUsersCacheProcessor: mockSegmentProcessor as any,
     eventEmitter: eventEmitter,
+    clock: new Clock(),
   });
 
   // Destroy should propagate the error

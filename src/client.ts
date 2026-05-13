@@ -73,13 +73,13 @@ export class BKTClientImpl implements Bucketeer {
       featureFlagProcessor: FeatureFlagProcessor | null;
       segementUsersCacheProcessor: SegementUsersCacheProcessor | null;
       eventEmitter: ProcessorEventsEmitter;
-      clock?: Clock;
+      clock: Clock;
     },
   ) {
     this.config = config;
     this.apiClient = options.apiClient;
     this.eventStore = options.eventStore;
-    this.clock = options.clock ?? new Clock();
+    this.clock = options.clock;
     this.registerEventsScheduleID = createSchedule(() => {
       // Flush events in batches to avoid exceeding gRPC message size limits
       while (this.eventStore.size() > 0) {
