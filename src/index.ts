@@ -230,6 +230,7 @@ function defaultInitialize(resolvedConfig: InternalConfig): Bucketeer {
   const apiClient = new APIClient(resolvedConfig.apiEndpoint, resolvedConfig.apiKey);
   const eventStore = new EventStore();
   const eventEmitter = new ProcessorEventsEmitter();
+  const clock = new Clock();
 
   let featureFlagProcessor: FeatureFlagProcessor | null = null;
   let segementUsersCacheProcessor: SegementUsersCacheProcessor | null = null;
@@ -242,7 +243,6 @@ function defaultInitialize(resolvedConfig: InternalConfig): Bucketeer {
     );
     const cache = new InMemoryCache();
     const featureFlagCache = NewFeatureCache({ cache: cache, ttl: FEATURE_FLAG_CACHE_TTL });
-    const clock = new Clock();
     const segementUsersCache = NewSegmentUsersCache({
       cache: cache,
       ttl: SEGEMENT_USERS_CACHE_TTL,
@@ -285,6 +285,7 @@ function defaultInitialize(resolvedConfig: InternalConfig): Bucketeer {
     featureFlagProcessor: featureFlagProcessor,
     segementUsersCacheProcessor: segementUsersCacheProcessor,
     eventEmitter: eventEmitter,
+    clock: clock,
   };
 
   return new BKTClientImpl(resolvedConfig, options);

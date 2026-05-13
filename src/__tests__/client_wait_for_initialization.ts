@@ -128,6 +128,7 @@ test.serial('Timeout reached', async (t) => {
     config,
     cache,
     evaluator,
+    clock,
   } = t.context;
 
   const bktOptions = {
@@ -138,6 +139,7 @@ test.serial('Timeout reached', async (t) => {
     featureFlagProcessor: featureFlagProcessor,
     segementUsersCacheProcessor: segementUsersCacheProcessor,
     eventEmitter: eventEmitter,
+    clock: clock,
   };
 
   // mock featureFlagProcessor.start() to complete after timeout
@@ -175,6 +177,7 @@ test.serial('Init successful', async (t) => {
     config,
     cache,
     evaluator,
+    clock,
   } = t.context;
 
   const bktOptions = {
@@ -185,6 +188,7 @@ test.serial('Init successful', async (t) => {
     featureFlagProcessor: featureFlagProcessor,
     segementUsersCacheProcessor: segementUsersCacheProcessor,
     eventEmitter: eventEmitter,
+    clock: clock,
   };
 
   // Mock both processors to resolve after a short delay
@@ -230,6 +234,7 @@ test.serial('Init failed - by feature processor', async (t) => {
     config,
     cache,
     evaluator,
+    clock,
   } = t.context;
 
   const bktOptions = {
@@ -240,6 +245,7 @@ test.serial('Init failed - by feature processor', async (t) => {
     featureFlagProcessor: featureFlagProcessor,
     segementUsersCacheProcessor: segementUsersCacheProcessor,
     eventEmitter: eventEmitter,
+    clock: clock,
   };
 
   // Mock feature processor to fail, segment to succeed
@@ -271,6 +277,7 @@ test.serial('Init failed - by segment processor', async (t) => {
     config,
     cache,
     evaluator,
+    clock,
   } = t.context;
 
   const bktOptions = {
@@ -281,6 +288,7 @@ test.serial('Init failed - by segment processor', async (t) => {
     featureFlagProcessor: featureFlagProcessor,
     segementUsersCacheProcessor: segementUsersCacheProcessor,
     eventEmitter: eventEmitter,
+    clock: clock,
   };
 
   // Mock segment processor to fail, feature to succeed
@@ -312,6 +320,7 @@ test.serial('Init failed - by both processors', async (t) => {
     config,
     cache,
     evaluator,
+    clock,
   } = t.context;
 
   const bktOptions = {
@@ -322,6 +331,7 @@ test.serial('Init failed - by both processors', async (t) => {
     featureFlagProcessor: featureFlagProcessor,
     segementUsersCacheProcessor: segementUsersCacheProcessor,
     eventEmitter: eventEmitter,
+    clock: clock,
   };
 
   // Mock both processors to fail
@@ -359,6 +369,7 @@ test.serial(
       config,
       cache,
       evaluator,
+      clock,
     } = t.context;
 
     const editConfig = { ...config, enableLocalEvaluation: false };
@@ -371,6 +382,7 @@ test.serial(
       featureFlagProcessor: featureFlagProcessor,
       segementUsersCacheProcessor: segementUsersCacheProcessor,
       eventEmitter: eventEmitter,
+      clock: clock,
     };
 
     const sdkInstance = new BKTClientImpl(editConfig, bktOptions);
@@ -393,7 +405,7 @@ test.serial(
 );
 
 test.serial('Client with none local evaluation should not have initializationAsync Promises', async (t) => {
-  const { eventEmitter, config, cache, evaluator } = t.context;
+  const { eventEmitter, config, cache, evaluator, clock } = t.context;
   const editConfig = { ...config, enableLocalEvaluation: false };
   const bktOptions = {
     cache: cache,
@@ -403,6 +415,7 @@ test.serial('Client with none local evaluation should not have initializationAsy
     featureFlagProcessor: null,
     segementUsersCacheProcessor: null,
     eventEmitter: eventEmitter,
+    clock: clock,
   };
 
   const sdkInstance = new BKTClientImpl(editConfig, bktOptions);
@@ -423,6 +436,7 @@ test.serial(
       config,
       cache,
       evaluator,
+      clock,
     } = t.context;
 
     const bktOptions = {
@@ -433,6 +447,7 @@ test.serial(
       featureFlagProcessor: featureFlagProcessor,
       segementUsersCacheProcessor: segementUsersCacheProcessor,
       eventEmitter: eventEmitter,
+      clock: clock,
     };
 
     // Mock both processors to resolve after a short delay
@@ -484,6 +499,7 @@ test.serial(
       config,
       cache,
       evaluator,
+      clock,
     } = t.context;
 
     const bktOptions = {
@@ -494,6 +510,7 @@ test.serial(
       featureFlagProcessor: featureFlagProcessor,
       segementUsersCacheProcessor: segementUsersCacheProcessor,
       eventEmitter: eventEmitter,
+      clock: clock,
     };
 
     // Mock both processors to fail
@@ -539,6 +556,7 @@ test.serial('very short/zero timeout should fine', async (t) => {
     config,
     cache,
     evaluator,
+    clock,
   } = t.context;
 
   const bktOptions = {
@@ -549,6 +567,7 @@ test.serial('very short/zero timeout should fine', async (t) => {
     featureFlagProcessor: featureFlagProcessor,
     segementUsersCacheProcessor: segementUsersCacheProcessor,
     eventEmitter: eventEmitter,
+    clock: clock,
   };
 
   // Mock both processors to resolve after a short delay
