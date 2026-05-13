@@ -47,17 +47,8 @@ jobs:
         run: make build
       - name: e2e test
         run: |
-          API_ENDPOINT="${{ secrets.E2E_API_ENDPOINT }}"
-          SCHEME="${{ secrets.E2E_SCHEME }}"
-          if [ -z "$SCHEME" ]; then
-            SCHEME="https"
-          fi
-          CLIENT_API_KEY="${{ secrets.E2E_CLIENT_API_KEY }}"
-          SERVER_API_KEY="${{ secrets.E2E_SERVER_API_KEY }}"
-
-          sed -i -e "s|<API_ENDPOINT>|${API_ENDPOINT}|" \
-            -e "s|<SCHEME>|${SCHEME}|" \
-            -e "s|<CLIENT_API_KEY>|${CLIENT_API_KEY}|" \
-            -e "s|<SERVER_API_KEY>|${SERVER_API_KEY}|" \
-            ava-e2e.config.mjs
+          echo "API_ENDPOINT=${{ secrets.E2E_API_ENDPOINT }}" > .env
+          echo "SCHEME=${{ secrets.E2E_SCHEME || 'https' }}" >> .env
+          echo "CLIENT_API_KEY=${{ secrets.E2E_CLIENT_API_KEY }}" >> .env
+          echo "SERVER_API_KEY=${{ secrets.E2E_SERVER_API_KEY }}" >> .env
           make e2e
