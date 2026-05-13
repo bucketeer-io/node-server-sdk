@@ -9,6 +9,10 @@ init:
 start: build-sdk build
 	node $(CURDIR)/__build/index.js
 
+.PHONY: start-local-evaluation
+start-local-evaluation: build-sdk build
+	node $(CURDIR)/__build/index-local-evaluation.js
+
 .PHONY: clean
 clean:
 	rm -rf $(CURDIR)/__build
