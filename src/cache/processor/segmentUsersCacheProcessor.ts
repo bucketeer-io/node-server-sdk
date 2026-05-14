@@ -97,7 +97,7 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
     const sourceId = this.sourceId;
     const sdkVersion = this.sdkVersion;
 
-    const startTime: number = this.clock.getTime();
+    const startMark = this.clock.latencyStart();
 
     const resp = await this.grpc.getSegmentUsers({
       segmentIdsList: segmentIds,
@@ -106,8 +106,7 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
       sdkVersion: sdkVersion,
     });
 
-    const endTime: number = this.clock.getTime();
-    const latency = (endTime - startTime) / 1000;
+    const latency = this.clock.latencySecondsSince(startMark);
 
     this.pushLatencyMetricsEvent(latency);
     this.pushSizeMetricsEvent(resp.serializeBinary().length);

@@ -21,6 +21,10 @@ import { ProcessorEventsEmitter } from '../../../../processorEventsEmitter';
 import { SourceId } from '../../../../objects/sourceId';
 
 test('polling cache', async (t) => {
+  const firstStartMark = BigInt(10);
+  const secondStartMark = BigInt(20);
+  const thirdStartMark = BigInt(30);
+
   const cache = new MockCache();
   const grpc = new MockGRPCClient();
   const eventEmitter = new ProcessorEventsEmitter();
@@ -41,14 +45,15 @@ test('polling cache', async (t) => {
     sdkVersion: sdkVersion,
   };
 
-  const mockClock = sino.mock(clock);
-  const mockClockExpected = mockClock.expects('getTime').atLeast(5);
-  mockClockExpected.onFirstCall().returns(0);
-  mockClockExpected.onSecondCall().returns(2210);
-  mockClockExpected.onThirdCall().returns(4200);
-  mockClockExpected.onCall(3).returns(7000);
-  mockClockExpected.onCall(4).returns(8700);
-  mockClockExpected.onCall(5).returns(9700);
+  const latencyStartStub = sino.stub(clock, 'latencyStart');
+  latencyStartStub.onFirstCall().returns(firstStartMark);
+  latencyStartStub.onSecondCall().returns(secondStartMark);
+  latencyStartStub.onThirdCall().returns(thirdStartMark);
+
+  const latencySecondsSinceStub = sino.stub(clock, 'latencySecondsSince');
+  latencySecondsSinceStub.withArgs(firstStartMark).returns(2.21);
+  latencySecondsSinceStub.withArgs(secondStartMark).returns(2.8);
+  latencySecondsSinceStub.withArgs(thirdStartMark).returns(1.0);
 
   const mockCache = sino.mock(cache);
   const mockCacheGetAllExpect = mockCache
@@ -118,7 +123,10 @@ test('polling cache', async (t) => {
 
   await processor.stop();
 
+  t.true(latencyStartStub.calledThrice);
+  t.true(latencySecondsSinceStub.calledThrice);
   mockCache.verify();
+  mockEventEmitter.verify();
   mockGRPCClient.verify();
   t.pass();
 });

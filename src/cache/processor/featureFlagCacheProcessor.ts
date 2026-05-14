@@ -95,7 +95,7 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
   private async getFeatureFlags() {
     const featureFlagsId = await this.getFeatureFlagId();
     const requestedAt = await this.getFeatureFlagRequestedAt();
-    const startTime: number = this.clock.getTime();
+    const startMark = this.clock.latencyStart();
     const featureFlags = await this.grpc.getFeatureFlags({
       requestedAt: requestedAt,
       tag: this.featureTag,
@@ -104,8 +104,7 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
       sdkVersion: this.sdkVersion,
     });
 
-    const endTime = this.clock.getTime();
-    const latency = (endTime - startTime) / 1000;
+    const latency = this.clock.latencySecondsSince(startMark);
 
     this.pushLatencyMetricsEvent(latency);
     this.pushSizeMetricsEvent(featureFlags.serializeBinary().length);
