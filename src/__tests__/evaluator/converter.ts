@@ -1,5 +1,5 @@
 import test from 'ava';
-import { Feature } from '../../objects/feature';
+import { Feature, Variation } from '../../objects/feature';
 import { SegmentUsers } from '../../objects/segment';
 import {
   toProtoFeature,
@@ -46,7 +46,9 @@ test('toProtoFeature: parameterized cases', (t) => {
                 variations: [{ variation: 'var_1', weight: 100000 }],
               },
             },
-            clauses: [{ id: 'clause_1', attribute: 'attr_1', operator: 'EQUALS', values: ['val_1'] }],
+            clauses: [
+              { id: 'clause_1', attribute: 'attr_1', operator: 'EQUALS', values: ['val_1'] },
+            ],
           },
         ],
         defaultStrategy: {
@@ -85,7 +87,12 @@ test('toProtoFeature: parameterized cases', (t) => {
         archived: false,
         samplingSeed: 'seed_1',
         variationsLength: 1,
-        firstVariation: { id: 'var_1', value: 'value_1', name: 'Variation 1', description: 'desc 1' },
+        firstVariation: {
+          id: 'var_1',
+          value: 'value_1',
+          name: 'Variation 1',
+          description: 'desc 1',
+        },
         targetsLength: 1,
         firstTarget: { variation: 'var_1', usersList: ['user_1'] },
         rulesLength: 1,
@@ -390,40 +397,92 @@ test('toProtoFeature: parameterized cases', (t) => {
     t.is(obj.variationsList.length, tc.expected.variationsLength, `${tc.name}: variationsLength`);
     if (tc.expected.firstVariation) {
       t.is(obj.variationsList[0].id, tc.expected.firstVariation.id, `${tc.name}: variation[0].id`);
-      t.is(obj.variationsList[0].value, tc.expected.firstVariation.value, `${tc.name}: variation[0].value`);
-      t.is(obj.variationsList[0].name, tc.expected.firstVariation.name, `${tc.name}: variation[0].name`);
-      t.is(obj.variationsList[0].description, tc.expected.firstVariation.description, `${tc.name}: variation[0].description`);
+      t.is(
+        obj.variationsList[0].value,
+        tc.expected.firstVariation.value,
+        `${tc.name}: variation[0].value`,
+      );
+      t.is(
+        obj.variationsList[0].name,
+        tc.expected.firstVariation.name,
+        `${tc.name}: variation[0].name`,
+      );
+      t.is(
+        obj.variationsList[0].description,
+        tc.expected.firstVariation.description,
+        `${tc.name}: variation[0].description`,
+      );
     }
 
     t.is(obj.targetsList.length, tc.expected.targetsLength, `${tc.name}: targetsLength`);
     if (tc.expected.firstTarget) {
-      t.is(obj.targetsList[0].variation, tc.expected.firstTarget.variation, `${tc.name}: target[0].variation`);
-      t.deepEqual(obj.targetsList[0].usersList, tc.expected.firstTarget.usersList, `${tc.name}: target[0].usersList`);
+      t.is(
+        obj.targetsList[0].variation,
+        tc.expected.firstTarget.variation,
+        `${tc.name}: target[0].variation`,
+      );
+      t.deepEqual(
+        obj.targetsList[0].usersList,
+        tc.expected.firstTarget.usersList,
+        `${tc.name}: target[0].usersList`,
+      );
     }
 
     t.is(obj.rulesList.length, tc.expected.rulesLength, `${tc.name}: rulesLength`);
     if (tc.expected.firstRule) {
       const rule = obj.rulesList[0];
       t.is(rule.id, tc.expected.firstRule.id, `${tc.name}: rule[0].id`);
-      t.is(rule.strategy?.type as number, tc.expected.firstRule.strategyType, `${tc.name}: rule[0].strategy.type`);
-      t.is(rule.clausesList.length, tc.expected.firstRule.clausesLength, `${tc.name}: rule[0].clausesLength`);
+      t.is(
+        rule.strategy?.type as number,
+        tc.expected.firstRule.strategyType,
+        `${tc.name}: rule[0].strategy.type`,
+      );
+      t.is(
+        rule.clausesList.length,
+        tc.expected.firstRule.clausesLength,
+        `${tc.name}: rule[0].clausesLength`,
+      );
       if (tc.expected.firstRule.firstClause) {
         const clause = rule.clausesList[0];
         t.is(clause.id, tc.expected.firstRule.firstClause.id, `${tc.name}: clause[0].id`);
-        t.is(clause.attribute, tc.expected.firstRule.firstClause.attribute, `${tc.name}: clause[0].attribute`);
-        t.is(clause.operator as number, tc.expected.firstRule.firstClause.operator, `${tc.name}: clause[0].operator`);
-        t.deepEqual(clause.valuesList, tc.expected.firstRule.firstClause.valuesList, `${tc.name}: clause[0].valuesList`);
+        t.is(
+          clause.attribute,
+          tc.expected.firstRule.firstClause.attribute,
+          `${tc.name}: clause[0].attribute`,
+        );
+        t.is(
+          clause.operator as number,
+          tc.expected.firstRule.firstClause.operator,
+          `${tc.name}: clause[0].operator`,
+        );
+        t.deepEqual(
+          clause.valuesList,
+          tc.expected.firstRule.firstClause.valuesList,
+          `${tc.name}: clause[0].valuesList`,
+        );
       }
       if (rule.strategy?.rolloutStrategy) {
-        t.is(rule.strategy.rolloutStrategy.variationsList.length, tc.expected.firstRule.rolloutVariationsLength, `${tc.name}: rolloutVariationsLength`);
+        t.is(
+          rule.strategy.rolloutStrategy.variationsList.length,
+          tc.expected.firstRule.rolloutVariationsLength,
+          `${tc.name}: rolloutVariationsLength`,
+        );
       }
     }
 
     if (tc.expected.defaultStrategyType !== undefined) {
       t.truthy(obj.defaultStrategy, `${tc.name}: defaultStrategy present`);
-      t.is(obj.defaultStrategy?.type as number, tc.expected.defaultStrategyType, `${tc.name}: defaultStrategy.type`);
+      t.is(
+        obj.defaultStrategy?.type as number,
+        tc.expected.defaultStrategyType,
+        `${tc.name}: defaultStrategy.type`,
+      );
       if (tc.expected.defaultStrategyFixedVariation !== undefined) {
-        t.is(obj.defaultStrategy?.fixedStrategy?.variation, tc.expected.defaultStrategyFixedVariation, `${tc.name}: defaultStrategy.fixedStrategy.variation`);
+        t.is(
+          obj.defaultStrategy?.fixedStrategy?.variation,
+          tc.expected.defaultStrategyFixedVariation,
+          `${tc.name}: defaultStrategy.fixedStrategy.variation`,
+        );
       }
     } else {
       t.falsy(obj.defaultStrategy, `${tc.name}: no defaultStrategy`);
@@ -431,20 +490,56 @@ test('toProtoFeature: parameterized cases', (t) => {
 
     if (tc.expected.lastUsedInfo) {
       t.truthy(obj.lastUsedInfo, `${tc.name}: lastUsedInfo present`);
-      t.is(obj.lastUsedInfo?.featureId, tc.expected.lastUsedInfo.featureId, `${tc.name}: lastUsedInfo.featureId`);
-      t.is(obj.lastUsedInfo?.version, tc.expected.lastUsedInfo.version, `${tc.name}: lastUsedInfo.version`);
-      t.is(obj.lastUsedInfo?.lastUsedAt, tc.expected.lastUsedInfo.lastUsedAt, `${tc.name}: lastUsedInfo.lastUsedAt`);
-      t.is(obj.lastUsedInfo?.createdAt, tc.expected.lastUsedInfo.createdAt, `${tc.name}: lastUsedInfo.createdAt`);
-      t.is(obj.lastUsedInfo?.clientOldestVersion, tc.expected.lastUsedInfo.clientOldestVersion, `${tc.name}: lastUsedInfo.clientOldestVersion`);
-      t.is(obj.lastUsedInfo?.clientLatestVersion, tc.expected.lastUsedInfo.clientLatestVersion, `${tc.name}: lastUsedInfo.clientLatestVersion`);
+      t.is(
+        obj.lastUsedInfo?.featureId,
+        tc.expected.lastUsedInfo.featureId,
+        `${tc.name}: lastUsedInfo.featureId`,
+      );
+      t.is(
+        obj.lastUsedInfo?.version,
+        tc.expected.lastUsedInfo.version,
+        `${tc.name}: lastUsedInfo.version`,
+      );
+      t.is(
+        obj.lastUsedInfo?.lastUsedAt,
+        tc.expected.lastUsedInfo.lastUsedAt,
+        `${tc.name}: lastUsedInfo.lastUsedAt`,
+      );
+      t.is(
+        obj.lastUsedInfo?.createdAt,
+        tc.expected.lastUsedInfo.createdAt,
+        `${tc.name}: lastUsedInfo.createdAt`,
+      );
+      t.is(
+        obj.lastUsedInfo?.clientOldestVersion,
+        tc.expected.lastUsedInfo.clientOldestVersion,
+        `${tc.name}: lastUsedInfo.clientOldestVersion`,
+      );
+      t.is(
+        obj.lastUsedInfo?.clientLatestVersion,
+        tc.expected.lastUsedInfo.clientLatestVersion,
+        `${tc.name}: lastUsedInfo.clientLatestVersion`,
+      );
     } else {
       t.falsy(obj.lastUsedInfo, `${tc.name}: no lastUsedInfo`);
     }
 
-    t.is(obj.prerequisitesList.length, tc.expected.prerequisitesLength, `${tc.name}: prerequisitesLength`);
+    t.is(
+      obj.prerequisitesList.length,
+      tc.expected.prerequisitesLength,
+      `${tc.name}: prerequisitesLength`,
+    );
     if (tc.expected.firstPrerequisite) {
-      t.is(obj.prerequisitesList[0].featureId, tc.expected.firstPrerequisite.featureId, `${tc.name}: prereq[0].featureId`);
-      t.is(obj.prerequisitesList[0].variationId, tc.expected.firstPrerequisite.variationId, `${tc.name}: prereq[0].variationId`);
+      t.is(
+        obj.prerequisitesList[0].featureId,
+        tc.expected.firstPrerequisite.featureId,
+        `${tc.name}: prereq[0].featureId`,
+      );
+      t.is(
+        obj.prerequisitesList[0].variationId,
+        tc.expected.firstPrerequisite.variationId,
+        `${tc.name}: prereq[0].variationId`,
+      );
     }
   }
 });
@@ -507,7 +602,13 @@ test('toProtoSegmentUsers: parameterized cases', (t) => {
         segmentId: 'seg_unknown_state',
         updatedAt: '1690000000',
         users: [
-          { id: 'su_3', segmentId: 'seg_unknown_state', userId: 'user_3', state: 'SOME_FUTURE_STATE', deleted: false },
+          {
+            id: 'su_3',
+            segmentId: 'seg_unknown_state',
+            userId: 'user_3',
+            state: 'SOME_FUTURE_STATE',
+            deleted: false,
+          },
         ],
       } as SegmentUsers,
       expected: {
@@ -515,7 +616,13 @@ test('toProtoSegmentUsers: parameterized cases', (t) => {
         updatedAt: 1690000000,
         usersLength: 1,
         users: [
-          { id: 'su_3', segmentId: 'seg_unknown_state', userId: 'user_3', state: 0, deleted: false }, // falls back to INCLUDED = 0
+          {
+            id: 'su_3',
+            segmentId: 'seg_unknown_state',
+            userId: 'user_3',
+            state: 0,
+            deleted: false,
+          }, // falls back to INCLUDED = 0
         ],
       },
     },
@@ -525,7 +632,13 @@ test('toProtoSegmentUsers: parameterized cases', (t) => {
         segmentId: 'seg_deleted',
         updatedAt: '1690000000',
         users: [
-          { id: 'su_4', segmentId: 'seg_deleted', userId: 'user_4', state: 'INCLUDED', deleted: true },
+          {
+            id: 'su_4',
+            segmentId: 'seg_deleted',
+            userId: 'user_4',
+            state: 'INCLUDED',
+            deleted: true,
+          },
         ],
       } as SegmentUsers,
       expected: {
@@ -561,10 +674,48 @@ test('toProtoSegmentUsers: parameterized cases', (t) => {
 
 test('toProtoVariation: parameterized cases', (t) => {
   const testCases = [
-    { name: 'empty', input: {}, expected: { id: '', value: '', name: '', description: '' } },
-    { name: 'full', input: { id: 'v1', value: 'val1', name: 'name1', description: 'desc1' }, expected: { id: 'v1', value: 'val1', name: 'name1', description: 'desc1' } },
-    { name: 'partial id only', input: { id: 'v2' }, expected: { id: 'v2', value: '', name: '', description: '' } },
-    { name: 'partial value only', input: { value: 'val2' }, expected: { id: '', value: 'val2', name: '', description: '' } },
+    {
+      name: 'empty',
+      // Using `as any as` to bypass TypeScript's required fields for this test case,
+      // since we're testing how the function handles missing fields.
+      input: {} as any as Variation,
+      expected: {
+        id: '',
+        value: '',
+        name: '',
+        description: '',
+      },
+    },
+    {
+      name: 'full',
+      input: {
+        id: 'v1',
+        value: 'val1',
+        name: 'name1',
+        description: 'desc1',
+      },
+      expected: {
+        id: 'v1',
+        value: 'val1',
+        name: 'name1',
+        description: 'desc1',
+      },
+    },
+    {
+      name: 'partial id only',
+      input: { id: 'v2' } as any as Variation,
+      expected: { id: 'v2', value: '', name: '', description: '' },
+    },
+    {
+      name: 'partial value only',
+      input: { value: 'val2' } as any as Variation,
+      expected: {
+        id: '',
+        value: 'val2',
+        name: '',
+        description: '',
+      },
+    },
   ];
 
   for (const tc of testCases) {
@@ -580,9 +731,17 @@ test('toProtoVariation: parameterized cases', (t) => {
 
 test('toProtoTarget: parameterized cases', (t) => {
   const testCases = [
-    { name: 'basic', input: { variation: 'v1', users: ['u1', 'u2'] }, expected: { variation: 'v1', users: ['u1', 'u2'] } },
+    {
+      name: 'basic',
+      input: { variation: 'v1', users: ['u1', 'u2'] },
+      expected: { variation: 'v1', users: ['u1', 'u2'] },
+    },
     { name: 'empty', input: { variation: '', users: [] }, expected: { variation: '', users: [] } },
-    { name: 'no users', input: { variation: 'v2', users: [] }, expected: { variation: 'v2', users: [] } },
+    {
+      name: 'no users',
+      input: { variation: 'v2', users: [] },
+      expected: { variation: 'v2', users: [] },
+    },
   ];
 
   for (const tc of testCases) {
@@ -619,13 +778,23 @@ test('toProtoClause: all operators parameterized', (t) => {
   ];
 
   for (const tc of testCases) {
-    const obj = toProtoClause({ id: 'c1', attribute: 'a1', operator: tc.operator, values: ['v'] } as any).toObject();
+    const obj = toProtoClause({
+      id: 'c1',
+      attribute: 'a1',
+      operator: tc.operator,
+      values: ['v'],
+    } as any).toObject();
     t.is(obj.operator as number, tc.expected, `${tc.name}: operator`);
   }
 });
 
 test('toProtoClause: full field mapping', (t) => {
-  const obj = toProtoClause({ id: 'c1', attribute: 'attr', operator: 'IN', values: ['a', 'b'] }).toObject();
+  const obj = toProtoClause({
+    id: 'c1',
+    attribute: 'attr',
+    operator: 'IN',
+    values: ['a', 'b'],
+  }).toObject();
   t.is(obj.id, 'c1');
   t.is(obj.attribute, 'attr');
   t.is(obj.operator as number, 1); // IN
@@ -650,10 +819,26 @@ test('toProtoFixedStrategy: parameterized cases', (t) => {
 
 test('toProtoRolloutStrategyVariation: parameterized cases', (t) => {
   const testCases = [
-    { name: 'basic', input: { variation: 'v1', weight: 50000 }, expected: { variation: 'v1', weight: 50000 } },
-    { name: 'zero weight', input: { variation: 'v2', weight: 0 }, expected: { variation: 'v2', weight: 0 } },
-    { name: 'full weight', input: { variation: 'v3', weight: 100000 }, expected: { variation: 'v3', weight: 100000 } },
-    { name: 'empty variation', input: { variation: '', weight: 100 }, expected: { variation: '', weight: 100 } },
+    {
+      name: 'basic',
+      input: { variation: 'v1', weight: 50000 },
+      expected: { variation: 'v1', weight: 50000 },
+    },
+    {
+      name: 'zero weight',
+      input: { variation: 'v2', weight: 0 },
+      expected: { variation: 'v2', weight: 0 },
+    },
+    {
+      name: 'full weight',
+      input: { variation: 'v3', weight: 100000 },
+      expected: { variation: 'v3', weight: 100000 },
+    },
+    {
+      name: 'empty variation',
+      input: { variation: '', weight: 100 },
+      expected: { variation: '', weight: 100 },
+    },
   ];
 
   for (const tc of testCases) {
@@ -669,8 +854,16 @@ test('toProtoRolloutStrategy: parameterized cases', (t) => {
   const testCases = [
     {
       name: 'multiple variations with weights',
-      input: { variations: [{ variation: 'v1', weight: 50000 }, { variation: 'v2', weight: 50000 }] },
-      expected: [{ variation: 'v1', weight: 50000 }, { variation: 'v2', weight: 50000 }],
+      input: {
+        variations: [
+          { variation: 'v1', weight: 50000 },
+          { variation: 'v2', weight: 50000 },
+        ],
+      },
+      expected: [
+        { variation: 'v1', weight: 50000 },
+        { variation: 'v2', weight: 50000 },
+      ],
     },
     {
       name: 'single variation full weight',
@@ -688,7 +881,11 @@ test('toProtoRolloutStrategy: parameterized cases', (t) => {
     const obj = toProtoRolloutStrategy(tc.input).toObject();
     t.is(obj.variationsList.length, tc.expected.length, `${tc.name}: length`);
     for (let i = 0; i < tc.expected.length; i++) {
-      t.is(obj.variationsList[i].variation, tc.expected[i].variation, `${tc.name}: [${i}].variation`);
+      t.is(
+        obj.variationsList[i].variation,
+        tc.expected[i].variation,
+        `${tc.name}: [${i}].variation`,
+      );
       t.is(obj.variationsList[i].weight, tc.expected[i].weight, `${tc.name}: [${i}].weight`);
     }
   }
@@ -698,11 +895,44 @@ test('toProtoRolloutStrategy: parameterized cases', (t) => {
 
 test('toProtoStrategy: parameterized cases', (t) => {
   const testCases = [
-    { name: 'FIXED', input: { type: 'FIXED', fixedStrategy: { variation: 'v1' } }, expectedType: 0, hasFixed: true, hasRollout: false }, // Type.FIXED = 0
-    { name: 'ROLLOUT', input: { type: 'ROLLOUT', rolloutStrategy: { variations: [{ variation: 'v1', weight: 100 }] } }, expectedType: 1, hasFixed: false, hasRollout: true }, // Type.ROLLOUT = 1
-    { name: 'ROLLOUT empty', input: { type: 'ROLLOUT', rolloutStrategy: { variations: [] } }, expectedType: 1, hasFixed: false, hasRollout: true },
-    { name: 'UNKNOWN defaults to FIXED', input: { type: 'UNKNOWN' }, expectedType: 0, hasFixed: false, hasRollout: false },
-    { name: 'empty type', input: { type: '' }, expectedType: 0, hasFixed: false, hasRollout: false },
+    {
+      name: 'FIXED',
+      input: { type: 'FIXED', fixedStrategy: { variation: 'v1' } },
+      expectedType: 0,
+      hasFixed: true,
+      hasRollout: false,
+    }, // Type.FIXED = 0
+    {
+      name: 'ROLLOUT',
+      input: {
+        type: 'ROLLOUT',
+        rolloutStrategy: { variations: [{ variation: 'v1', weight: 100 }] },
+      },
+      expectedType: 1,
+      hasFixed: false,
+      hasRollout: true,
+    }, // Type.ROLLOUT = 1
+    {
+      name: 'ROLLOUT empty',
+      input: { type: 'ROLLOUT', rolloutStrategy: { variations: [] } },
+      expectedType: 1,
+      hasFixed: false,
+      hasRollout: true,
+    },
+    {
+      name: 'UNKNOWN defaults to FIXED',
+      input: { type: 'UNKNOWN' },
+      expectedType: 0,
+      hasFixed: false,
+      hasRollout: false,
+    },
+    {
+      name: 'empty type',
+      input: { type: '' },
+      expectedType: 0,
+      hasFixed: false,
+      hasRollout: false,
+    },
   ];
 
   for (const tc of testCases) {
@@ -742,7 +972,10 @@ test('toProtoRule: parameterized cases', (t) => {
       name: 'with ROLLOUT strategy',
       input: {
         id: 'r3',
-        strategy: { type: 'ROLLOUT', rolloutStrategy: { variations: [{ variation: 'v1', weight: 100000 }] } },
+        strategy: {
+          type: 'ROLLOUT',
+          rolloutStrategy: { variations: [{ variation: 'v1', weight: 100000 }] },
+        },
         clauses: [{ id: 'c3', attribute: 'a3', operator: 'SEGMENT', values: ['seg_1'] }],
       },
       expectedId: 'r3',
@@ -772,18 +1005,60 @@ test('toProtoFeatureLastUsedInfo: parameterized cases', (t) => {
   const testCases = [
     {
       name: 'valid numbers',
-      input: { featureId: 'f1', version: 1, lastUsedAt: '123', createdAt: '456', clientOldestVersion: '1.0.0', clientLatestVersion: '2.0.0' },
-      expected: { featureId: 'f1', version: 1, lastUsedAt: 123, createdAt: 456, clientOldestVersion: '1.0.0', clientLatestVersion: '2.0.0' }
+      input: {
+        featureId: 'f1',
+        version: 1,
+        lastUsedAt: '123',
+        createdAt: '456',
+        clientOldestVersion: '1.0.0',
+        clientLatestVersion: '2.0.0',
+      },
+      expected: {
+        featureId: 'f1',
+        version: 1,
+        lastUsedAt: 123,
+        createdAt: 456,
+        clientOldestVersion: '1.0.0',
+        clientLatestVersion: '2.0.0',
+      },
     },
     {
       name: 'empty timestamps',
-      input: { featureId: 'f2', version: 0, lastUsedAt: '', createdAt: '', clientOldestVersion: '', clientLatestVersion: '' },
-      expected: { featureId: 'f2', version: 0, lastUsedAt: 0, createdAt: 0, clientOldestVersion: '', clientLatestVersion: '' }
+      input: {
+        featureId: 'f2',
+        version: 0,
+        lastUsedAt: '',
+        createdAt: '',
+        clientOldestVersion: '',
+        clientLatestVersion: '',
+      },
+      expected: {
+        featureId: 'f2',
+        version: 0,
+        lastUsedAt: 0,
+        createdAt: 0,
+        clientOldestVersion: '',
+        clientLatestVersion: '',
+      },
     },
     {
       name: 'invalid string timestamps default to 0',
-      input: { featureId: 'f3', version: 9, lastUsedAt: 'invalid', createdAt: 'invalid_date', clientOldestVersion: 'v1', clientLatestVersion: 'v2' },
-      expected: { featureId: 'f3', version: 9, lastUsedAt: 0, createdAt: 0, clientOldestVersion: 'v1', clientLatestVersion: 'v2' }
+      input: {
+        featureId: 'f3',
+        version: 9,
+        lastUsedAt: 'invalid',
+        createdAt: 'invalid_date',
+        clientOldestVersion: 'v1',
+        clientLatestVersion: 'v2',
+      },
+      expected: {
+        featureId: 'f3',
+        version: 9,
+        lastUsedAt: 0,
+        createdAt: 0,
+        clientOldestVersion: 'v1',
+        clientLatestVersion: 'v2',
+      },
     },
   ];
 
@@ -793,8 +1068,16 @@ test('toProtoFeatureLastUsedInfo: parameterized cases', (t) => {
     t.is(obj.version, tc.expected.version, `${tc.name}: version`);
     t.is(obj.lastUsedAt, tc.expected.lastUsedAt, `${tc.name}: lastUsedAt`);
     t.is(obj.createdAt, tc.expected.createdAt, `${tc.name}: createdAt`);
-    t.is(obj.clientOldestVersion, tc.expected.clientOldestVersion, `${tc.name}: clientOldestVersion`);
-    t.is(obj.clientLatestVersion, tc.expected.clientLatestVersion, `${tc.name}: clientLatestVersion`);
+    t.is(
+      obj.clientOldestVersion,
+      tc.expected.clientOldestVersion,
+      `${tc.name}: clientOldestVersion`,
+    );
+    t.is(
+      obj.clientLatestVersion,
+      tc.expected.clientLatestVersion,
+      `${tc.name}: clientLatestVersion`,
+    );
   }
 });
 
@@ -802,9 +1085,21 @@ test('toProtoFeatureLastUsedInfo: parameterized cases', (t) => {
 
 test('toProtoPrerequisite: parameterized cases', (t) => {
   const testCases = [
-    { name: 'basic', input: { featureId: 'f1', variationId: 'v1' }, expected: { featureId: 'f1', variationId: 'v1' } },
-    { name: 'empty', input: { featureId: '', variationId: '' }, expected: { featureId: '', variationId: '' } },
-    { name: 'partial featureId only', input: { featureId: 'f2', variationId: '' }, expected: { featureId: 'f2', variationId: '' } },
+    {
+      name: 'basic',
+      input: { featureId: 'f1', variationId: 'v1' },
+      expected: { featureId: 'f1', variationId: 'v1' },
+    },
+    {
+      name: 'empty',
+      input: { featureId: '', variationId: '' },
+      expected: { featureId: '', variationId: '' },
+    },
+    {
+      name: 'partial featureId only',
+      input: { featureId: 'f2', variationId: '' },
+      expected: { featureId: 'f2', variationId: '' },
+    },
   ];
 
   for (const tc of testCases) {
@@ -821,7 +1116,13 @@ test('toProtoUser: parameterized cases', (t) => {
     {
       name: 'basic with data',
       input: { id: 'u1', data: { key1: 'val1', key2: 'val2' } },
-      expected: { id: 'u1', dataMap: [['key1', 'val1'], ['key2', 'val2']] },
+      expected: {
+        id: 'u1',
+        dataMap: [
+          ['key1', 'val1'],
+          ['key2', 'val2'],
+        ],
+      },
     },
     {
       name: 'without data',
