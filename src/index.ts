@@ -29,6 +29,7 @@ import { Clock } from './utils/clock';
 import { LocalEvaluator } from './evaluator/local';
 import { BKTClientImpl } from './client';
 import { InternalConfig, requiredInternalConfig } from './internalConfig';
+import { RetryPolicy } from './utils/promiseRetriable';
 
 export interface BuildInfo {
   readonly GIT_REVISION: string;
@@ -227,6 +228,12 @@ export function initializeBKTClient(config: BKTConfig): Bucketeer {
 }
 
 function defaultInitialize(resolvedConfig: InternalConfig): Bucketeer {
+  // const retryPolicy: RetryPolicy = {
+  //   maxRetries: resolvedConfig.maxRetries,
+  //   initialInterval: resolvedConfig.retryInitialInterval,
+  //   maxInterval: resolvedConfig.retryMaxInterval,
+  //   multiplier: resolvedConfig.retryMultiplier,
+  // };
   const apiClient = new APIClient(resolvedConfig.apiEndpoint, resolvedConfig.apiKey);
   const eventStore = new EventStore();
   const eventEmitter = new ProcessorEventsEmitter();

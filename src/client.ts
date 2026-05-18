@@ -36,6 +36,14 @@ import { InternalConfig } from './internalConfig';
 // For high-traffic applications with large event queues, consider increasing this value
 const DEFAULT_DESTROY_TIMEOUT_MILLIS = 30000;
 
+// Per-call deadline constants — mirrors the Go SDK values.
+// getEvaluation: 30 seconds default deadline, generous enough for multiple retry attempts
+// even with cross-region latency. (Go SDK: defaultEvaluationTimeout = 30 * time.Second)
+const DEFAULT_EVALUATION_TIMEOUT_MS = 30_000;
+// registerEvents: 10 seconds default deadline.
+// (Go SDK: flushTimeout = 10 * time.Second)
+const DEFAULT_REGISTER_EVENTS_TIMEOUT_MS = 10_000;
+
 export class BKTClientImpl implements Bucketeer {
   apiClient: APIClient;
   eventStore: EventStore;
@@ -222,7 +230,12 @@ export class BKTClientImpl implements Bucketeer {
 
   private callRegisterEvents(events: Array<Event>): void {
     this.apiClient
-      .registerEvents(events, this.config.sourceId, this.config.sdkVersion)
+      .registerEvents(
+        events,
+        this.config.sourceId,
+        this.config.sdkVersion,
+        AbortSignal.timeout(DEFAULT_REGISTER_EVENTS_TIMEOUT_MS),
+      )
       .catch((e) => {
         this.saveErrorMetricsEvent(this.config.featureTag, e, ApiId.REGISTER_EVENTS);
         this.config.logger?.warn('register events failed', e);
@@ -269,6 +282,7 @@ export class BKTClientImpl implements Bucketeer {
           eventsToFlush,
           this.config.sourceId,
           this.config.sdkVersion,
+          AbortSignal.timeout(DEFAULT_REGISTER_EVENTS_TIMEOUT_MS),
         );
         flushedCount += eventsToFlush.length;
         this.config.logger?.debug(
@@ -391,6 +405,7 @@ export class BKTClientImpl implements Bucketeer {
         featureId,
         this.config.sourceId,
         this.config.sdkVersion,
+        AbortSignal.timeout(DEFAULT_EVALUATION_TIMEOUT_MS),
       );
       const second = (Date.now() - startTime) / 1000;
       this.eventEmitter.emit('pushLatencyMetricsEvent', {

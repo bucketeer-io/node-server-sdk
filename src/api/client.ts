@@ -4,19 +4,29 @@ import { Event } from '../objects/event';
 import { SourceId } from '../objects/sourceId';
 import { GetEvaluationRequest, RegisterEventsRequest } from '../objects/request';
 import { GetEvaluationResponse, RegisterEventsResponse } from '../objects/response';
-import { InvalidStatusError } from '../objects/errors';
+import { InvalidStatusError, parseRetryAfter } from '../objects/errors';
+import { RetryPolicy, promiseRetriable, isRetryable } from '../utils/promiseRetriable';
 
 const scheme = 'https://';
 const evaluationAPI = '/get_evaluation';
 const eventsAPI = '/register_events';
 
+const DEFAULT_RETRY_POLICY: RetryPolicy = {
+  maxRetries: 0,
+  initialInterval: 1000,
+  maxInterval: 10000,
+  multiplier: 2.0,
+};
+
 export class APIClient {
   private readonly host: string;
   private readonly apiKey: string;
+  private readonly retryPolicy: RetryPolicy;
 
-  constructor(host: string, apiKey: string) {
+  constructor(host: string, apiKey: string, retryPolicy: RetryPolicy = DEFAULT_RETRY_POLICY) {
     this.host = host;
     this.apiKey = apiKey;
+    this.retryPolicy = retryPolicy;
   }
 
   getEvaluation(
@@ -25,6 +35,7 @@ export class APIClient {
     featureId: string,
     sourceId: SourceId,
     sdkVersion: string,
+    signal?: AbortSignal,
   ): Promise<[GetEvaluationResponse, number]> {
     const req: GetEvaluationRequest = {
       tag,
@@ -35,19 +46,9 @@ export class APIClient {
     };
     const chunk = JSON.stringify(req);
     const url = scheme.concat(this.host, evaluationAPI);
-    return new Promise((resolve, reject) => {
-      this.postRequest(url, chunk)
-        .then(([res, size]) => {
-          try {
-            const msg = JSON.parse(res) as GetEvaluationResponse;
-            resolve([msg, size]);
-          } catch (error) {
-            reject(error);
-          }
-        })
-        .catch((err) => {
-          return reject(err);
-        });
+    return this.postRequestWithRetry(url, chunk, signal).then(([res, size]) => {
+      const msg = JSON.parse(res) as GetEvaluationResponse;
+      return [msg, size];
     });
   }
 
@@ -55,6 +56,7 @@ export class APIClient {
     events: Array<Event>,
     sourceId: SourceId,
     sdkVersion: string,
+    signal?: AbortSignal,
   ): Promise<[RegisterEventsResponse, number]> {
     const req: RegisterEventsRequest = {
       events,
@@ -63,23 +65,30 @@ export class APIClient {
     };
     const chunk = JSON.stringify(req);
     const url = scheme.concat(this.host, eventsAPI);
-    return new Promise((resolve, reject) => {
-      this.postRequest(url, chunk)
-        .then(([res, size]) => {
-          try {
-            const msg = JSON.parse(res) as RegisterEventsResponse;
-            resolve([msg, size]);
-          } catch (error) {
-            reject(error);
-          }
-        })
-        .catch((err) => {
-          return reject(err);
-        });
+    return this.postRequestWithRetry(url, chunk, signal).then(([res, size]) => {
+      const msg = JSON.parse(res) as RegisterEventsResponse;
+      return [msg, size];
     });
   }
 
-  private postRequest(url: string, chunk: string): Promise<[string, number]> {
+  private postRequestWithRetry(
+    url: string,
+    chunk: string,
+    signal?: AbortSignal,
+  ): Promise<[string, number]> {
+    return promiseRetriable(
+      (s) => this.postRequestOnce(url, chunk, s),
+      this.retryPolicy,
+      isRetryable,
+      signal,
+    );
+  }
+
+  private postRequestOnce(
+    url: string,
+    chunk: string,
+    signal?: AbortSignal,
+  ): Promise<[string, number]> {
     const opts: https.RequestOptions = {
       method: 'POST',
       headers: {
@@ -87,25 +96,31 @@ export class APIClient {
         authorization: this.apiKey,
       },
       timeout: 10000,
+      signal: signal as AbortSignal | undefined,
     };
     return new Promise((resolve, reject) => {
+      if (signal?.aborted) {
+        return reject(signal.reason);
+      }
       const clientReq = https.request(url, opts, (res) => {
-        if (res.statusCode != 200) {
-          reject(
-            new InvalidStatusError(
-              `bucketeer/api: send HTTP request failed: ${res.statusCode}`,
-              res.statusCode,
-            ),
-          );
-        }
         res.setEncoding('utf8');
         let rawData = '';
         res.on('data', (chunk: Buffer) => {
           rawData += chunk.toString();
         });
         res.on('end', () => {
-          const header = res.headers['content-length'];
-          resolve([rawData, Number(header || 0)]);
+          if (res.statusCode !== 200) {
+            const retryAfterMs = parseRetryAfter(res.headers['retry-after'] as string | undefined);
+            reject(
+              new InvalidStatusError(
+                `bucketeer/api: send HTTP request failed: ${res.statusCode}`,
+                res.statusCode,
+                retryAfterMs,
+              ),
+            );
+            return;
+          }
+          resolve([rawData, Number(res.headers['content-length'] || 0)]);
         });
       });
       clientReq.on('error', (e) => {
