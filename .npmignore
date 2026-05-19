@@ -28,3 +28,7 @@ tslint.json
 yarn-error.log
 bootstrap.js
 index.ts
+.yarn
+.yarn/install-state.gz
+.github
+eslint-rules
