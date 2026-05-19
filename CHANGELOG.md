@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.4.6](https://github.com/bucketeer-io/node-server-sdk/compare/v0.4.5...v0.4.6) (2026-05-19)
+
+
+### Build System
+
+* **deps:** bump runtime-dependencies group to v11.1.1 [SECURITY] ([#203](https://github.com/bucketeer-io/node-server-sdk/issues/203)) ([f62665f](https://github.com/bucketeer-io/node-server-sdk/commit/f62665f4d505fa424a9623938b956018be6348d9))
+* **dev-deps:** bump dev-minor ([#188](https://github.com/bucketeer-io/node-server-sdk/issues/188)) ([800dfaa](https://github.com/bucketeer-io/node-server-sdk/commit/800dfaafad3f4d3c919f3c6af7534d6bb968d7a2))
+* **dev-deps:** bump dev-patch ([#183](https://github.com/bucketeer-io/node-server-sdk/issues/183)) ([c5f8aa8](https://github.com/bucketeer-io/node-server-sdk/commit/c5f8aa89cdc471d8599ccbbe4f4d382ff20bbbbb))
+* **dev-deps:** bump dev-patch ([#187](https://github.com/bucketeer-io/node-server-sdk/issues/187)) ([beeb04e](https://github.com/bucketeer-io/node-server-sdk/commit/beeb04ec197827f463e67e40c8fabaa889707b57))
+* **dev-deps:** bump dev-patch ([#202](https://github.com/bucketeer-io/node-server-sdk/issues/202)) ([5abaf8d](https://github.com/bucketeer-io/node-server-sdk/commit/5abaf8d88dc5d40bd1fe2e2c47b9eb1ab9ec3c02))
+
 ## [0.4.5](https://github.com/bucketeer-io/node-server-sdk/compare/v0.4.4...v0.4.5) (2026-01-20)
 
 
