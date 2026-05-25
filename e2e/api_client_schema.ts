@@ -85,7 +85,7 @@ function assertAllowedString(
   t.true(allowedValues.includes(stringValue));
 }
 
-// ─── Leaf helpers ─────────────────────────────────────────────────────────────
+// Leaf helpers
 
 function assertVariation(t: ExecutionContext, v: unknown): void {
   t.truthy(v);
@@ -167,7 +167,7 @@ function assertReason(t: ExecutionContext, reason: unknown): void {
   }
 }
 
-// ─── Composed helpers ─────────────────────────────────────────────────────────
+// Composed helpers
 
 function assertRolloutStrategy(t: ExecutionContext, rs: unknown): void {
   t.truthy(rs);
@@ -249,7 +249,7 @@ function assertEvaluation(t: ExecutionContext, e: unknown): void {
   }
 }
 
-// ─── Tests ────────────────────────────────────────────────────────────────────
+// Tests
 
 test('getFeatureFlags: response schema is valid', async (t) => {
   const client = new APIClient(API_ENDPOINT, SERVER_API_KEY);

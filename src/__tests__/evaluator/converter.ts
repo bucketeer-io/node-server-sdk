@@ -18,7 +18,7 @@ import {
 } from '../../evaluator/converter';
 import { Feature as ProtoFeature } from '@bucketeer/evaluation';
 
-// ─── toProtoFeature ──────────────────────────────────────────────────────────
+// toProtoFeature
 
 test('toProtoFeature: parameterized cases', (t) => {
   const testCases = [
@@ -544,7 +544,7 @@ test('toProtoFeature: parameterized cases', (t) => {
   }
 });
 
-// ─── toProtoSegmentUsers ─────────────────────────────────────────────────────
+// toProtoSegmentUsers
 
 test('toProtoSegmentUsers: parameterized cases', (t) => {
   const testCases = [
@@ -670,7 +670,7 @@ test('toProtoSegmentUsers: parameterized cases', (t) => {
   }
 });
 
-// ─── toProtoVariation ────────────────────────────────────────────────────────
+// toProtoVariation
 
 test('toProtoVariation: parameterized cases', (t) => {
   const testCases = [
@@ -727,7 +727,7 @@ test('toProtoVariation: parameterized cases', (t) => {
   }
 });
 
-// ─── toProtoTarget ───────────────────────────────────────────────────────────
+// toProtoTarget
 
 test('toProtoTarget: parameterized cases', (t) => {
   const testCases = [
@@ -751,7 +751,7 @@ test('toProtoTarget: parameterized cases', (t) => {
   }
 });
 
-// ─── toProtoClause ───────────────────────────────────────────────────────────
+// toProtoClause
 
 test('toProtoClause: all operators parameterized', (t) => {
   // Actual operator enum values from clause_pb.d.ts:
@@ -801,7 +801,7 @@ test('toProtoClause: full field mapping', (t) => {
   t.deepEqual(obj.valuesList, ['a', 'b']);
 });
 
-// ─── toProtoFixedStrategy ────────────────────────────────────────────────────
+// toProtoFixedStrategy
 
 test('toProtoFixedStrategy: parameterized cases', (t) => {
   const testCases = [
@@ -815,7 +815,7 @@ test('toProtoFixedStrategy: parameterized cases', (t) => {
   }
 });
 
-// ─── toProtoRolloutStrategyVariation ─────────────────────────────────────────
+// toProtoRolloutStrategyVariation
 
 test('toProtoRolloutStrategyVariation: parameterized cases', (t) => {
   const testCases = [
@@ -848,7 +848,7 @@ test('toProtoRolloutStrategyVariation: parameterized cases', (t) => {
   }
 });
 
-// ─── toProtoRolloutStrategy ──────────────────────────────────────────────────
+// toProtoRolloutStrategy
 
 test('toProtoRolloutStrategy: parameterized cases', (t) => {
   const testCases = [
@@ -891,7 +891,7 @@ test('toProtoRolloutStrategy: parameterized cases', (t) => {
   }
 });
 
-// ─── toProtoStrategy ─────────────────────────────────────────────────────────
+// toProtoStrategy
 
 test('toProtoStrategy: parameterized cases', (t) => {
   const testCases = [
@@ -943,7 +943,7 @@ test('toProtoStrategy: parameterized cases', (t) => {
   }
 });
 
-// ─── toProtoRule ─────────────────────────────────────────────────────────────
+// toProtoRule
 
 test('toProtoRule: parameterized cases', (t) => {
   const testCases = [
@@ -999,7 +999,7 @@ test('toProtoRule: parameterized cases', (t) => {
   }
 });
 
-// ─── toProtoFeatureLastUsedInfo ───────────────────────────────────────────────
+// toProtoFeatureLastUsedInfo
 
 test('toProtoFeatureLastUsedInfo: parameterized cases', (t) => {
   const testCases = [
@@ -1081,7 +1081,7 @@ test('toProtoFeatureLastUsedInfo: parameterized cases', (t) => {
   }
 });
 
-// ─── toProtoPrerequisite ─────────────────────────────────────────────────────
+// toProtoPrerequisite
 
 test('toProtoPrerequisite: parameterized cases', (t) => {
   const testCases = [
@@ -1109,7 +1109,7 @@ test('toProtoPrerequisite: parameterized cases', (t) => {
   }
 });
 
-// ─── toProtoUser ─────────────────────────────────────────────────────────────
+// toProtoUser
 
 test('toProtoUser: parameterized cases', (t) => {
   const testCases = [
