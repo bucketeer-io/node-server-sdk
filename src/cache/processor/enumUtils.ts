@@ -12,6 +12,14 @@
 // STRING, EQUALS, FIXED, or INCLUDED. The sentinel automatically adjusts when
 // the @bucketeer/evaluation package is updated with new enum values, because
 // the generated enum map is inspected at startup.
+//
+// Persistent-cache caveat: the `max + 1` sentinel is not stable across
+// @bucketeer/evaluation upgrades — if the package adds a new enum member that
+// takes the old sentinel value, a previously-cached "unsupported" entry would
+// be silently reinterpreted as that new real value. There is no persistent
+// cache today, but if one is added, cache keys should be namespaced by the
+// @bucketeer/evaluation package version so that entries written before an
+// upgrade are treated as cache misses and re-fetched with the updated sentinel.
 export function normalizeEnumName(value: string): string {
   return value.toUpperCase();
 }
