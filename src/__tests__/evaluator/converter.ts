@@ -16,7 +16,10 @@ import {
   toProtoPrerequisite,
   toProtoUser,
 } from '../../evaluator/converter';
-import { Feature as ProtoFeature } from '@bucketeer/evaluation';
+import {
+  Feature as ProtoFeature,
+} from '@bucketeer/evaluation';
+import { UNSUPPORTED_PROTO_ENUM_VALUES } from '../../evaluator/unsupportedEnumValues';
 
 // toProtoFeature
 
@@ -169,7 +172,7 @@ test('toProtoFeature: parameterized cases', (t) => {
       },
     },
     {
-      name: 'Unknown Variation Type defaults to STRING',
+      name: 'Unknown Variation Type preserves unsupported numeric value',
       input: {
         id: 'feature_unknown_type',
         name: 'Feature Unknown',
@@ -200,7 +203,58 @@ test('toProtoFeature: parameterized cases', (t) => {
         version: 1,
         createdAt: 1690000000,
         updatedAt: 1690000000,
-        variationType: ProtoFeature.VariationType.STRING, // Default
+        variationType: UNSUPPORTED_PROTO_ENUM_VALUES.variationType,
+        offVariation: '',
+        tagsList: [],
+        maintainer: '',
+        archived: false,
+        samplingSeed: '',
+        variationsLength: 0,
+        firstVariation: null,
+        targetsLength: 0,
+        firstTarget: null,
+        rulesLength: 0,
+        firstRule: null,
+        defaultStrategyType: undefined,
+        defaultStrategyFixedVariation: undefined,
+        lastUsedInfo: null,
+        prerequisitesLength: 0,
+        firstPrerequisite: null,
+      },
+    },
+    {
+      name: 'YAML variation type',
+      input: {
+        id: 'feature_yaml',
+        name: 'Feature YAML',
+        description: '',
+        enabled: true,
+        deleted: false,
+        ttl: 0,
+        version: 1,
+        createdAt: '1690000000',
+        updatedAt: '1690000000',
+        variationType: 'YAML',
+        variations: [],
+        targets: [],
+        rules: [],
+        offVariation: '',
+        tags: [],
+        maintainer: '',
+        archived: false,
+        samplingSeed: '',
+      } as Feature,
+      expected: {
+        id: 'feature_yaml',
+        name: 'Feature YAML',
+        description: '',
+        enabled: true,
+        deleted: false,
+        ttl: 0,
+        version: 1,
+        createdAt: 1690000000,
+        updatedAt: 1690000000,
+        variationType: ProtoFeature.VariationType.YAML,
         offVariation: '',
         tagsList: [],
         maintainer: '',
@@ -597,7 +651,7 @@ test('toProtoSegmentUsers: parameterized cases', (t) => {
       },
     },
     {
-      name: 'Unknown state defaults to INCLUDED',
+      name: 'Unknown state preserves unsupported numeric value',
       input: {
         segmentId: 'seg_unknown_state',
         updatedAt: '1690000000',
@@ -620,9 +674,9 @@ test('toProtoSegmentUsers: parameterized cases', (t) => {
             id: 'su_3',
             segmentId: 'seg_unknown_state',
             userId: 'user_3',
-            state: 0,
+            state: UNSUPPORTED_PROTO_ENUM_VALUES.segmentUserState,
             deleted: false,
-          }, // falls back to INCLUDED = 0
+          },
         ],
       },
     },
@@ -773,8 +827,16 @@ test('toProtoClause: all operators parameterized', (t) => {
     { name: 'FEATURE_FLAG', operator: 'FEATURE_FLAG', expected: 11 },
     { name: 'PARTIALLY_MATCH', operator: 'PARTIALLY_MATCH', expected: 12 },
     { name: 'NOT_EQUALS', operator: 'NOT_EQUALS', expected: 13 },
-    { name: 'unknown defaults to EQUALS', operator: 'FOO_BAR', expected: 0 },
-    { name: 'empty defaults to EQUALS', operator: '', expected: 0 },
+    {
+      name: 'unknown preserves unsupported numeric value',
+      operator: 'FOO_BAR',
+      expected: UNSUPPORTED_PROTO_ENUM_VALUES.operator,
+    },
+    {
+      name: 'empty preserves unsupported numeric value',
+      operator: '',
+      expected: UNSUPPORTED_PROTO_ENUM_VALUES.operator,
+    },
   ];
 
   for (const tc of testCases) {
@@ -920,16 +982,16 @@ test('toProtoStrategy: parameterized cases', (t) => {
       hasRollout: true,
     },
     {
-      name: 'UNKNOWN defaults to FIXED',
+      name: 'UNKNOWN preserves unsupported numeric value',
       input: { type: 'UNKNOWN' },
-      expectedType: 0,
+      expectedType: UNSUPPORTED_PROTO_ENUM_VALUES.strategyType,
       hasFixed: false,
       hasRollout: false,
     },
     {
-      name: 'empty type',
+      name: 'empty type preserves unsupported numeric value',
       input: { type: '' },
-      expectedType: 0,
+      expectedType: UNSUPPORTED_PROTO_ENUM_VALUES.strategyType,
       hasFixed: false,
       hasRollout: false,
     },

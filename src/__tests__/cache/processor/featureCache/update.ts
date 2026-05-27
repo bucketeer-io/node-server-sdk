@@ -17,6 +17,7 @@ import { ApiId } from '../../../../objects/apiId';
 import { ProcessorEventsEmitter } from '../../../../processorEventsEmitter';
 import { SourceId } from '../../../../objects/sourceId';
 import { toProtoFeature } from '../../../../evaluator/converter';
+import { UNSUPPORTED_PROTO_ENUM_VALUES } from '../../../../evaluator/unsupportedEnumValues';
 import { minimalFeature } from '../../../utils/feature';
 
 const test = anyTest as TestFn<{
@@ -519,6 +520,152 @@ test('success: forceUpdate is false', async (t) => {
   mockFeatureFlagCache.expects('put').withArgs(toProtoFeature(feature));
   mockFeatureFlagCache.expects('delete').withArgs(archivedFeatureIds[0]);
   mockFeatureFlagCache.expects('delete').withArgs(archivedFeatureIds[1]);
+
+  await processor.runUpdateCache();
+  mockCache.verify();
+  mockAPIClient.verify();
+  mockProcessorEventsEmitter.verify();
+  mockFeatureFlagCache.verify();
+  t.pass();
+});
+
+test('success: preserves unsupported operator when caching feature', async (t) => {
+  const { featureTag, processor, options, sandbox, feature } = t.context;
+  const mockCache = sandbox.mock(options.cache);
+  const mockAPIClient = sandbox.mock(options.apiClient);
+  const mockProcessorEventsEmitter = sandbox.mock(options.eventEmitter);
+  const mockFeatureFlagCache = sandbox.mock(options.featureFlagCache);
+  const featureWithUnknownOperator: Feature = {
+    ...feature,
+    rules: [
+      {
+        id: 'rule-1',
+        clauses: [
+          {
+            id: 'clause-1',
+            attribute: 'email',
+            operator: 'FUTURE_OPERATOR',
+            values: ['user@example.com'],
+          },
+        ],
+      },
+    ],
+  };
+
+  mockCache.expects('get').withArgs(FEATURE_FLAG_ID).returns('feature-flags-id-1');
+  mockCache.expects('get').withArgs(FEATURE_FLAG_REQUESTED_AT).returns(10);
+
+  const response = buildFeatureResponse(
+    'feature-flags-id-2',
+    '20',
+    true,
+    [featureWithUnknownOperator],
+    [],
+  );
+  const responseSize = 512;
+
+  mockAPIClient
+    .expects('getFeatureFlags')
+    .once()
+    .withArgs(featureTag, 'feature-flags-id-1', 10, options.sourceId, options.sdkVersion)
+    .resolves([response, responseSize]);
+
+  mockProcessorEventsEmitter
+    .expects('emit')
+    .once()
+    .withArgs('pushLatencyMetricsEvent', {
+      latency: sino.match.any,
+      apiId: ApiId.GET_FEATURE_FLAGS,
+    });
+  mockProcessorEventsEmitter
+    .expects('emit')
+    .once()
+    .withArgs('pushSizeMetricsEvent', { size: responseSize, apiId: ApiId.GET_FEATURE_FLAGS });
+
+  mockCache.expects('put').withArgs(FEATURE_FLAG_ID, 'feature-flags-id-2', FEATURE_FLAG_CACHE_TTL);
+  mockCache.expects('put').withArgs(FEATURE_FLAG_REQUESTED_AT, 20, FEATURE_FLAG_CACHE_TTL);
+  mockFeatureFlagCache.expects('deleteAll').once();
+  mockFeatureFlagCache
+    .expects('put')
+    .once()
+    .withArgs(
+      sino.match((protoFeature: any) => {
+        const obj = protoFeature.toObject();
+        return (
+          obj.rulesList.length === 1 &&
+          obj.rulesList[0].clausesList.length === 1 &&
+          obj.rulesList[0].clausesList[0].operator === UNSUPPORTED_PROTO_ENUM_VALUES.operator
+        );
+      }, 'proto feature preserving unsupported operator'),
+    );
+
+  await processor.runUpdateCache();
+  mockCache.verify();
+  mockAPIClient.verify();
+  mockProcessorEventsEmitter.verify();
+  mockFeatureFlagCache.verify();
+  t.pass();
+});
+
+test('success: preserves unsupported variation and strategy types when caching feature', async (t) => {
+  const { featureTag, processor, options, sandbox, feature } = t.context;
+  const mockCache = sandbox.mock(options.cache);
+  const mockAPIClient = sandbox.mock(options.apiClient);
+  const mockProcessorEventsEmitter = sandbox.mock(options.eventEmitter);
+  const mockFeatureFlagCache = sandbox.mock(options.featureFlagCache);
+  const featureWithUnknownEnums: Feature = {
+    ...feature,
+    variationType: 'FUTURE_VARIATION_TYPE',
+    defaultStrategy: {
+      type: 'FUTURE_STRATEGY_TYPE',
+    },
+  };
+
+  mockCache.expects('get').withArgs(FEATURE_FLAG_ID).returns('feature-flags-id-1');
+  mockCache.expects('get').withArgs(FEATURE_FLAG_REQUESTED_AT).returns(10);
+
+  const response = buildFeatureResponse(
+    'feature-flags-id-2',
+    '20',
+    true,
+    [featureWithUnknownEnums],
+    [],
+  );
+  const responseSize = 512;
+
+  mockAPIClient
+    .expects('getFeatureFlags')
+    .once()
+    .withArgs(featureTag, 'feature-flags-id-1', 10, options.sourceId, options.sdkVersion)
+    .resolves([response, responseSize]);
+
+  mockProcessorEventsEmitter
+    .expects('emit')
+    .once()
+    .withArgs('pushLatencyMetricsEvent', {
+      latency: sino.match.any,
+      apiId: ApiId.GET_FEATURE_FLAGS,
+    });
+  mockProcessorEventsEmitter
+    .expects('emit')
+    .once()
+    .withArgs('pushSizeMetricsEvent', { size: responseSize, apiId: ApiId.GET_FEATURE_FLAGS });
+
+  mockCache.expects('put').withArgs(FEATURE_FLAG_ID, 'feature-flags-id-2', FEATURE_FLAG_CACHE_TTL);
+  mockCache.expects('put').withArgs(FEATURE_FLAG_REQUESTED_AT, 20, FEATURE_FLAG_CACHE_TTL);
+  mockFeatureFlagCache.expects('deleteAll').once();
+  mockFeatureFlagCache
+    .expects('put')
+    .once()
+    .withArgs(
+      sino.match((protoFeature: any) => {
+        const obj = protoFeature.toObject();
+        return (
+          obj.variationType === UNSUPPORTED_PROTO_ENUM_VALUES.variationType &&
+          obj.defaultStrategy?.type === UNSUPPORTED_PROTO_ENUM_VALUES.strategyType
+        );
+      }, 'proto feature preserving unsupported variation and strategy types'),
+    );
 
   await processor.runUpdateCache();
   mockCache.verify();

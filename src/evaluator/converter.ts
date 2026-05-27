@@ -28,11 +28,13 @@ import {
   FixedStrategy as ProtoFixedStrategy,
   User as ProtoUser,
 } from '@bucketeer/evaluation';
+import { normalizeEnumName } from './enumUtils';
+import { UNSUPPORTED_PROTO_ENUM_VALUES } from './unsupportedEnumValues';
 
 function mapVariationType(
   type: string,
 ): ProtoFeature.VariationTypeMap[keyof ProtoFeature.VariationTypeMap] {
-  switch (type.toUpperCase()) {
+  switch (normalizeEnumName(type)) {
     case 'STRING':
       return ProtoFeature.VariationType.STRING;
     case 'BOOLEAN':
@@ -41,8 +43,10 @@ function mapVariationType(
       return ProtoFeature.VariationType.NUMBER;
     case 'JSON':
       return ProtoFeature.VariationType.JSON;
+    case 'YAML':
+      return ProtoFeature.VariationType.YAML;
     default:
-      return ProtoFeature.VariationType.STRING;
+      return UNSUPPORTED_PROTO_ENUM_VALUES.variationType as ProtoFeature.VariationTypeMap[keyof ProtoFeature.VariationTypeMap];
   }
 }
 
@@ -51,7 +55,7 @@ function mapOperator(op: string): ProtoClause.OperatorMap[keyof ProtoClause.Oper
   // EQUALS=0, IN=1, ENDS_WITH=2, STARTS_WITH=3, SEGMENT=4,
   // GREATER=5, GREATER_OR_EQUAL=6, LESS=7, LESS_OR_EQUAL=8,
   // BEFORE=9, AFTER=10, FEATURE_FLAG=11, PARTIALLY_MATCH=12, NOT_EQUALS=13
-  switch (op.toUpperCase()) {
+  switch (normalizeEnumName(op)) {
     case 'EQUALS':
       return ProtoClause.Operator.EQUALS;
     case 'IN':
@@ -81,31 +85,31 @@ function mapOperator(op: string): ProtoClause.OperatorMap[keyof ProtoClause.Oper
     case 'NOT_EQUALS':
       return ProtoClause.Operator.NOT_EQUALS;
     default:
-      return ProtoClause.Operator.EQUALS;
+      return UNSUPPORTED_PROTO_ENUM_VALUES.operator as ProtoClause.OperatorMap[keyof ProtoClause.OperatorMap];
   }
 }
 
 function mapStrategyType(type: string): ProtoStrategy.TypeMap[keyof ProtoStrategy.TypeMap] {
-  switch (type.toUpperCase()) {
+  switch (normalizeEnumName(type)) {
     case 'FIXED':
       return ProtoStrategy.Type.FIXED;
     case 'ROLLOUT':
       return ProtoStrategy.Type.ROLLOUT;
     default:
-      return ProtoStrategy.Type.FIXED;
+      return UNSUPPORTED_PROTO_ENUM_VALUES.strategyType as ProtoStrategy.TypeMap[keyof ProtoStrategy.TypeMap];
   }
 }
 
 function mapSegmentUserState(
   state: string,
 ): ProtoSegmentUser.StateMap[keyof ProtoSegmentUser.StateMap] {
-  switch (state.toUpperCase()) {
+  switch (normalizeEnumName(state)) {
     case 'INCLUDED':
       return ProtoSegmentUser.State.INCLUDED;
     case 'EXCLUDED':
       return ProtoSegmentUser.State.EXCLUDED;
     default:
-      return ProtoSegmentUser.State.INCLUDED;
+      return UNSUPPORTED_PROTO_ENUM_VALUES.segmentUserState as ProtoSegmentUser.StateMap[keyof ProtoSegmentUser.StateMap];
   }
 }
 
