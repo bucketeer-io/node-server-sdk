@@ -16,8 +16,8 @@ import { MockAPIClient } from '../../../mocks/api';
 import { ApiId } from '../../../../objects/apiId';
 import { ProcessorEventsEmitter } from '../../../../processorEventsEmitter';
 import { SourceId } from '../../../../objects/sourceId';
-import { toProtoFeature } from '../../../../evaluator/converter';
-import { UNSUPPORTED_PROTO_ENUM_VALUES } from '../../../../evaluator/unsupportedEnumValues';
+import { toProtoFeature } from '../../../../cache/processor/converter';
+import { UNSUPPORTED_PROTO_ENUM_VALUES } from '../../../../cache/processor/unsupportedEnumValues';
 import { minimalFeature } from '../../../utils/feature';
 
 const test = anyTest as TestFn<{

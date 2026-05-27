@@ -1,6 +1,6 @@
 import test from 'ava';
-import { Feature, Variation } from '../../objects/feature';
-import { SegmentUsers } from '../../objects/segment';
+import { Feature, Variation } from '../../../objects/feature';
+import { SegmentUsers } from '../../../objects/segment';
 import {
   toProtoFeature,
   toProtoSegmentUsers,
@@ -15,11 +15,9 @@ import {
   toProtoFeatureLastUsedInfo,
   toProtoPrerequisite,
   toProtoUser,
-} from '../../evaluator/converter';
-import {
-  Feature as ProtoFeature,
-} from '@bucketeer/evaluation';
-import { UNSUPPORTED_PROTO_ENUM_VALUES } from '../../evaluator/unsupportedEnumValues';
+} from '../../../cache/processor/converter';
+import { Feature as ProtoFeature } from '@bucketeer/evaluation';
+import { UNSUPPORTED_PROTO_ENUM_VALUES } from '../../../cache/processor/unsupportedEnumValues';
 
 // toProtoFeature
 

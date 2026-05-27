@@ -7,7 +7,7 @@ import { Feature } from '../../objects/feature';
 import { ApiId } from '../../objects/apiId';
 import { Clock } from '../../utils/clock';
 import { SourceId } from '../../objects/sourceId';
-import { toProtoFeature } from '../../evaluator/converter';
+import { toProtoFeature } from './converter';
 
 interface FeatureFlagProcessor {
   start(): Promise<void>;

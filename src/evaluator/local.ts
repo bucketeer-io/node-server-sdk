@@ -15,7 +15,7 @@ import { User } from '../objects/user';
 import { Reason, ReasonType } from '../objects/reason';
 import { NodeEvaluator } from './evaluator';
 import { IllegalStateError, InvalidStatusError } from '../objects/errors';
-import { toProtoUser } from './converter';
+import { toProtoUser } from '../cache/processor/converter';
 
 class LocalEvaluator implements NodeEvaluator {
   private tag: string;

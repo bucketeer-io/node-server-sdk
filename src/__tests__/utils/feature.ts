@@ -17,7 +17,7 @@ import {
   toProtoFeature,
   toProtoUser,
   toProtoPrerequisite,
-} from '../../evaluator/converter';
+} from '../../cache/processor/converter';
 import { Feature } from '../../objects/feature';
 
 export function createUser(id: string, data: { [key: string]: string }): ProtoUser {

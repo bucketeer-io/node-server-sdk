@@ -15,8 +15,8 @@ import { NewSegmentUsersCache } from '../../../../cache/segmentUsers';
 import { ApiId } from '../../../../objects/apiId';
 import { ProcessorEventsEmitter } from '../../../../processorEventsEmitter';
 import { SourceId } from '../../../../objects/sourceId';
-import { toProtoSegmentUsers } from '../../../../evaluator/converter';
-import { UNSUPPORTED_PROTO_ENUM_VALUES } from '../../../../evaluator/unsupportedEnumValues';
+import { toProtoSegmentUsers } from '../../../../cache/processor/converter';
+import { UNSUPPORTED_PROTO_ENUM_VALUES } from '../../../../cache/processor/unsupportedEnumValues';
 
 const test = anyTest as TestFn<{
   processor: DefaultSegementUserCacheProcessor;

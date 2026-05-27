@@ -7,7 +7,7 @@ import { SegmentUsers } from '../../objects/segment';
 import { createSchedule, removeSchedule } from '../../schedule';
 import { Clock } from '../../utils/clock';
 import { SourceId } from '../../objects/sourceId';
-import { toProtoSegmentUsers } from '../../evaluator/converter';
+import { toProtoSegmentUsers } from './converter';
 
 interface SegementUsersCacheProcessor {
   start(): Promise<void>;
