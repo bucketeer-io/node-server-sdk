@@ -529,6 +529,14 @@ test('success: forceUpdate is false', async (t) => {
   t.pass();
 });
 
+/**
+ * Keep these as separate tests because unsupported enums are converted in
+ * different parts of toProtoFeature: nested rules[].clauses[].operator vs.
+ * feature-level variationType and defaultStrategy.type. Splitting them makes
+ * regressions point to the exact conversion path that broke.
+ */
+
+// Handles nested clause-level enum conversion
 test('success: preserves unsupported operator when caching feature', async (t) => {
   const { featureTag, processor, options, sandbox, feature } = t.context;
   const mockCache = sandbox.mock(options.cache);
@@ -607,6 +615,7 @@ test('success: preserves unsupported operator when caching feature', async (t) =
   t.pass();
 });
 
+// Handles top-level and strategy-level enum conversion
 test('success: preserves unsupported variation and strategy types when caching feature', async (t) => {
   const { featureTag, processor, options, sandbox, feature } = t.context;
   const mockCache = sandbox.mock(options.cache);
