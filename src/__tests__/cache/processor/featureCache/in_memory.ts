@@ -11,7 +11,7 @@ import { ProcessorEventsEmitter } from '../../../../processorEventsEmitter';
 import { SourceId } from '../../../../objects/sourceId';
 import { GetFeatureFlagsResponse, GetSegmentUsersResponse } from '../../../../objects/response';
 import { APIClient } from '../../../../api/client';
-import { toProtoFeature } from '../../../../evaluator/converter';
+import { toProtoFeature } from '../../../../cache/processor/converter';
 import { minimalFeature } from '../../../utils/feature';
 
 class SpyAPIClient implements Pick<APIClient, 'getFeatureFlags' | 'getSegmentUsers'> {
