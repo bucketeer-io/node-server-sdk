@@ -16,7 +16,7 @@ import { MockCache } from '../../../mocks/cache';
 import { MockAPIClient } from '../../../mocks/api';
 import { SourceId } from '../../../../objects/sourceId';
 import { ApiId } from '../../../../objects/apiId';
-import { toProtoFeature } from '../../../../evaluator/converter';
+import { toProtoFeature } from '../../../../cache/processor/converter';
 import { minimalFeature } from '../../../utils/feature';
 
 const test = anyTest as TestFn<{

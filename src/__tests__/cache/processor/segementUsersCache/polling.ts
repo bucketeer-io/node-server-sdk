@@ -17,7 +17,7 @@ import {
 import { ApiId } from '../../../../objects/apiId';
 import { ProcessorEventsEmitter } from '../../../../processorEventsEmitter';
 import { SourceId } from '../../../../objects/sourceId';
-import { toProtoSegmentUsers } from '../../../../evaluator/converter';
+import { toProtoSegmentUsers } from '../../../../cache/processor/converter';
 
 test('polling cache', async (t) => {
   const cache = new MockCache();

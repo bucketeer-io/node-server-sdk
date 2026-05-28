@@ -4,7 +4,7 @@
  * will be restricted to internal testing only within the @bucketeer/evaluation package.
  *
  * All functions below are designed to use the same translation logic used in production
- * (via src/evaluator/converter.ts) to ensure that tests accurately simulate how data is
+ * (via src/cache/processor/converter.ts) to ensure that tests accurately simulate how data is
  * mapped in the network and evaluator layers.
  */
 import {
@@ -17,7 +17,7 @@ import {
   toProtoFeature,
   toProtoUser,
   toProtoPrerequisite,
-} from '../../evaluator/converter';
+} from '../../cache/processor/converter';
 import { Feature } from '../../objects/feature';
 
 export function createUser(id: string, data: { [key: string]: string }): ProtoUser {

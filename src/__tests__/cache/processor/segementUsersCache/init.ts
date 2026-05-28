@@ -15,7 +15,7 @@ import { NewSegmentUsersCache } from '../../../../cache/segmentUsers';
 import { ApiId } from '../../../../objects/apiId';
 import { ProcessorEventsEmitter } from '../../../../processorEventsEmitter';
 import { SourceId } from '../../../../objects/sourceId';
-import { toProtoSegmentUsers } from '../../../../evaluator/converter';
+import { toProtoSegmentUsers } from '../../../../cache/processor/converter';
 
 const test = anyTest as TestFn<{
   processor: DefaultSegementUserCacheProcessor;

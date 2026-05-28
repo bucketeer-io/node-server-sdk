@@ -15,7 +15,8 @@ import { NewSegmentUsersCache } from '../../../../cache/segmentUsers';
 import { ApiId } from '../../../../objects/apiId';
 import { ProcessorEventsEmitter } from '../../../../processorEventsEmitter';
 import { SourceId } from '../../../../objects/sourceId';
-import { toProtoSegmentUsers } from '../../../../evaluator/converter';
+import { toProtoSegmentUsers } from '../../../../cache/processor/converter';
+import { UNSUPPORTED_PROTO_ENUM_VALUES } from '../../../../cache/processor/unsupportedEnumValues';
 
 const test = anyTest as TestFn<{
   processor: DefaultSegementUserCacheProcessor;
@@ -370,6 +371,70 @@ test('success: force update is false', async (t) => {
 
   mockSegementUsersCache.expects('deleteAll').never();
   mockSegementUsersCache.expects('put').withArgs(toProtoSegmentUsers(singleSegementUser)).resolves();
+  mockCache
+    .expects('put')
+    .withArgs(SEGEMENT_USERS_REQUESTED_AT, 20, SEGEMENT_USERS_CACHE_TTL)
+    .resolves();
+
+  await processor.runUpdateCache();
+  mockAPIClient.verify();
+  mockSegementUsersCache.verify();
+  mockCache.verify();
+  mockProcessorEventsEmitter.verify();
+  t.pass();
+});
+
+test('success: preserves unsupported segment user state when caching segment users', async (t) => {
+  const { processor, sandbox, options, singleSegementUser } = t.context;
+  const mockSegementUsersCache = sandbox.mock(options.segmentUsersCache);
+  mockSegementUsersCache.expects('getIds').resolves(['segment-id']);
+  const mockCache = sandbox.mock(options.cache);
+  mockCache.expects('get').withArgs(SEGEMENT_USERS_REQUESTED_AT).resolves(10);
+
+  const segmentUsersWithUnknownState: SegmentUsers = {
+    ...singleSegementUser,
+    users: [
+      {
+        ...singleSegementUser.users[0],
+        state: 'FUTURE_STATE',
+      },
+    ],
+  };
+
+  const response = buildSegmentResponse([segmentUsersWithUnknownState], '20', false, []);
+  const responseSize = 256;
+  const mockAPIClient = sandbox.mock(options.apiClient);
+  mockAPIClient
+    .expects('getSegmentUsers')
+    .withArgs(['segment-id'], 10, options.sourceId, options.sdkVersion)
+    .resolves([response, responseSize]);
+
+  const mockProcessorEventsEmitter = sandbox.mock(options.eventEmitter);
+  mockProcessorEventsEmitter
+    .expects('emit')
+    .once()
+    .withArgs('pushLatencyMetricsEvent', {
+      latency: sino.match.any,
+      apiId: ApiId.GET_SEGMENT_USERS,
+    });
+  mockProcessorEventsEmitter
+    .expects('emit')
+    .once()
+    .withArgs('pushSizeMetricsEvent', { size: responseSize, apiId: ApiId.GET_SEGMENT_USERS });
+
+  mockSegementUsersCache.expects('deleteAll').never();
+  mockSegementUsersCache
+    .expects('put')
+    .withArgs(
+      sino.match((protoSegmentUsers: any) => {
+        const obj = protoSegmentUsers.toObject();
+        return (
+          obj.usersList.length === 1 &&
+          obj.usersList[0].state === UNSUPPORTED_PROTO_ENUM_VALUES.segmentUserState
+        );
+      }, 'proto segment users preserving unsupported state'),
+    )
+    .resolves();
   mockCache
     .expects('put')
     .withArgs(SEGEMENT_USERS_REQUESTED_AT, 20, SEGEMENT_USERS_CACHE_TTL)
