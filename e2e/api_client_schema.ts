@@ -59,7 +59,7 @@ const CLAUSE_OPERATORS = [
 ] as const;
 
 const STRATEGY_TYPES = ['FIXED', 'ROLLOUT'] as const;
-const VARIATION_TYPES = ['STRING', 'BOOLEAN', 'NUMBER', 'JSON'] as const;
+const VARIATION_TYPES = ['STRING', 'BOOLEAN', 'NUMBER', 'JSON', 'YAML'] as const;
 const SEGMENT_USER_STATES = ['INCLUDED', 'EXCLUDED'] as const;
 const REASON_TYPES = [
   'TARGET',
