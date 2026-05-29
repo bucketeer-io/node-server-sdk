@@ -351,6 +351,7 @@ test.beforeEach((t) => {
     featureFlagProcessor: featureFlagProcessor,
     segementUsersCacheProcessor: segementUsersCacheProcessor,
     eventEmitter: eventEmitter,
+    clock: clock,
   };
 
   const sdkInstance = new BKTClientImpl(config, bktOptions);

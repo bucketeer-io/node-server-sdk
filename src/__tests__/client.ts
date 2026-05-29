@@ -6,7 +6,6 @@ import { Config, User } from '../bootstrap';
 import { DefaultLogger } from '../logger';
 import { setupServerAndListen } from './utils/setup_server';
 import { GetEvaluationResponse } from '../objects/response';
-import { GetEvaluationRequest } from '../objects/request';
 import { newDefaultBKTEvaluationDetails } from '../evaluationDetails';
 import { BKTConfig, defineBKTConfig } from '../config';
 
