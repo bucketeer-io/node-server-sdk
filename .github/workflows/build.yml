@@ -125,8 +125,8 @@ jobs:
     needs: install-dependencies
     uses: ./.github/workflows/e2e.yml
     secrets:
-      E2E_HOST: ${{ secrets.E2E_HOST }}
-      E2E_TOKEN: ${{ secrets.E2E_TOKEN }}
-      E2E_SERVER_ROLE_TOKEN: ${{ secrets.E2E_SERVER_ROLE_TOKEN }}
-      NPM_TOKEN: ${{ secrets.NPM_TOKEN}}
+      E2E_API_ENDPOINT: ${{ secrets.E2E_API_ENDPOINT }}
+      E2E_CLIENT_API_KEY: ${{ secrets.E2E_CLIENT_API_KEY }}
+      E2E_SERVER_API_KEY: ${{ secrets.E2E_SERVER_API_KEY }}
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
