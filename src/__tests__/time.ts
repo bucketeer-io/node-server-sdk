@@ -29,7 +29,7 @@ test('latencySecondsSince returns a finite, non-negative number', (t) => {
   t.true(elapsed >= 0);
 });
 
-test('latencySecondsSince divides the bigint diff by 1e9', (t) => {
+test.serial('latencySecondsSince divides the bigint diff by 1e9', (t) => {
   const startMark = BigInt(100);
   const hrtimeBigintStub = sinon
     .stub(process.hrtime, 'bigint')
