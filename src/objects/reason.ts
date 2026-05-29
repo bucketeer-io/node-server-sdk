@@ -1,5 +1,3 @@
-import { Reason as ProtoReason } from '@bucketeer/evaluation';
-
 type Reason = {
   type: ReasonType;
   ruleId?: string;
