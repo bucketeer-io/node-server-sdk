@@ -351,3 +351,107 @@ test('should reject malformed URL in apiEndpoint', (t) => {
   );
   t.true(error.message.includes('Invalid apiEndpoint URL'));
 });
+
+// 8. Retry configuration defaults and validation
+test('should use default retry config when not provided', (t) => {
+  const config = defineBKTConfig({
+    apiKey: 'key',
+    apiEndpoint: 'endpoint',
+    appVersion: '1.2.3',
+  });
+  t.is(config.maxRetries, 0);
+  t.is(config.retryInitialInterval, 1000);
+  t.is(config.retryMaxInterval, 10000);
+  t.is(config.retryMultiplier, 2.0);
+});
+
+test('should accept custom retry config', (t) => {
+  const config = defineBKTConfig({
+    apiKey: 'key',
+    apiEndpoint: 'endpoint',
+    appVersion: '1.2.3',
+    maxRetries: 5,
+    retryInitialInterval: 500,
+    retryMaxInterval: 20000,
+    retryMultiplier: 1.5,
+  });
+  t.is(config.maxRetries, 5);
+  t.is(config.retryInitialInterval, 500);
+  t.is(config.retryMaxInterval, 20000);
+  t.is(config.retryMultiplier, 1.5);
+});
+
+test('should accept maxRetries = 0 to disable retries', (t) => {
+  const config = defineBKTConfig({
+    apiKey: 'key',
+    apiEndpoint: 'endpoint',
+    appVersion: '1.2.3',
+    maxRetries: 0,
+  });
+  t.is(config.maxRetries, 0);
+});
+
+test('should reset negative maxRetries to default', (t) => {
+  const config = defineBKTConfig({
+    apiKey: 'key',
+    apiEndpoint: 'endpoint',
+    appVersion: '1.2.3',
+    maxRetries: -1,
+  });
+  t.is(config.maxRetries, 0);
+});
+
+test('should reset negative retryInitialInterval to default', (t) => {
+  const config = defineBKTConfig({
+    apiKey: 'key',
+    apiEndpoint: 'endpoint',
+    appVersion: '1.2.3',
+    retryInitialInterval: -100,
+    retryMultiplier: -1,
+  });
+  t.is(config.retryInitialInterval, 1000);
+  t.is(config.retryMultiplier, 2.0);
+});
+
+test('should reset retryMaxInterval to default when less than retryInitialInterval', (t) => {
+  const config = defineBKTConfig({
+    apiKey: 'key',
+    apiEndpoint: 'endpoint',
+    appVersion: '1.2.3',
+    retryInitialInterval: 5000,
+    retryMaxInterval: 1000,
+    retryMultiplier: 0,
+  });
+  t.is(config.retryMaxInterval, 10000);
+  t.is(config.retryMultiplier, 2.0);
+});
+
+test('should accept retryMaxInterval = 0 (no cap)', (t) => {
+  const config = defineBKTConfig({
+    apiKey: 'key',
+    apiEndpoint: 'endpoint',
+    appVersion: '1.2.3',
+    retryMaxInterval: 0,
+  });
+  t.is(config.retryMaxInterval, 0);
+});
+
+test('retry config coexists correctly with other options', (t) => {
+  const config = defineBKTConfig({
+    apiKey: 'key',
+    apiEndpoint: 'endpoint',
+    appVersion: '1.2.3',
+    maxRetries: 5,
+    retryInitialInterval: 500,
+    retryMaxInterval: 15000,
+    retryMultiplier: 3.0,
+    eventsFlushInterval: 30000,
+    cachePollingInterval: 120000,
+  });
+  t.is(config.maxRetries, 5);
+  t.is(config.retryInitialInterval, 500);
+  t.is(config.retryMaxInterval, 15000);
+  t.is(config.retryMultiplier, 3.0);
+  t.is(config.eventsFlushInterval, 30000);
+  t.is(config.cachePollingInterval, 120000);
+});

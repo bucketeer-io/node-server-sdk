@@ -15,5 +15,8 @@
       "node",
     ]
   },
+  "include": [
+    "./src/**/*",
+  ],
   "exclude": [],
 }
