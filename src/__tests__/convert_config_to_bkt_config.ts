@@ -23,6 +23,9 @@ test('should convert Config to BKTConfig with defaults', (t) => {
   t.true(bktConfig.logger instanceof DefaultLogger); // Default logger
   t.false(bktConfig.enableLocalEvaluation); // Default value
   t.is(bktConfig.cachePollingInterval, 60000); // Default value
+  t.is(bktConfig.maxRetries, 0); // Default retry value
+  t.is(bktConfig.retryInitialInterval, 1000); // Default retry value
+  t.is(bktConfig.retryMaxInterval, 10000); // Default retry value
 });
 
 test('should override defaults with provided values', (t) => {
