@@ -6,6 +6,8 @@ import { SourceId } from '../objects/sourceId';
 import { DefaultLogger } from '../logger';
 import { nodeSDKVersion } from '../objects/version';
 
+const DEFAULT_MAX_RETRIES = 3;
+
 // 1. Validation error tests
 test('should throw if apiKey is missing', (t) => {
   const error = t.throws(
@@ -359,7 +361,7 @@ test('should use default retry config when not provided', (t) => {
     apiEndpoint: 'endpoint',
     appVersion: '1.2.3',
   });
-  t.is(config.maxRetries, 0);
+  t.is(config.maxRetries, DEFAULT_MAX_RETRIES);
   t.is(config.retryInitialInterval, 1000);
   t.is(config.retryMaxInterval, 10000);
   t.is(config.retryMultiplier, 2.0);
@@ -398,7 +400,7 @@ test('should reset negative maxRetries to default', (t) => {
     appVersion: '1.2.3',
     maxRetries: -1,
   });
-  t.is(config.maxRetries, 0);
+  t.is(config.maxRetries, DEFAULT_MAX_RETRIES);
 });
 
 test('should reset negative retryInitialInterval to default', (t) => {
