@@ -132,14 +132,14 @@ export async function promiseRetriable<T>(
     } catch (error) {
       const lastError = error instanceof Error ? error : new Error(String(error));
 
-      // Check if the error itself allows a retry
-      const decision = shouldRetry(lastError);
-      if (!decision.retry) {
+      // If we have no more retries allowed, throw immediately
+      if (retriesPerformed >= maxRetries) {
         throw lastError;
       }
 
-      // If we have no more retries allowed, throw immediately
-      if (retriesPerformed >= maxRetries) {
+      // Check if the error itself allows a retry
+      const decision = shouldRetry(lastError);
+      if (!decision.retry) {
         throw lastError;
       }
 
