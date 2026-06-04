@@ -8,6 +8,7 @@ import { ApiId } from '../../objects/apiId';
 import { Clock } from '../../utils/clock';
 import { SourceId } from '../../objects/sourceId';
 import { toProtoFeature } from './converter';
+import { PollController as PollAbortController } from '../../utils/pollController';
 
 interface FeatureFlagProcessor {
   start(): Promise<void>;
@@ -42,7 +43,7 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
   private pollingScheduleID?: NodeJS.Timeout;
   private pollingInterval: number;
   private clock: Clock;
-  private currentPollController: AbortController | null = null;
+  private pollController = new PollAbortController();
 
   featureTag: string;
   sourceId: SourceId;
@@ -79,19 +80,7 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
       removeSchedule(this.pollingScheduleID);
       this.pollingScheduleID = undefined;
     }
-    this.currentPollController?.abort();
-    this.currentPollController = null;
-  }
-
-  // AbortSignal.any([AbortSignal.timeout(...), stopSignal]) would be cleaner but
-  // requires Node.js ≥ v20.3; this SDK targets v18, so we combine manually.
-  private createPollSignal(): AbortSignal {
-    this.currentPollController?.abort();
-    const controller = new AbortController();
-    this.currentPollController = controller;
-    const timeoutId = setTimeout(() => controller.abort(), this.pollingInterval);
-    controller.signal.addEventListener('abort', () => clearTimeout(timeoutId), { once: true });
-    return controller.signal;
+    this.pollController.abort();
   }
 
   getPollingScheduleID(): NodeJS.Timeout | undefined {
@@ -108,7 +97,7 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
   }
 
   private async getFeatureFlags() {
-    const signal = this.createPollSignal();
+    const signal = this.pollController.createSignal(this.pollingInterval);
     const featureFlagsId = await this.getFeatureFlagId();
     const requestedAt = await this.getFeatureFlagRequestedAt();
     const startMark = this.clock.latencyStart();
