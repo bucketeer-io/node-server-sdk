@@ -119,7 +119,7 @@ interface BKTConfig {
 
   /**
    * Initial backoff interval between retries in milliseconds. (Default: 1000)
-   * Uses exponential backoff: interval = retryInitialInterval × (2 ^ attemptNumber) ±25% jitter.
+   * Uses exponential backoff: interval = retryInitialInterval × (retryMultiplier ^ attemptNumber) ±25% jitter.
    */
   retryInitialInterval: number;
 

@@ -164,7 +164,11 @@ export class APIClient {
             );
             return;
           }
-          resolve([JSON.parse(rawData) as T, Number(res.headers['content-length'] || 0)]);
+          try {
+            resolve([JSON.parse(rawData) as T, Number(res.headers['content-length'] || 0)]);
+          } catch (e) {
+            reject(e);
+          }
         });
       });
       clientReq.on('error', (e) => {
