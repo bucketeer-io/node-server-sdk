@@ -44,6 +44,7 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
   private clock: Clock;
   private sourceId: SourceId;
   private sdkVersion: string;
+  private currentPollController: AbortController | null = null;
 
   constructor(options: SegementUsersCacheProcessorOptions) {
     this.cache = options.cache;
@@ -73,6 +74,19 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
       removeSchedule(this.pollingScheduleID);
       this.pollingScheduleID = undefined;
     }
+    this.currentPollController?.abort();
+    this.currentPollController = null;
+  }
+
+  // AbortSignal.any([AbortSignal.timeout(...), stopSignal]) would be cleaner but
+  // requires Node.js ≥ v20.3; this SDK targets v18, so we combine manually.
+  private createPollSignal(): AbortSignal {
+    this.currentPollController?.abort();
+    const controller = new AbortController();
+    this.currentPollController = controller;
+    const timeoutId = setTimeout(() => controller.abort(), this.pollingInterval);
+    controller.signal.addEventListener('abort', () => clearTimeout(timeoutId), { once: true });
+    return controller.signal;
   }
 
   getPollingScheduleID(): NodeJS.Timeout | undefined {
@@ -89,6 +103,7 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
   }
 
   private async getSegmentUsers() {
+    const signal = this.createPollSignal();
     const segmentIds = await this.segmentUsersCache.getIds();
     const requestedAt = await this.getSegmentUsersRequestedAt();
     const sourceId = this.sourceId;
@@ -101,6 +116,7 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
       requestedAt,
       sourceId,
       sdkVersion,
+      signal,
     );
 
     const latency = this.clock.latencySecondsSince(startMark);

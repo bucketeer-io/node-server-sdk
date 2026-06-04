@@ -47,6 +47,7 @@ export class APIClient {
     requestedAt: number,
     sourceId: SourceId,
     sdkVersion: string,
+    signal?: AbortSignal,
   ): Promise<[GetFeatureFlagsResponse, number]> {
     const req: GetFeatureFlagsRequest = {
       tag,
@@ -57,7 +58,7 @@ export class APIClient {
     };
     const url = scheme.concat(this.host, featureFlagsAPI);
     const chunk = JSON.stringify(req);
-    return this.postRequestWithRetry<GetFeatureFlagsResponse>(url, chunk);
+    return this.postRequestWithRetry<GetFeatureFlagsResponse>(url, chunk, signal);
   }
 
   getSegmentUsers(
@@ -65,6 +66,7 @@ export class APIClient {
     requestedAt: number,
     sourceId: SourceId,
     sdkVersion: string,
+    signal?: AbortSignal,
   ): Promise<[GetSegmentUsersResponse, number]> {
     const req: GetSegmentUsersRequest = {
       segmentIds,
@@ -74,7 +76,7 @@ export class APIClient {
     };
     const url = scheme.concat(this.host, segmentUsersAPI);
     const chunk = JSON.stringify(req);
-    return this.postRequestWithRetry<GetSegmentUsersResponse>(url, chunk);
+    return this.postRequestWithRetry<GetSegmentUsersResponse>(url, chunk, signal);
   }
 
   getEvaluation(
