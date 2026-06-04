@@ -57,10 +57,7 @@ export class APIClient {
     };
     const url = scheme.concat(this.host, featureFlagsAPI);
     const chunk = JSON.stringify(req);
-    return this.postRequestWithRetry(url, chunk).then(([res, size]) => {
-      const msg = JSON.parse(res) as GetFeatureFlagsResponse;
-      return [msg, size];
-    });
+    return this.postRequestWithRetry<GetFeatureFlagsResponse>(url, chunk);
   }
 
   getSegmentUsers(
@@ -77,10 +74,7 @@ export class APIClient {
     };
     const url = scheme.concat(this.host, segmentUsersAPI);
     const chunk = JSON.stringify(req);
-    return this.postRequestWithRetry(url, chunk).then(([res, size]) => {
-      const msg = JSON.parse(res) as GetSegmentUsersResponse;
-      return [msg, size];
-    });
+    return this.postRequestWithRetry<GetSegmentUsersResponse>(url, chunk);
   }
 
   getEvaluation(
@@ -100,10 +94,7 @@ export class APIClient {
     };
     const url = scheme.concat(this.host, evaluationAPI);
     const chunk = JSON.stringify(req);
-    return this.postRequestWithRetry(url, chunk, signal).then(([res, size]) => {
-      const msg = JSON.parse(res) as GetEvaluationResponse;
-      return [msg, size];
-    });
+    return this.postRequestWithRetry<GetEvaluationResponse>(url, chunk, signal);
   }
 
   registerEvents(
@@ -119,30 +110,27 @@ export class APIClient {
     };
     const url = scheme.concat(this.host, eventsAPI);
     const chunk = JSON.stringify(req);
-    return this.postRequestWithRetry(url, chunk, signal).then(([res, size]) => {
-      const msg = JSON.parse(res) as RegisterEventsResponse;
-      return [msg, size];
-    });
+    return this.postRequestWithRetry<RegisterEventsResponse>(url, chunk, signal);
   }
 
-  private postRequestWithRetry(
+  private postRequestWithRetry<T>(
     url: string,
     chunk: string,
     signal?: AbortSignal,
-  ): Promise<[string, number]> {
+  ): Promise<[T, number]> {
     return promiseRetriable(
-      (s) => this.postRequestOnce(url, chunk, s),
+      (s) => this.postRequest<T>(url, chunk, s),
       this.retryPolicy,
       isRetryable,
       signal,
     );
   }
 
-  private postRequestOnce(
+  private postRequest<T>(
     url: string,
     chunk: string,
     signal?: AbortSignal,
-  ): Promise<[string, number]> {
+  ): Promise<[T, number]> {
     const opts: https.RequestOptions = {
       method: 'POST',
       headers: {
@@ -177,14 +165,12 @@ export class APIClient {
             );
             return;
           }
-          resolve([rawData, Number(res.headers['content-length'] || 0)]);
+          resolve([JSON.parse(rawData) as T, Number(res.headers['content-length'] || 0)]);
         });
       });
       clientReq.on('error', (e) => {
         reject(e);
       });
-      clientReq.write(chunk);
-      clientReq.end();
       clientReq.on('timeout', () => {
         // No error arg: Node.js emits ECONNRESET on clientReq (pre-response phase)
         // or on res (post-headers phase). Both paths are handled — clientReq.on('error')
@@ -192,6 +178,8 @@ export class APIClient {
         // ECONNRESET is retriable.
         clientReq.destroy();
       });
+      clientReq.write(chunk);
+      clientReq.end();
     });
   }
 }
