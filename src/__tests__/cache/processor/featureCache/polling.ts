@@ -86,13 +86,13 @@ test('polling cache', async (t) => {
   mockAPIClient
     .expects('getFeatureFlags')
     .once()
-    .withArgs(featureFlag, '', 0, sourceId, '2.3.1')
+    .withArgs(featureFlag, '', 0, sourceId, '2.3.1', sino.match.instanceOf(AbortSignal))
     .resolves([featuresResponse, responseSize]);
 
   mockAPIClient
     .expects('getFeatureFlags')
     .twice()
-    .withArgs(featureFlag, 'featureFlagsId', 1100, sourceId, '2.3.1')
+    .withArgs(featureFlag, 'featureFlagsId', 1100, sourceId, '2.3.1', sino.match.instanceOf(AbortSignal))
     .resolves([featuresResponse, responseSize]);
 
   const eventEmitter = new ProcessorEventsEmitter();
