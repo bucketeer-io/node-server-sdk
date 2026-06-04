@@ -88,7 +88,7 @@ test.serial('start success', async (t) => {
   mockAPIClient
     .expects('getFeatureFlags')
     .once()
-    .withArgs(featureTag, 'feature-flags-id-1', 10, options.sourceId, options.sdkVersion)
+    .withArgs(featureTag, 'feature-flags-id-1', 10, options.sourceId, options.sdkVersion, sino.match.instanceOf(AbortSignal))
     .resolves([response, responseSize]);
 
   mockProcessorEventsEmitter
@@ -133,7 +133,7 @@ test.serial('start fail', async (t) => {
   mockAPIClient
     .expects('getFeatureFlags')
     .once()
-    .withArgs(featureTag, '', 0, options.sourceId, options.sdkVersion)
+    .withArgs(featureTag, '', 0, options.sourceId, options.sdkVersion, sino.match.instanceOf(AbortSignal))
     .rejects(error);
   mockProcessorEventsEmitter
     .expects('emit')

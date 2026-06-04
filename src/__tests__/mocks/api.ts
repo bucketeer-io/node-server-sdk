@@ -9,6 +9,7 @@ class MockAPIClient implements Pick<APIClient, 'getFeatureFlags' | 'getSegmentUs
     _requestedAt: number,
     _sourceId: SourceId,
     _sdkVersion: string,
+    _signal?: AbortSignal,
   ): Promise<[GetFeatureFlagsResponse, number]> {
     throw new Error('Method not implemented.');
   }
@@ -18,6 +19,7 @@ class MockAPIClient implements Pick<APIClient, 'getFeatureFlags' | 'getSegmentUs
     _requestedAt: number,
     _sourceId: SourceId,
     _sdkVersion: string,
+    _signal?: AbortSignal,
   ): Promise<[GetSegmentUsersResponse, number]> {
     throw new Error('Method not implemented.');
   }
