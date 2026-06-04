@@ -8,6 +8,7 @@ import { createSchedule, removeSchedule } from '../../schedule';
 import { Clock } from '../../utils/clock';
 import { SourceId } from '../../objects/sourceId';
 import { toProtoSegmentUsers } from './converter';
+import { PollController } from '../../utils/pollController';
 
 interface SegementUsersCacheProcessor {
   start(): Promise<void>;
@@ -44,7 +45,7 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
   private clock: Clock;
   private sourceId: SourceId;
   private sdkVersion: string;
-  private currentPollController: AbortController | null = null;
+  private pollController = new PollController();
 
   constructor(options: SegementUsersCacheProcessorOptions) {
     this.cache = options.cache;
@@ -74,19 +75,7 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
       removeSchedule(this.pollingScheduleID);
       this.pollingScheduleID = undefined;
     }
-    this.currentPollController?.abort();
-    this.currentPollController = null;
-  }
-
-  // AbortSignal.any([AbortSignal.timeout(...), stopSignal]) would be cleaner but
-  // requires Node.js ≥ v20.3; this SDK targets v18, so we combine manually.
-  private createPollSignal(): AbortSignal {
-    this.currentPollController?.abort();
-    const controller = new AbortController();
-    this.currentPollController = controller;
-    const timeoutId = setTimeout(() => controller.abort(), this.pollingInterval);
-    controller.signal.addEventListener('abort', () => clearTimeout(timeoutId), { once: true });
-    return controller.signal;
+    this.pollController.abort();
   }
 
   getPollingScheduleID(): NodeJS.Timeout | undefined {
@@ -103,7 +92,7 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
   }
 
   private async getSegmentUsers() {
-    const signal = this.createPollSignal();
+    const signal = this.pollController.createSignal(this.pollingInterval);
     const segmentIds = await this.segmentUsersCache.getIds();
     const requestedAt = await this.getSegmentUsersRequestedAt();
     const sourceId = this.sourceId;
