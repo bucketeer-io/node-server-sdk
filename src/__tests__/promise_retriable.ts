@@ -497,3 +497,29 @@ test.serial('signal is forwarded to fn on each attempt', async (t) => {
   t.is(receivedSignals.length, 1);
   t.is(receivedSignals[0], controller.signal);
 });
+
+test.serial('signal fired mid-request propagates abort into fn', async (t) => {
+  const controller = new AbortController();
+  const abortReason = new Error('aborted mid-request');
+
+  const fn = sinon.stub<[AbortSignal | undefined], Promise<never>>().callsFake(
+    (signal) =>
+      new Promise<never>((_, reject) => {
+        signal?.addEventListener('abort', () => reject(signal.reason), { once: true });
+      }),
+  );
+
+  const resultPromise = promiseRetriable(
+    fn as (signal: AbortSignal | undefined) => Promise<never>,
+    policy,
+    () => ({ retry: false }),
+    controller.signal,
+  );
+
+  // fn is already in-flight — abort while it is still executing
+  controller.abort(abortReason);
+
+  const thrown = await t.throwsAsync(resultPromise);
+  t.is(thrown, abortReason);
+  t.is(fn.callCount, 1);
+});
