@@ -89,8 +89,8 @@ test.serial('does not retry when maxRetries is 0', async (t) => {
   const thrownError = await t.throwsAsync(resultPromise);
   t.is(thrownError, error);
   t.is(fn.callCount, 1);
-  // Optional: shouldRetry might still be called once for the first failure
-  t.is(shouldRetry.callCount, 1);
+  // Optional: shouldRetry might not be called once for the first failure because maxRetries is 0, 
+  t.is(shouldRetry.callCount, 0);
 });
 
 test.serial('throws the last error after exceeding max retries', async (t) => {
@@ -108,8 +108,12 @@ test.serial('throws the last error after exceeding max retries', async (t) => {
 
   const thrownError = await t.throwsAsync(resultPromise);
   t.is(thrownError, error);
+  // callCount = the initial attempt + retries
   t.is(fn.callCount, 3);
-  t.is(shouldRetry.callCount, 3);
+  // shouldRetry is called after each failure to decide whether to retry.
+  // With maxRetries=2: called after attempt 1 (→ retry) and attempt 2 (→ retry),
+  // but NOT after attempt 3 because the retry budget is exhausted — it just throws.
+  t.is(shouldRetry.callCount, 2);
 });
 
 test.serial('does not retry when shouldRetry returns false', async (t) => {
