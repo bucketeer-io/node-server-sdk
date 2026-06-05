@@ -376,3 +376,26 @@ test('toErrorMetricsEvent returns correct event for TimeoutError', (t) => {
 
   t.deepEqual(actualEvent, expectedEvent);
 });
+
+test('toErrorMetricsEvent returns timeout event for DOMException TimeoutError from AbortSignal.timeout()', (t) => {
+  // AbortSignal.timeout() rejects with DOMException { name: 'TimeoutError' }, not the SDK TimeoutError class
+  const error = new DOMException('The operation timed out.', 'TimeoutError');
+  const tag = 'test-tag';
+  const apiId = ApiId.GET_EVALUATION;
+
+  const expectedEvent = createTimeoutErrorMetricsEvent(
+    tag,
+    apiId,
+    SourceId.OPEN_FEATURE_NODE,
+    sdkVersion,
+  ).event;
+  const actualEvent = toErrorMetricsEvent(
+    error,
+    tag,
+    apiId,
+    SourceId.OPEN_FEATURE_NODE,
+    sdkVersion,
+  )?.event;
+
+  t.deepEqual(actualEvent, expectedEvent);
+});
