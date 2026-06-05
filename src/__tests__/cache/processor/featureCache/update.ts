@@ -121,7 +121,7 @@ test('err: failed while requesting cache from the server', async (t) => {
   mockAPIClient
     .expects('getFeatureFlags')
     .once()
-    .withArgs(featureTag, '', 0, options.sourceId, options.sdkVersion)
+    .withArgs(featureTag, '', 0, options.sourceId, options.sdkVersion, sino.match.instanceOf(AbortSignal))
     .rejects(error);
   mockProcessorEventsEmitter
     .expects('emit')
@@ -152,7 +152,7 @@ test('err: failed while putting featureFlagsID, and the forceUpdate is true', as
   mockAPIClient
     .expects('getFeatureFlags')
     .once()
-    .withArgs(featureTag, 'feature-flags-id-1', 10, options.sourceId, options.sdkVersion)
+    .withArgs(featureTag, 'feature-flags-id-1', 10, options.sourceId, options.sdkVersion, sino.match.instanceOf(AbortSignal))
     .resolves([response, responseSize]);
 
   mockProcessorEventsEmitter
@@ -204,7 +204,7 @@ test('err: failed while putting requestedAt, and the forceUpdate is true', async
   mockAPIClient
     .expects('getFeatureFlags')
     .once()
-    .withArgs(featureTag, 'feature-flags-id-1', 10, options.sourceId, options.sdkVersion)
+    .withArgs(featureTag, 'feature-flags-id-1', 10, options.sourceId, options.sdkVersion, sino.match.instanceOf(AbortSignal))
     .resolves([response, responseSize]);
 
   mockProcessorEventsEmitter
@@ -261,7 +261,7 @@ test('err: failed while putting featureFlagsID, and the forceUpdate is false', a
   mockAPIClient
     .expects('getFeatureFlags')
     .once()
-    .withArgs(featureTag, 'feature-flags-id-1', 10, options.sourceId, options.sdkVersion)
+    .withArgs(featureTag, 'feature-flags-id-1', 10, options.sourceId, options.sdkVersion, sino.match.instanceOf(AbortSignal))
     .resolves([response, responseSize]);
 
   mockProcessorEventsEmitter
@@ -320,7 +320,7 @@ test('err: failed while putting requestedAt, and the forceUpdate is false', asyn
   mockAPIClient
     .expects('getFeatureFlags')
     .once()
-    .withArgs(featureTag, 'feature-flags-id-1', 10, options.sourceId, options.sdkVersion)
+    .withArgs(featureTag, 'feature-flags-id-1', 10, options.sourceId, options.sdkVersion, sino.match.instanceOf(AbortSignal))
     .resolves([response, responseSize]);
 
   mockProcessorEventsEmitter
@@ -372,7 +372,7 @@ test('success: featureFlagsID not found', async (t) => {
   mockAPIClient
     .expects('getFeatureFlags')
     .once()
-    .withArgs(featureTag, '', 10, options.sourceId, options.sdkVersion)
+    .withArgs(featureTag, '', 10, options.sourceId, options.sdkVersion, sino.match.instanceOf(AbortSignal))
     .resolves([response, responseSize]);
 
   mockProcessorEventsEmitter
@@ -411,7 +411,7 @@ test('success: requestedAt not found', async (t) => {
   mockAPIClient
     .expects('getFeatureFlags')
     .once()
-    .withArgs(featureTag, 'feature-flags-id-1', 0, options.sourceId, options.sdkVersion)
+    .withArgs(featureTag, 'feature-flags-id-1', 0, options.sourceId, options.sdkVersion, sino.match.instanceOf(AbortSignal))
     .resolves([response, responseSize]);
 
   mockProcessorEventsEmitter
@@ -449,7 +449,7 @@ test('success: forceUpdate is true', async (t) => {
   mockAPIClient
     .expects('getFeatureFlags')
     .once()
-    .withArgs(featureTag, 'feature-flags-id-1', 10, options.sourceId, options.sdkVersion)
+    .withArgs(featureTag, 'feature-flags-id-1', 10, options.sourceId, options.sdkVersion, sino.match.instanceOf(AbortSignal))
     .resolves([response, responseSize]);
 
   mockProcessorEventsEmitter
@@ -499,7 +499,7 @@ test('success: forceUpdate is false', async (t) => {
   mockAPIClient
     .expects('getFeatureFlags')
     .once()
-    .withArgs(featureTag, 'feature-flags-id-1', 10, options.sourceId, options.sdkVersion)
+    .withArgs(featureTag, 'feature-flags-id-1', 10, options.sourceId, options.sdkVersion, sino.match.instanceOf(AbortSignal))
     .resolves([response, responseSize]);
 
   mockProcessorEventsEmitter
@@ -575,7 +575,7 @@ test('success: preserves unsupported operator when caching feature', async (t) =
   mockAPIClient
     .expects('getFeatureFlags')
     .once()
-    .withArgs(featureTag, 'feature-flags-id-1', 10, options.sourceId, options.sdkVersion)
+    .withArgs(featureTag, 'feature-flags-id-1', 10, options.sourceId, options.sdkVersion, sino.match.instanceOf(AbortSignal))
     .resolves([response, responseSize]);
 
   mockProcessorEventsEmitter
@@ -645,7 +645,7 @@ test('success: preserves unsupported variation and strategy types when caching f
   mockAPIClient
     .expects('getFeatureFlags')
     .once()
-    .withArgs(featureTag, 'feature-flags-id-1', 10, options.sourceId, options.sdkVersion)
+    .withArgs(featureTag, 'feature-flags-id-1', 10, options.sourceId, options.sdkVersion, sino.match.instanceOf(AbortSignal))
     .resolves([response, responseSize]);
 
   mockProcessorEventsEmitter
