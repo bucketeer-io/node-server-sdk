@@ -66,6 +66,9 @@ test.serial('stop() aborts an in-flight getFeatureFlags call', async (t) => {
     resolveInFlight = resolve;
   });
 
+  // Simulate a stalled network call that never resolves on its own.
+  // The abort listener is required to convert the signal's abort event into a
+  // promise rejection — aborting a signal does not automatically reject awaiting promises.
   sandbox.stub(options.apiClient, 'getFeatureFlags').callsFake(
     (_tag, _id, _requestedAt, _sourceId, _sdkVersion, signal) => {
       resolveInFlight();
@@ -107,6 +110,9 @@ test.serial('start() creates a polling schedule after stop() and restart', async
   const inFlightStarted = new Promise<void>((resolve) => { resolveInFlight = resolve; });
 
   const apiStub = sandbox.stub(options.apiClient, 'getFeatureFlags');
+  // Simulate a stalled network call that never resolves on its own.
+  // The abort listener is required to convert the signal's abort event into a
+  // promise rejection — aborting a signal does not automatically reject awaiting promises.
   apiStub.onFirstCall().callsFake((_tag, _id, _requestedAt, _sourceId, _sdkVersion, signal) => {
     resolveInFlight();
     return new Promise<never>((_, reject) => {
@@ -140,6 +146,9 @@ test.serial('runUpdateCache(): stop() abort is silently dropped', async (t) => {
   let resolveInFlight!: () => void;
   const inFlightStarted = new Promise<void>((resolve) => { resolveInFlight = resolve; });
 
+  // Simulate a stalled network call that never resolves on its own.
+  // The abort listener is required to convert the signal's abort event into a
+  // promise rejection — aborting a signal does not automatically reject awaiting promises.
   sandbox.stub(options.apiClient, 'getFeatureFlags').callsFake(
     (_tag, _id, _requestedAt, _sourceId, _sdkVersion, signal) => {
       resolveInFlight();
@@ -175,6 +184,9 @@ test.serial('runUpdateCache(): poll abort emits an error metric', async (t) => {
     sino.match({ error: sino.match.instanceOf(TimeoutError), apiId: ApiId.GET_FEATURE_FLAGS }),
   );
 
+  // Simulate a stalled network call that never resolves on its own.
+  // The abort listener is required to convert the signal's abort event into a
+  // promise rejection — aborting a signal does not automatically reject awaiting promises.
   sandbox.stub(options.apiClient, 'getFeatureFlags').callsFake(
     (_tag, _id, _requestedAt, _sourceId, _sdkVersion, signal) => {
       return new Promise<never>((_, reject) => {
@@ -212,6 +224,9 @@ test.serial('polling interval deadline aborts a hanging getFeatureFlags call', a
     resolveInFlight = resolve;
   });
 
+  // Simulate a stalled network call that never resolves on its own.
+  // The abort listener is required to convert the signal's abort event into a
+  // promise rejection — aborting a signal does not automatically reject awaiting promises.
   sandbox.stub(options.apiClient, 'getFeatureFlags').callsFake(
     (_tag, _id, _requestedAt, _sourceId, _sdkVersion, signal) => {
       resolveInFlight();

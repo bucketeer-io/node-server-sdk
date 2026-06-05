@@ -174,6 +174,9 @@ test.serial('runUpdateCache(): poll abort emits an error metric', async (t) => {
     sino.match({ error: sino.match.instanceOf(TimeoutError), apiId: ApiId.GET_SEGMENT_USERS }),
   );
 
+  // Simulate a stalled network call that never resolves on its own.
+  // The abort listener is required to convert the signal's abort event into a
+  // promise rejection — aborting a signal does not automatically reject awaiting promises.
   sandbox.stub(options.apiClient, 'getSegmentUsers').callsFake(
     (_segmentIds, _requestedAt, _sourceId, _sdkVersion, signal) => {
       return new Promise<never>((_, reject) => {
