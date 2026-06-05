@@ -227,7 +227,7 @@ export const toErrorMetricsEvent = (
   sdkVersion: string,
   logger?: Logger,
 ): Event | null => {
-  if (e instanceof TimeoutError) {
+  if (e instanceof TimeoutError || (e as any)?.name === 'TimeoutError') {
     return createTimeoutErrorMetricsEvent(tag, apiId, sourceId, sdkVersion);
   }
   if (e instanceof IllegalArgumentError || e instanceof IllegalStateError) {
