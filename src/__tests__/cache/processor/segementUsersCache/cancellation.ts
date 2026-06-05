@@ -13,6 +13,7 @@ import { MockCache } from '../../../mocks/cache';
 import { MockAPIClient } from '../../../mocks/api';
 import { SourceId } from '../../../../objects/sourceId';
 import { ApiId } from '../../../../objects/apiId';
+import { TimeoutError } from '../../../../objects/errors';
 
 const test = anyTest as TestFn<{
   processor: DefaultSegementUserCacheProcessor;
@@ -125,6 +126,67 @@ test.serial('start() creates a polling schedule after stop() and restart', async
   t.truthy(processor.getPollingScheduleID(), 'schedule should be created after restart');
 
   await processor.stop();
+  t.pass();
+});
+
+test.serial('runUpdateCache(): stop() abort is silently dropped', async (t) => {
+  const { processor, options, sandbox } = t.context;
+
+  sandbox.stub(options.cache, 'get').resolves('');
+  sandbox.stub(options.cache, 'scan').resolves([]);
+
+  let resolveInFlight!: () => void;
+  const inFlightStarted = new Promise<void>((resolve) => { resolveInFlight = resolve; });
+
+  sandbox.stub(options.apiClient, 'getSegmentUsers').callsFake(
+    (_segmentIds, _requestedAt, _sourceId, _sdkVersion, signal) => {
+      resolveInFlight();
+      return new Promise<never>((_, reject) => {
+        signal?.addEventListener('abort', () => reject(signal.reason), { once: true });
+      });
+    },
+  );
+
+  const mockEventEmitter = sandbox.mock(options.eventEmitter);
+  mockEventEmitter.expects('emit').withArgs('error', sino.match.any).never();
+
+  const updatePromise = processor.runUpdateCache();
+  await inFlightStarted;
+  await processor.stop();
+  await updatePromise;
+
+  mockEventEmitter.verify();
+  t.pass();
+});
+
+test.serial('runUpdateCache(): poll abort emits an error metric', async (t) => {
+  const { options, sandbox } = t.context;
+
+  const shortInterval = 50;
+  const processor = new DefaultSegementUserCacheProcessor({ ...options, pollingInterval: shortInterval });
+
+  sandbox.stub(options.cache, 'get').resolves('');
+  sandbox.stub(options.cache, 'scan').resolves([]);
+
+  const mockEventEmitter = sandbox.mock(options.eventEmitter);
+  mockEventEmitter.expects('emit').once().withArgs(
+    'error',
+    sino.match({ error: sino.match.instanceOf(TimeoutError), apiId: ApiId.GET_SEGMENT_USERS }),
+  );
+
+  sandbox.stub(options.apiClient, 'getSegmentUsers').callsFake(
+    (_segmentIds, _requestedAt, _sourceId, _sdkVersion, signal) => {
+      return new Promise<never>((_, reject) => {
+        signal?.addEventListener('abort', () => reject(signal.reason), { once: true });
+      });
+    },
+  );
+
+  const updatePromise = processor.runUpdateCache();
+  await new Promise((resolve) => setTimeout(resolve, shortInterval + 20));
+  await updatePromise;
+
+  mockEventEmitter.verify();
   t.pass();
 });
 
