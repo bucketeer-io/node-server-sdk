@@ -46,6 +46,7 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
   private sourceId: SourceId;
   private sdkVersion: string;
   private pollController = new PollController();
+  private stopped = false;
 
   constructor(options: SegementUsersCacheProcessorOptions) {
     this.cache = options.cache;
@@ -59,6 +60,7 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
   }
 
   async start() {
+    this.stopped = false;
     // Execute immediately
     try {
       await this.getSegmentUsers();
@@ -66,11 +68,14 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
       this.pushErrorMetricsEvent(e);
       throw e;
     } finally {
-      this.pollingScheduleID = createSchedule(() => this.runUpdateCache(), this.pollingInterval);
+      if (!this.stopped) {
+        this.pollingScheduleID = createSchedule(() => this.runUpdateCache(), this.pollingInterval);
+      }
     }
   }
 
   async stop() {
+    this.stopped = true;
     if (this.pollingScheduleID) {
       removeSchedule(this.pollingScheduleID);
       this.pollingScheduleID = undefined;

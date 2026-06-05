@@ -44,6 +44,7 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
   private pollingInterval: number;
   private clock: Clock;
   private pollController = new PollAbortController();
+  private stopped = false;
 
   featureTag: string;
   sourceId: SourceId;
@@ -62,6 +63,7 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
   }
 
   async start() {
+    this.stopped = false;
     // Execute immediately
     try {
       await this.getFeatureFlags();
@@ -69,13 +71,16 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
       this.pushErrorMetricsEvent(e);
       throw e;
     } finally {
-      this.pollingScheduleID = createSchedule(() => {
-        this.runUpdateCache();
-      }, this.pollingInterval);
+      if (!this.stopped) {
+        this.pollingScheduleID = createSchedule(() => {
+          this.runUpdateCache();
+        }, this.pollingInterval);
+      }
     }
   }
 
   async stop() {
+    this.stopped = true;
     if (this.pollingScheduleID) {
       removeSchedule(this.pollingScheduleID);
       this.pollingScheduleID = undefined;

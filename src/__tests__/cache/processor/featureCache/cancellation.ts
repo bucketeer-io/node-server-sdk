@@ -86,13 +86,48 @@ test.serial('stop() aborts an in-flight getFeatureFlags call', async (t) => {
   // use t.throwsAsync here. Verify rejection manually instead.
   const startError = await startPromise.then(() => null, (e) => e);
   t.truthy(startError, 'expected start() to reject');
-
-  // start()'s finally block creates a new schedule even when aborting.
-  // A second stop() is needed to clear it.
-  await processor.stop();
+  t.falsy(processor.getPollingScheduleID(), 'no schedule should be created after stop()');
 
   mockCache.verify();
   mockEventEmitter.verify();
+  t.pass();
+});
+
+test.serial('start() creates a polling schedule after stop() and restart', async (t) => {
+  const { processor, options, sandbox } = t.context;
+
+  // Absorb the error event emitted when the first start() is aborted
+  options.eventEmitter.on('error', () => {});
+
+  sandbox.stub(options.cache, 'get').resolves('');
+  sandbox.stub(options.cache, 'put').resolves();
+
+  let resolveInFlight!: () => void;
+  const inFlightStarted = new Promise<void>((resolve) => { resolveInFlight = resolve; });
+
+  const apiStub = sandbox.stub(options.apiClient, 'getFeatureFlags');
+  apiStub.onFirstCall().callsFake((_tag, _id, _requestedAt, _sourceId, _sdkVersion, signal) => {
+    resolveInFlight();
+    return new Promise<never>((_, reject) => {
+      signal?.addEventListener('abort', () => reject(signal.reason), { once: true });
+    });
+  });
+  apiStub.onSecondCall().resolves([
+    { featureFlagsId: '', requestedAt: '0', forceUpdate: false, features: [], archivedFeatureFlagIds: [] },
+    0,
+  ]);
+
+  const firstStart = processor.start();
+  await inFlightStarted;
+  await processor.stop();
+  await firstStart.catch(() => {});
+
+  t.falsy(processor.getPollingScheduleID(), 'no schedule after stop()');
+
+  await processor.start();
+  t.truthy(processor.getPollingScheduleID(), 'schedule should be created after restart');
+
+  await processor.stop();
   t.pass();
 });
 
