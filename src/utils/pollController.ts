@@ -17,3 +17,9 @@ export class PollController {
     this.current = null;
   }
 }
+
+export function isAbortError(e: unknown): boolean {
+  // DOMException is not instanceof Error in Node.js — check name property directly
+  const name = (e as any)?.name;
+  return name === 'AbortError' || name === 'TimeoutError';
+}

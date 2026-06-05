@@ -8,7 +8,8 @@ import { createSchedule, removeSchedule } from '../../schedule';
 import { Clock } from '../../utils/clock';
 import { SourceId } from '../../objects/sourceId';
 import { toProtoSegmentUsers } from './converter';
-import { PollController } from '../../utils/pollController';
+import { PollController, isAbortError } from '../../utils/pollController';
+import { TimeoutError } from '../../objects/errors';
 
 interface SegementUsersCacheProcessor {
   start(): Promise<void>;
@@ -91,7 +92,12 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
     try {
       await this.getSegmentUsers();
     } catch (error) {
-      // Always log the error regardless of initialization state
+      if (isAbortError(error)) {
+        if (!this.stopped) {
+          this.pushErrorMetricsEvent(new TimeoutError(this.pollingInterval, 'poll timed out'));
+        }
+        return;
+      }
       this.pushErrorMetricsEvent(error);
     }
   }

@@ -1,5 +1,5 @@
 import { Logger } from '../logger';
-import { IllegalArgumentError, IllegalStateError, InvalidStatusError, isNodeError } from '../objects/errors';
+import { IllegalArgumentError, IllegalStateError, InvalidStatusError, TimeoutError, isNodeError } from '../objects/errors';
 import { createTimestamp } from '../utils/time';
 import { NodeApiIds } from './apiId';
 import { createEvent, Event } from './event';
@@ -227,6 +227,9 @@ export const toErrorMetricsEvent = (
   sdkVersion: string,
   logger?: Logger,
 ): Event | null => {
+  if (e instanceof TimeoutError) {
+    return createTimeoutErrorMetricsEvent(tag, apiId, sourceId, sdkVersion);
+  }
   if (e instanceof IllegalArgumentError || e instanceof IllegalStateError) {
     return createInternalSdkErrorMetricsEvent(tag, apiId, sourceId, sdkVersion, e.message);
   }
