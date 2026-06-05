@@ -76,9 +76,16 @@ test('polling cache', async (t) => {
   const responseSize = 256;
 
   const mockAPIClient = sino.mock(apiClient);
-  const mockAPIClientGetSegmentUsersExpect = mockAPIClient.expects('getSegmentUsers').thrice();
-  mockAPIClientGetSegmentUsersExpect.onFirstCall().resolves([response, responseSize]);
-  mockAPIClientGetSegmentUsersExpect.resolves([response, responseSize]);
+  mockAPIClient
+    .expects('getSegmentUsers')
+    .once()
+    .withArgs([], 0, sourceId, sdkVersion, sino.match.instanceOf(AbortSignal))
+    .resolves([response, responseSize]);
+  mockAPIClient
+    .expects('getSegmentUsers')
+    .twice()
+    .withArgs([], 1100, sourceId, sdkVersion, sino.match.instanceOf(AbortSignal))
+    .resolves([response, responseSize]);
 
   mockCache.expects('put').thrice().withArgs(SEGEMENT_USERS_REQUESTED_AT, 1200, SEGEMENT_USERS_CACHE_TTL);
   mockCache
