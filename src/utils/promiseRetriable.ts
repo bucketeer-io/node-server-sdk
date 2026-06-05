@@ -3,7 +3,7 @@ import { InvalidStatusError } from '../objects/errors';
 export interface RetryPolicy {
   /** Maximum number of retry attempts */
   maxRetries: number;
-  /** Initial backoff interval in milliseconds */
+  /** Initial backoff interval in milliseconds. Set to 0 for no delay between retries. */
   initialInterval: number;
   /** Maximum backoff interval in milliseconds. Set to 0 for no cap. */
   maxInterval: number;
@@ -65,6 +65,7 @@ export function isRetryable(error: Error): RetryDecision {
  */
 export function calculateBackoff(attempt: number, policy: RetryPolicy): number {
   const initialInterval = Math.max(0, policy.initialInterval);
+  // initialInterval=0 means "no delay" — retries fire immediately with no wait.
   if (initialInterval === 0) {
     return 0;
   }

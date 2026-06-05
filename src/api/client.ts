@@ -140,7 +140,7 @@ export class APIClient {
         authorization: this.apiKey,
       },
       timeout: 5000,
-      signal: signal as AbortSignal | undefined,
+      signal: signal,
     };
     return new Promise((resolve, reject) => {
       if (signal?.aborted) {
