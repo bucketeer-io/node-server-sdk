@@ -502,6 +502,9 @@ test.serial('signal fired mid-request propagates abort into fn', async (t) => {
   const controller = new AbortController();
   const abortReason = new Error('aborted mid-request');
 
+  // Simulate a func call that never resolves on its own.
+  // The abort listener is required to convert the signal's abort event into a
+  // promise rejection — aborting a signal does not automatically reject awaiting promises.
   const fn = sinon.stub<[AbortSignal | undefined], Promise<never>>().callsFake(
     (signal) =>
       new Promise<never>((_, reject) => {
