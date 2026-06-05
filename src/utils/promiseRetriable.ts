@@ -143,13 +143,20 @@ export async function promiseRetriable<T>(
         throw lastError;
       }
 
-      // Calculate delay based on the retry index (0, 1, 2...)
-      const waitTime =
-        decision.delayOverrideMs !== undefined
-          ? retryPolicy.maxInterval > 0
-            ? Math.min(decision.delayOverrideMs, retryPolicy.maxInterval)
-            : decision.delayOverrideMs
-          : calculateBackoff(retriesPerformed, retryPolicy);
+      // Retry-After is still capped at maxInterval for safety — a misbehaving server
+      // cannot force arbitrarily long waits. Mirrors go-server-sdk retry.go behavior.
+      let waitTime: number;
+      if (decision.delayOverrideMs !== undefined) {
+        const serverRequestedDelay = decision.delayOverrideMs;
+        const retryAfterCappedAtMaxInterval = Math.min(
+          serverRequestedDelay,
+          retryPolicy.maxInterval,
+        );
+        const maxIntervalIsSet = retryPolicy.maxInterval > 0;
+        waitTime = maxIntervalIsSet ? retryAfterCappedAtMaxInterval : serverRequestedDelay;
+      } else {
+        waitTime = calculateBackoff(retriesPerformed, retryPolicy);
+      }
 
       if (waitTime > 0) {
         await abortableSleep(waitTime, signal);
