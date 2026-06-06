@@ -56,7 +56,8 @@ test.serial('stop() aborts an in-flight getSegmentUsers call', async (t) => {
   mockCache.expects('get').withArgs(SEGEMENT_USERS_REQUESTED_AT).returns(0);
 
   const mockEventEmitter = sandbox.mock(options.eventEmitter);
-  mockEventEmitter.expects('emit').once().withArgs('error', sino.match.any);
+  // The abort triggered by stop() should not emit an error event, since the abort is intentional and expected.
+  mockEventEmitter.expects('emit').never().withArgs('error', sino.match.any);
 
   // Deferred promise: capture `resolve` so the stub can signal "request started"
   // from outside the constructor. Without this, inFlightStarted would never resolve.

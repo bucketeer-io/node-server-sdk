@@ -58,7 +58,8 @@ test.serial('stop() aborts an in-flight getFeatureFlags call', async (t) => {
   mockCache.expects('get').withArgs(FEATURE_FLAG_REQUESTED_AT).returns(0);
 
   const mockEventEmitter = sandbox.mock(options.eventEmitter);
-  mockEventEmitter.expects('emit').once().withArgs('error', sino.match.any);
+  // The abort triggered by stop() should not emit an error event, since the abort is intentional and expected.
+  mockEventEmitter.expects('emit').never().withArgs('error', sino.match.any);
 
   // Signal that the stub has started so we know when to call stop()
   let resolveInFlight!: () => void;
