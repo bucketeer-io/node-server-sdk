@@ -1,5 +1,22 @@
 import { Logger } from '../logger';
-import { IllegalArgumentError, IllegalStateError, InvalidStatusError, TimeoutError, isNodeError } from '../objects/errors';
+import {
+  BKTBaseError,
+  BadRequestError,
+  ClientClosedRequestError,
+  ForbiddenError,
+  IllegalArgumentError,
+  IllegalStateError,
+  InternalServerError,
+  InvalidHttpMethodError,
+  NetworkError,
+  NotFoundError,
+  PayloadTooLargeError,
+  RedirectRequestError,
+  ServiceUnavailableError,
+  TimeoutError,
+  UnauthorizedError,
+  UnknownError,
+} from '../objects/errors';
 import { createTimestamp } from '../utils/time';
 import { NodeApiIds } from './apiId';
 import { createEvent, Event } from './event';
@@ -220,76 +237,62 @@ export function createUnknownErrorMetricsEvent(
 }
 
 export const toErrorMetricsEvent = (
-  e: any,
+  e: BKTBaseError,
   tag: string,
   apiId: NodeApiIds,
   sourceId: SourceId,
   sdkVersion: string,
   logger?: Logger,
 ): Event | null => {
-  if (e instanceof TimeoutError || (e as any)?.name === 'TimeoutError') {
+  if (e instanceof TimeoutError) {
     return createTimeoutErrorMetricsEvent(tag, apiId, sourceId, sdkVersion);
   }
   if (e instanceof IllegalArgumentError || e instanceof IllegalStateError) {
     return createInternalSdkErrorMetricsEvent(tag, apiId, sourceId, sdkVersion, e.message);
   }
-  if (e instanceof InvalidStatusError) {
-    const statusCode = e.code ?? 0;
-    switch (true) {
-      case statusCode >= 300 && statusCode < 400:
-        return createRedirectRequestErrorMetricsEvent(tag, apiId, statusCode, sourceId, sdkVersion);
-        case statusCode === 400:
-          return createBadRequestErrorMetricsEvent(tag, apiId, sourceId, sdkVersion);
-        case statusCode === 401:
-          logger?.error('An unauthorized error occurred. Please check your API Key.');
-          return null;
-        case statusCode === 403:
-          logger?.error('An forbidden error occurred. Please check your API Key.');
-          return null;
-        case statusCode === 404:
-          return createNotFoundErrorMetricsEvent(tag, apiId, sourceId, sdkVersion);
-        case statusCode === 405:
-          return createInternalSdkErrorMetricsEvent(tag, apiId, sourceId, sdkVersion, e.message);
-        case statusCode === 408:
-          return createTimeoutErrorMetricsEvent(tag, apiId, sourceId, sdkVersion);
-        case statusCode === 413:
-          return createPayloadTooLargeErrorMetricsEvent(tag, apiId, sourceId, sdkVersion);
-        case statusCode === 499:
-          return createClientClosedRequestErrorMetricsEvent(tag, apiId, sourceId, sdkVersion);
-        case statusCode === 500:
-          return createInternalServerErrorMetricsEvent(tag, apiId, sourceId, sdkVersion);
-      case [502, 503, 504].includes(statusCode):
-        return createServiceUnavailableErrorMetricsEvent(tag, apiId, sourceId, sdkVersion);
-      default:
-        return createUnknownErrorMetricsEvent(
-          tag,
-          apiId,
-          sourceId,
-          sdkVersion,
-          statusCode,
-          e.message,
-        );
-    }
+  if (e instanceof RedirectRequestError) {
+    return createRedirectRequestErrorMetricsEvent(tag, apiId, e.statusCode, sourceId, sdkVersion);
   }
-  if (isNodeError(e)) {
-    switch (e.code) {
-      case 'ECONNRESET':
-        return createTimeoutErrorMetricsEvent(tag, apiId, sourceId, sdkVersion);
-      case 'EHOSTUNREACH':
-      case 'ECONNREFUSED':
-        return createNetworkErrorMetricsEvent(tag, apiId, sourceId, sdkVersion);
-      default:
-        return createUnknownErrorMetricsEvent(
-          tag,
-          apiId,
-          sourceId,
-          sdkVersion,
-          undefined,
-          e.message,
-        );
-    }
+  if (e instanceof BadRequestError) {
+    return createBadRequestErrorMetricsEvent(tag, apiId, sourceId, sdkVersion);
   }
-  return createUnknownErrorMetricsEvent(tag, apiId, sourceId, sdkVersion, undefined, String(e));
+  if (e instanceof UnauthorizedError) {
+    logger?.error('An unauthorized error occurred. Please check your API Key.');
+    return null;
+  }
+  if (e instanceof ForbiddenError) {
+    logger?.error('An forbidden error occurred. Please check your API Key.');
+    return null;
+  }
+  if (e instanceof NotFoundError) {
+    return createNotFoundErrorMetricsEvent(tag, apiId, sourceId, sdkVersion);
+  }
+  if (e instanceof InvalidHttpMethodError) {
+    return createInternalSdkErrorMetricsEvent(tag, apiId, sourceId, sdkVersion, e.message);
+  }
+  if (e instanceof PayloadTooLargeError) {
+    return createPayloadTooLargeErrorMetricsEvent(tag, apiId, sourceId, sdkVersion);
+  }
+  if (e instanceof ClientClosedRequestError) {
+    return createClientClosedRequestErrorMetricsEvent(tag, apiId, sourceId, sdkVersion);
+  }
+  if (e instanceof InternalServerError) {
+    return createInternalServerErrorMetricsEvent(tag, apiId, sourceId, sdkVersion);
+  }
+  if (e instanceof ServiceUnavailableError) {
+    return createServiceUnavailableErrorMetricsEvent(tag, apiId, sourceId, sdkVersion);
+  }
+  if (e instanceof NetworkError) {
+    return createNetworkErrorMetricsEvent(tag, apiId, sourceId, sdkVersion);
+  }
+  return createUnknownErrorMetricsEvent(
+    tag,
+    apiId,
+    sourceId,
+    sdkVersion,
+    e instanceof UnknownError ? e.statusCode : undefined,
+    e.message,
+  );
 };
 
 export function isErrorMetricsEvent(obj: any, specificErrorType?: string): obj is MetricsEvent {

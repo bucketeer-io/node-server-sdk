@@ -3,8 +3,8 @@ import typeUtils from 'node:util/types';
 /**
  * Parses the `Retry-After` HTTP response header into milliseconds.
  * Handles both RFC 7231 formats:
- *  - Delta-seconds: "120" → 120_000
- *  - HTTP-date:     "Wed, 16 Apr 2026 12:00:00 GMT" → (date - now) ms
+ *  - Delta-seconds: "120" -> 120_000
+ *  - HTTP-date:     "Wed, 16 Apr 2026 12:00:00 GMT" -> (date - now) ms
  * Returns undefined for missing, unparseable, or past HTTP-date values.
  */
 export function parseRetryAfter(header: string | undefined): number | undefined {
@@ -178,6 +178,7 @@ export function toBKTError(e: unknown, params: {
   if (isNodeError(e)) {
     switch (e.code) {
       case 'ECONNRESET':
+      case 'ABORT_ERR':
         return new TimeoutError(params.timeout ?? 0, e.message);
       case 'EHOSTUNREACH':
       case 'ECONNREFUSED':
@@ -186,7 +187,12 @@ export function toBKTError(e: unknown, params: {
         return new UnknownError(e.message);
     }
   }
-  
+
+  // DOMException TimeoutError / AbortError (pre-flight abort via signal.reason)
+  if ((e as any)?.name === 'TimeoutError' || (e as any)?.name === 'AbortError') {
+    return new TimeoutError(params.timeout ?? 0, (e as Error).message ?? '');
+  }
+
   // Generic Error
   if (e instanceof Error) {
     return new UnknownError(e.message);

@@ -385,8 +385,9 @@ export class BKTClientImpl implements Bucketeer {
       return;
     }
 
+    const bktError = toBKTError(e, {});
     const event = toErrorMetricsEvent(
-      e,
+      bktError,
       tag,
       apiId,
       this.config.sourceId,

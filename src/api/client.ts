@@ -14,7 +14,7 @@ import {
   GetSegmentUsersResponse,
   RegisterEventsResponse,
 } from '../objects/response';
-import { InvalidStatusError, parseRetryAfter } from '../objects/errors';
+import { InvalidStatusError, parseRetryAfter, toBKTError } from '../objects/errors';
 import { RetryPolicy, promiseRetriable, isRetryable } from '../utils/promiseRetriable';
 
 const scheme = 'https://';
@@ -115,17 +115,20 @@ export class APIClient {
     return this.postRequestWithRetry<RegisterEventsResponse>(url, chunk, signal);
   }
 
-  private postRequestWithRetry<T>(
+  private async postRequestWithRetry<T>(
     url: string,
     chunk: string,
     signal?: AbortSignal,
   ): Promise<[T, number]> {
-    return promiseRetriable(
-      (s) => this.postRequest<T>(url, chunk, s),
-      this.retryPolicy,
-      isRetryable,
-      signal,
-    );
+    try {
+      return await promiseRetriable(
+        (s) => this.postRequest<T>(url, chunk, s),
+        this.retryPolicy,
+        isRetryable,
+        signal);
+    } catch (e) {
+      throw toBKTError(e, {});
+    }
   }
 
   private postRequest<T>(

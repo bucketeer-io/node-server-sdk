@@ -65,22 +65,24 @@ test.serial('stop() aborts an in-flight getSegmentUsers call', async (t) => {
     resolveInFlight = resolve;
   });
 
+  // Simulate a stalled network call that never resolves on its own.
+  // The abort listener is required to convert the signal's abort event into a
+  // promise rejection — aborting a signal does not automatically reject awaiting promises.
   sandbox.stub(options.apiClient, 'getSegmentUsers').callsFake(
     (_segmentIds, _requestedAt, _sourceId, _sdkVersion, signal) => {
       resolveInFlight();
       return new Promise<never>((_, reject) => {
-        signal?.addEventListener('abort', () => reject(signal.reason), { once: true });
+        signal?.addEventListener('abort', () => reject(new TimeoutError(options.pollingInterval, 'poll timed out')), { once: true });
       });
     },
   );
 
   const startPromise = processor.start();
 
-  await inFlightStarted;   
+  await inFlightStarted;
   await processor.stop();
 
-  // DOMException (the default abort reason) is not instanceof Error in Node.js, so we cannot
-  // use t.throwsAsync here. Verify rejection manually instead.
+  // start() rejects with the TimeoutError thrown by the stub.
   const startError = await startPromise.then(() => null, (e) => e);
   t.truthy(startError, 'expected start() to reject');
   t.falsy(processor.getPollingScheduleID(), 'no schedule should be created after stop()');
@@ -104,10 +106,13 @@ test.serial('start() creates a polling schedule after stop() and restart', async
   const inFlightStarted = new Promise<void>((resolve) => { resolveInFlight = resolve; });
 
   const apiStub = sandbox.stub(options.apiClient, 'getSegmentUsers');
+  // Simulate a stalled network call that never resolves on its own.
+  // The abort listener is required to convert the signal's abort event into a
+  // promise rejection — aborting a signal does not automatically reject awaiting promises.
   apiStub.onFirstCall().callsFake((_segmentIds, _requestedAt, _sourceId, _sdkVersion, signal) => {
     resolveInFlight();
     return new Promise<never>((_, reject) => {
-      signal?.addEventListener('abort', () => reject(signal.reason), { once: true });
+      signal?.addEventListener('abort', () => reject(new TimeoutError(options.pollingInterval, 'poll timed out')), { once: true });
     });
   });
   apiStub.onSecondCall().resolves([
@@ -138,11 +143,14 @@ test.serial('runUpdateCache(): stop() abort is silently dropped', async (t) => {
   let resolveInFlight!: () => void;
   const inFlightStarted = new Promise<void>((resolve) => { resolveInFlight = resolve; });
 
+  // Simulate a stalled network call that never resolves on its own.
+  // The abort listener is required to convert the signal's abort event into a
+  // promise rejection — aborting a signal does not automatically reject awaiting promises.
   sandbox.stub(options.apiClient, 'getSegmentUsers').callsFake(
     (_segmentIds, _requestedAt, _sourceId, _sdkVersion, signal) => {
       resolveInFlight();
       return new Promise<never>((_, reject) => {
-        signal?.addEventListener('abort', () => reject(signal.reason), { once: true });
+        signal?.addEventListener('abort', () => reject(new TimeoutError(options.pollingInterval, 'poll timed out')), { once: true });
       });
     },
   );
@@ -180,7 +188,7 @@ test.serial('runUpdateCache(): poll abort emits an error metric', async (t) => {
   sandbox.stub(options.apiClient, 'getSegmentUsers').callsFake(
     (_segmentIds, _requestedAt, _sourceId, _sdkVersion, signal) => {
       return new Promise<never>((_, reject) => {
-        signal?.addEventListener('abort', () => reject(signal.reason), { once: true });
+        signal?.addEventListener('abort', () => reject(new TimeoutError(shortInterval, 'poll timed out')), { once: true });
       });
     },
   );
@@ -218,11 +226,14 @@ test.serial('polling interval deadline aborts a hanging getSegmentUsers call', a
     resolveInFlight = resolve;
   });
 
+  // Simulate a stalled network call that never resolves on its own.
+  // The abort listener is required to convert the signal's abort event into a
+  // promise rejection — aborting a signal does not automatically reject awaiting promises.
   sandbox.stub(options.apiClient, 'getSegmentUsers').callsFake(
     (_segmentIds, _requestedAt, _sourceId, _sdkVersion, signal) => {
       resolveInFlight();
       return new Promise<never>((_, reject) => {
-        signal?.addEventListener('abort', () => reject(signal.reason), { once: true });
+        signal?.addEventListener('abort', () => reject(new TimeoutError(shortInterval, 'poll timed out')), { once: true });
       });
     },
   );

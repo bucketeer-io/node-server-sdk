@@ -4,7 +4,7 @@ import fs from 'fs';
 import { APIClient } from '../api/client';
 import { User } from '../bootstrap';
 import path from 'path';
-import { InvalidStatusError } from '../objects/errors';
+import { InvalidStatusError, ServiceUnavailableError } from '../objects/errors';
 import { SourceId } from '../objects/sourceId';
 
 const apiKey = '';
@@ -40,7 +40,7 @@ test.after.always((t) => {
   t.context.server.close();
 });
 
-test('getEvaluation: 503 with Retry-After carries retryAfterMs', async (t) => {
+test('getEvaluation: 503 normalizes to ServiceUnavailableError at API boundary', async (t) => {
   const client = new APIClient(host, apiKey);
   const user: User = { id: 'test', data: {} };
 
@@ -48,10 +48,8 @@ test('getEvaluation: 503 with Retry-After carries retryAfterMs', async (t) => {
     client.getEvaluation('tag', user, 'feature', defaultSourceId, sdkVersion),
   );
 
-  t.true(error instanceof InvalidStatusError);
-  const invalidStatusError = error as InvalidStatusError;
-  t.is(invalidStatusError.code, 503);
-  t.is(invalidStatusError.retryAfterMs, 60_000);
+  t.true(error instanceof ServiceUnavailableError);
+  t.is((error as ServiceUnavailableError).message, 'bucketeer/api: send HTTP request failed: 503');
 });
 
 test('getEvaluation: 503 without Retry-After has retryAfterMs undefined', async (t) => {
@@ -63,15 +61,13 @@ test('getEvaluation: 503 without Retry-After has retryAfterMs undefined', async 
   t.is(err.code, 503);
 });
 
-test('registerEvents: 503 with Retry-After carries retryAfterMs', async (t) => {
+test('registerEvents: 503 normalizes to ServiceUnavailableError at API boundary', async (t) => {
   const client = new APIClient(host, apiKey);
 
   const error = await t.throwsAsync(() =>
     client.registerEvents([], defaultSourceId, sdkVersion),
   );
 
-  t.true(error instanceof InvalidStatusError);
-  const invalidStatusError = error as InvalidStatusError;
-  t.is(invalidStatusError.code, 503);
-  t.is(invalidStatusError.retryAfterMs, 60_000);
+  t.true(error instanceof ServiceUnavailableError);
+  t.is((error as ServiceUnavailableError).message, 'bucketeer/api: send HTTP request failed: 503');
 });

@@ -8,8 +8,8 @@ import { ApiId } from '../../objects/apiId';
 import { Clock } from '../../utils/clock';
 import { SourceId } from '../../objects/sourceId';
 import { toProtoFeature } from './converter';
-import { PollController as PollAbortController, isDeadlineExceeded } from '../../utils/pollController';
-import { TimeoutError } from '../../objects/errors';
+import { PollController as PollAbortController } from '../../utils/pollController';
+import { BKTBaseError, TimeoutError, toBKTError } from '../../objects/errors';
 
 interface FeatureFlagProcessor {
   start(): Promise<void>;
@@ -69,7 +69,7 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
     try {
       await this.getFeatureFlags();
     } catch (e) {
-      this.pushErrorMetricsEvent(e);
+      this.handleError(e);
       throw e;
     } finally {
       if (!this.stopped) {
@@ -97,15 +97,17 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
     try {
       await this.getFeatureFlags();
     } catch (error) {
-      if (isDeadlineExceeded(error)) {
-        if (!this.stopped) {
-          this.pushErrorMetricsEvent(new TimeoutError(this.pollingInterval, 'poll timed out'));
-        }
-        return;
-      }
-      this.pushErrorMetricsEvent(error);
+      this.handleError(error);
     }
   }
+
+  private handleError(error: any) {
+    const bktError = toBKTError(error, {});
+    if (bktError instanceof TimeoutError && this.stopped) {
+      return;
+    }
+    this.pushErrorMetricsEvent(bktError);
+  }  
 
   private async getFeatureFlags() {
     const signal = this.pollController.createSignal(this.pollingInterval);
@@ -185,7 +187,7 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
     });
   }
 
-  async pushErrorMetricsEvent(error: any) {
+  async pushErrorMetricsEvent(error: BKTBaseError) {
     this.eventEmitter.emit('error', { error: error, apiId: ApiId.GET_FEATURE_FLAGS });
   }
 

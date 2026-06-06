@@ -8,8 +8,8 @@ import { createSchedule, removeSchedule } from '../../schedule';
 import { Clock } from '../../utils/clock';
 import { SourceId } from '../../objects/sourceId';
 import { toProtoSegmentUsers } from './converter';
-import { PollController, isDeadlineExceeded } from '../../utils/pollController';
-import { TimeoutError } from '../../objects/errors';
+import { PollController } from '../../utils/pollController';
+import { BKTBaseError, TimeoutError, toBKTError } from '../../objects/errors';
 
 interface SegementUsersCacheProcessor {
   start(): Promise<void>;
@@ -66,7 +66,7 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
     try {
       await this.getSegmentUsers();
     } catch (e) {
-      this.pushErrorMetricsEvent(e);
+      this.handleError(e);
       throw e;
     } finally {
       if (!this.stopped) {
@@ -92,15 +92,17 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
     try {
       await this.getSegmentUsers();
     } catch (error) {
-      if (isDeadlineExceeded(error)) {
-        if (!this.stopped) {
-          this.pushErrorMetricsEvent(new TimeoutError(this.pollingInterval, 'poll timed out'));
-        }
-        return;
-      }
-      this.pushErrorMetricsEvent(error);
+      this.handleError(error);
     }
   }
+
+  private handleError(error: any) {
+    const bktError = toBKTError(error, {});
+    if (bktError instanceof TimeoutError && this.stopped) {
+      return;
+    }
+    this.pushErrorMetricsEvent(bktError);
+  }  
 
   private async getSegmentUsers() {
     const signal = this.pollController.createSignal(this.pollingInterval);
@@ -167,7 +169,7 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
     });
   }
 
-  async pushErrorMetricsEvent(error: any) {
+  async pushErrorMetricsEvent(error: BKTBaseError) {
     this.eventEmitter.emit('error', {
       error: error,
       apiId: ApiId.GET_SEGMENT_USERS,

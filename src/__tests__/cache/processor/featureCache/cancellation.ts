@@ -73,7 +73,7 @@ test.serial('stop() aborts an in-flight getFeatureFlags call', async (t) => {
     (_tag, _id, _requestedAt, _sourceId, _sdkVersion, signal) => {
       resolveInFlight();
       return new Promise<never>((_, reject) => {
-        signal?.addEventListener('abort', () => reject(signal.reason), { once: true });
+        signal?.addEventListener('abort', () => reject(new TimeoutError(options.pollingInterval, 'poll timed out')), { once: true });
       });
     },
   );
@@ -85,9 +85,7 @@ test.serial('stop() aborts an in-flight getFeatureFlags call', async (t) => {
   await inFlightStarted;
   await processor.stop();
 
-  // start() should reject because the abort propagates through getFeatureFlags → start().
-  // DOMException (the default abort reason) is not instanceof Error in Node.js, so we cannot
-  // use t.throwsAsync here. Verify rejection manually instead.
+  // start() rejects with the TimeoutError thrown by the stub.
   const startError = await startPromise.then(() => null, (e) => e);
   t.truthy(startError, 'expected start() to reject');
   t.falsy(processor.getPollingScheduleID(), 'no schedule should be created after stop()');
@@ -116,7 +114,7 @@ test.serial('start() creates a polling schedule after stop() and restart', async
   apiStub.onFirstCall().callsFake((_tag, _id, _requestedAt, _sourceId, _sdkVersion, signal) => {
     resolveInFlight();
     return new Promise<never>((_, reject) => {
-      signal?.addEventListener('abort', () => reject(signal.reason), { once: true });
+      signal?.addEventListener('abort', () => reject(new TimeoutError(options.pollingInterval, 'poll timed out')), { once: true });
     });
   });
   apiStub.onSecondCall().resolves([
@@ -153,7 +151,7 @@ test.serial('runUpdateCache(): stop() abort is silently dropped', async (t) => {
     (_tag, _id, _requestedAt, _sourceId, _sdkVersion, signal) => {
       resolveInFlight();
       return new Promise<never>((_, reject) => {
-        signal?.addEventListener('abort', () => reject(signal.reason), { once: true });
+        signal?.addEventListener('abort', () => reject(new TimeoutError(options.pollingInterval, 'poll timed out')), { once: true });
       });
     },
   );
@@ -190,7 +188,7 @@ test.serial('runUpdateCache(): poll abort emits an error metric', async (t) => {
   sandbox.stub(options.apiClient, 'getFeatureFlags').callsFake(
     (_tag, _id, _requestedAt, _sourceId, _sdkVersion, signal) => {
       return new Promise<never>((_, reject) => {
-        signal?.addEventListener('abort', () => reject(signal.reason), { once: true });
+        signal?.addEventListener('abort', () => reject(new TimeoutError(shortInterval, 'poll timed out')), { once: true });
       });
     },
   );
@@ -231,7 +229,7 @@ test.serial('polling interval deadline aborts a hanging getFeatureFlags call', a
     (_tag, _id, _requestedAt, _sourceId, _sdkVersion, signal) => {
       resolveInFlight();
       return new Promise<never>((_, reject) => {
-        signal?.addEventListener('abort', () => reject(signal.reason), { once: true });
+        signal?.addEventListener('abort', () => reject(new TimeoutError(shortInterval, 'poll timed out')), { once: true });
       });
     },
   );

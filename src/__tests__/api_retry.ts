@@ -5,7 +5,7 @@ import fs from 'fs';
 import path from 'path';
 import { APIClient } from '../api/client';
 import { User } from '../bootstrap';
-import { InvalidStatusError } from '../objects/errors';
+import { InvalidStatusError, TimeoutError, UnauthorizedError } from '../objects/errors';
 import { RetryPolicy } from '../utils/promiseRetriable';
 import { SourceId } from '../objects/sourceId';
 
@@ -58,7 +58,7 @@ test.after.always((t) => {
   t.context.server.close();
 });
 
-// --- Test 1: retry succeeds (503 → 200) ---
+// Test 1: retry succeeds (503 -> 200) 
 
 test.serial('getEvaluation: retries on 503 and succeeds on second attempt', async (t) => {
   let requestCount = 0;
@@ -82,7 +82,7 @@ test.serial('getEvaluation: retries on 503 and succeeds on second attempt', asyn
   t.is(requestCount, 2);
 });
 
-// --- Test 2: non-retryable status is not retried ---
+// Test 2: non-retryable status is not retried 
 
 test.serial('getEvaluation: 401 is not retried', async (t) => {
   let requestCount = 0;
@@ -99,19 +99,18 @@ test.serial('getEvaluation: 401 is not retried', async (t) => {
     client.getEvaluation('tag', user, 'feature-id', defaultSourceId, sdkVersion),
   );
 
-  t.true(error instanceof InvalidStatusError);
-  t.is((error as InvalidStatusError).code, 401);
+  t.true(error instanceof UnauthorizedError);
   t.is(requestCount, 1);
 });
 
-// --- Test 3: Retry-After:0 wiring (end-to-end) ---
+// Test 3: Retry-After:0 wiring (end-to-end) 
 
 test.serial('getEvaluation: Retry-After:0 threads through to promiseRetriable (immediate retry)', async (t) => {
   let requestCount = 0;
   currentHandler = (_req, res) => {
     requestCount++;
     if (requestCount === 1) {
-      // Retry-After: 0 → retryAfterMs: 0 → no extra delay, retry immediately
+      // Retry-After: 0 -> retryAfterMs: 0 -> no extra delay, retry immediately
       res.writeHead(503, { 'Retry-After': '0' });
       res.end();
     } else {
@@ -133,7 +132,7 @@ test.serial('getEvaluation: Retry-After:0 threads through to promiseRetriable (i
   t.true(elapsed < 1000, `expected elapsed < 1000ms, got ${elapsed}ms`);
 });
 
-// --- Test 4: AbortSignal cancels mid-retry backoff ---
+// Test 4: AbortSignal cancels mid-retry backoff 
 
 test.serial('getEvaluation: AbortSignal cancels mid-retry backoff', async (t) => {
   let requestCount = 0;
@@ -163,9 +162,34 @@ test.serial('getEvaluation: AbortSignal cancels mid-retry backoff', async (t) =>
   const abortReason = new Error('test aborted');
   controller.abort(abortReason);
 
-  // throwsAsync requires an Error instance; we pass an explicit reason above so DOMException
-  // is not used (DOMException is not instanceof Error in Node.js).
+  // Pass an explicit abort reason so the rejection message is predictable.
   await t.throwsAsync(() => resultPromise);
   // Only one HTTP request should have been made before abort cancelled the backoff
   t.is(requestCount, 1);
+});
+
+// Tests: API boundary normalises abort errors to TimeoutError
+
+test.serial('getEvaluation: AbortSignal.timeout on hanging request throws TimeoutError', async (t) => {
+  currentHandler = (_req, _res) => { /* hang — never respond */ };
+
+  const client = new APIClient(host, apiKey, { maxRetries: 0, initialInterval: 0, maxInterval: 0 });
+  const err = await t.throwsAsync(
+    client.getEvaluation('tag', user, 'feature-id', defaultSourceId, sdkVersion, AbortSignal.timeout(50)),
+  );
+  t.true(err instanceof TimeoutError);
+});
+
+test.serial('getEvaluation: explicit AbortController.abort() on in-flight request throws TimeoutError', async (t) => {
+  currentHandler = (_req, _res) => { /* hang — never respond */ };
+
+  const controller = new AbortController();
+  const client = new APIClient(host, apiKey, { maxRetries: 0, initialInterval: 0, maxInterval: 0 });
+
+  const resultPromise = client.getEvaluation('tag', user, 'feature-id', defaultSourceId, sdkVersion, controller.signal);
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  controller.abort();
+
+  const err = await t.throwsAsync(() => resultPromise);
+  t.true(err instanceof TimeoutError);
 });

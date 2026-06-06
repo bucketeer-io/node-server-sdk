@@ -111,7 +111,7 @@ test.serial('throws the last error after exceeding max retries', async (t) => {
   // callCount = the initial attempt + retries
   t.is(fn.callCount, 3);
   // shouldRetry is called after each failure to decide whether to retry.
-  // With maxRetries=2: called after attempt 1 (→ retry) and attempt 2 (→ retry),
+  // With maxRetries=2: called after attempt 1 (-> retry) and attempt 2 (-> retry),
   // but NOT after attempt 3 because the retry budget is exhausted — it just throws.
   t.is(shouldRetry.callCount, 2);
 });
@@ -242,7 +242,7 @@ test.serial('calculateBackoff - applies -25% jitter when random returns 0.0', (t
 
 test.serial('calculateBackoff - caps at maxInterval', (t) => {
   const p: RetryPolicy = { maxRetries: 3, initialInterval: 1000, maxInterval: 5_000 };
-  // attempt 10: 1000 * 2^10 = 1,024,000ms → capped at 5000
+  // attempt 10: 1000 * 2^10 = 1,024,000ms -> capped at 5000
   t.is(calculateBackoff(10, p), 5000);
 });
 
