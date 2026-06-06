@@ -18,6 +18,7 @@ import { SourceId } from '../../../../objects/sourceId';
 import { ApiId } from '../../../../objects/apiId';
 import { toProtoFeature } from '../../../../cache/processor/converter';
 import { minimalFeature } from '../../../utils/feature';
+import { toBKTError } from '../../../../objects/errors';
 
 const test = anyTest as TestFn<{
   featureTag: string;
@@ -129,7 +130,7 @@ test.serial('start fail', async (t) => {
 
   mockCache.expects('get').withArgs(FEATURE_FLAG_ID).returns('');
   mockCache.expects('get').withArgs(FEATURE_FLAG_REQUESTED_AT).returns(null);
-  const error = new Error('Internal error');
+  const error = toBKTError(new Error('Internal error'), {});
   mockAPIClient
     .expects('getFeatureFlags')
     .once()

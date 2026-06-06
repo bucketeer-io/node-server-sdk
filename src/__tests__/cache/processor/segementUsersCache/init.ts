@@ -16,6 +16,7 @@ import { ApiId } from '../../../../objects/apiId';
 import { ProcessorEventsEmitter } from '../../../../processorEventsEmitter';
 import { SourceId } from '../../../../objects/sourceId';
 import { toProtoSegmentUsers } from '../../../../cache/processor/converter';
+import { toBKTError } from '../../../../objects/errors';
 
 const test = anyTest as TestFn<{
   processor: DefaultSegementUserCacheProcessor;
@@ -140,7 +141,7 @@ test.serial('start fail', async (t) => {
   mockSegmentUsersCache.expects('getIds').resolves(['segment-id']);
   mockCache.expects('get').withArgs(SEGEMENT_USERS_REQUESTED_AT).resolves(10);
 
-  const error = new Error('Internal error');
+  const error = toBKTError(new Error('Internal error'), {});
   mockAPIClient
     .expects('getSegmentUsers')
     .once()

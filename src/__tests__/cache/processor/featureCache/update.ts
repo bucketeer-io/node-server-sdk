@@ -19,6 +19,7 @@ import { SourceId } from '../../../../objects/sourceId';
 import { toProtoFeature } from '../../../../cache/processor/converter';
 import { UNSUPPORTED_PROTO_ENUM_VALUES } from '../../../../cache/processor/unsupportedEnumValues';
 import { minimalFeature } from '../../../utils/feature';
+import { toBKTError } from '../../../../objects/errors';
 
 const test = anyTest as TestFn<{
   featureTag: string;
@@ -79,7 +80,7 @@ function buildFeatureResponse(
 test('err: failed while getting featureFlagsID', async (t) => {
   const { processor, options, sandbox } = t.context;
   const mockCache = sandbox.mock(options.cache);
-  const error = new Error('Internal error');
+  const error = toBKTError(new Error('Internal error'), {});
   mockCache.expects('get').once().withArgs(FEATURE_FLAG_ID).throws(error);
   const mockProcessorEventsEmitter = sandbox.mock(options.eventEmitter);
   mockProcessorEventsEmitter
@@ -95,7 +96,7 @@ test('err: failed while getting featureFlagsID', async (t) => {
 test('err: failed while getting requestedAt', async (t) => {
   const { processor, options, sandbox } = t.context;
   const mockCache = sandbox.mock(options.cache);
-  const error = new Error('Internal error');
+  const error = toBKTError(new Error('Internal error'), {});
   mockCache.expects('get').withArgs(FEATURE_FLAG_ID).returns('');
   mockCache.expects('get').withArgs(FEATURE_FLAG_REQUESTED_AT).throws(error);
   const mockProcessorEventsEmitter = sandbox.mock(options.eventEmitter);
@@ -117,7 +118,7 @@ test('err: failed while requesting cache from the server', async (t) => {
 
   mockCache.expects('get').withArgs(FEATURE_FLAG_ID).returns('');
   mockCache.expects('get').withArgs(FEATURE_FLAG_REQUESTED_AT).returns(null);
-  const error = new Error('Internal error');
+  const error = toBKTError(new Error('Internal error'), {});
   mockAPIClient
     .expects('getFeatureFlags')
     .once()
@@ -141,7 +142,7 @@ test('err: failed while putting featureFlagsID, and the forceUpdate is true', as
   const mockAPIClient = sandbox.mock(options.apiClient);
   const mockProcessorEventsEmitter = sandbox.mock(options.eventEmitter);
   const mockFeatureFlagCache = sandbox.mock(options.featureFlagCache);
-  const internalError = new Error('Internal error');
+  const internalError = toBKTError(new Error('Internal error'), {});
 
   mockCache.expects('get').withArgs(FEATURE_FLAG_ID).returns('feature-flags-id-1');
   mockCache.expects('get').withArgs(FEATURE_FLAG_REQUESTED_AT).returns(10);
@@ -192,7 +193,7 @@ test('err: failed while putting requestedAt, and the forceUpdate is true', async
   const mockAPIClient = sandbox.mock(options.apiClient);
   const mockProcessorEventsEmitter = sandbox.mock(options.eventEmitter);
   const mockFeatureFlagCache = sandbox.mock(options.featureFlagCache);
-  const internalError = new Error('Internal error');
+  const internalError = toBKTError(new Error('Internal error'), {});
 
   mockCache.expects('get').withArgs(FEATURE_FLAG_ID).returns('feature-flags-id-1');
   mockCache.expects('get').withArgs(FEATURE_FLAG_REQUESTED_AT).returns(10);
@@ -244,7 +245,7 @@ test('err: failed while putting featureFlagsID, and the forceUpdate is false', a
   const mockAPIClient = sandbox.mock(options.apiClient);
   const mockProcessorEventsEmitter = sandbox.mock(options.eventEmitter);
   const mockFeatureFlagCache = sandbox.mock(options.featureFlagCache);
-  const internalError = new Error('Internal error');
+  const internalError = toBKTError(new Error('Internal error'), {});
 
   mockCache.expects('get').withArgs(FEATURE_FLAG_ID).returns('feature-flags-id-1');
   mockCache.expects('get').withArgs(FEATURE_FLAG_REQUESTED_AT).returns(10);
@@ -303,7 +304,7 @@ test('err: failed while putting requestedAt, and the forceUpdate is false', asyn
   const mockAPIClient = sandbox.mock(options.apiClient);
   const mockProcessorEventsEmitter = sandbox.mock(options.eventEmitter);
   const mockFeatureFlagCache = sandbox.mock(options.featureFlagCache);
-  const internalError = new Error('Internal error');
+  const internalError = toBKTError(new Error('Internal error'), {});
 
   mockCache.expects('get').withArgs(FEATURE_FLAG_ID).returns('feature-flags-id-1');
   mockCache.expects('get').withArgs(FEATURE_FLAG_REQUESTED_AT).returns(10);
