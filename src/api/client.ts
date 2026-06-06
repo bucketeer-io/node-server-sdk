@@ -15,7 +15,11 @@ import {
   RegisterEventsResponse,
 } from '../objects/response';
 import { InvalidStatusError, parseRetryAfter } from '../objects/errors';
-import { RetryPolicy, promiseRetriable, isRetryable } from '../utils/promiseRetriable';
+import {
+  RetryPolicy,
+  promiseRetriable as defaultPromiseRetriable,
+  isRetryable,
+} from '../utils/promiseRetriable';
 
 const scheme = 'https://';
 const evaluationAPI = '/get_evaluation';
@@ -34,11 +38,18 @@ export class APIClient {
   private readonly host: string;
   private readonly apiKey: string;
   private readonly retryPolicy: RetryPolicy;
+  private readonly promiseRetriable: typeof defaultPromiseRetriable;
 
-  constructor(host: string, apiKey: string, retryPolicy: RetryPolicy = DEFAULT_RETRY_POLICY) {
+  constructor(
+    host: string,
+    apiKey: string,
+    retryPolicy: RetryPolicy = DEFAULT_RETRY_POLICY,
+    promiseRetriable: typeof defaultPromiseRetriable = defaultPromiseRetriable,
+  ) {
     this.host = host;
     this.apiKey = apiKey;
     this.retryPolicy = retryPolicy;
+    this.promiseRetriable = promiseRetriable;
   }
 
   getFeatureFlags(
@@ -120,7 +131,7 @@ export class APIClient {
     chunk: string,
     signal?: AbortSignal,
   ): Promise<[T, number]> {
-    return promiseRetriable(
+    return this.promiseRetriable(
       (s) => this.postRequest<T>(url, chunk, s),
       this.retryPolicy,
       isRetryable,

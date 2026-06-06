@@ -3,9 +3,47 @@ import sinon from 'sinon';
 import https from 'https';
 import { EventEmitter } from 'events';
 import { APIClient } from '../api/client';
+import { User } from '../bootstrap';
+import { InvalidStatusError } from '../objects/errors';
+import { isRetryable, RetryPolicy } from '../utils/promiseRetriable';
+import { SourceId } from '../objects/sourceId';
 
 const host = 'api.example.com:443';
 const apiKey = 'test-api-key';
+const defaultSourceId = SourceId.OPEN_FEATURE_NODE;
+const sdkVersion = '1.0.0';
+const user: User = { id: 'user-1', data: {} };
+
+const retryPolicy: RetryPolicy = { maxRetries: 2, initialInterval: 100, maxInterval: 500 };
+
+const mockEvalResponse = {
+  evaluation: {
+    id: 'eval-id',
+    featureId: 'feat-1',
+    featureVersion: 1,
+    userId: 'user-1',
+    variationId: 'var-1',
+    reason: { type: 'DEFAULT' },
+    variationValue: 'v',
+    variationName: 'n',
+  },
+};
+
+function makeFakeResponse(statusCode: number, headers: Record<string, string>) {
+  return Object.assign(new EventEmitter(), {
+    statusCode,
+    headers,
+    setEncoding: sinon.stub(),
+  });
+}
+
+function makeFakeClientReq() {
+  return Object.assign(new EventEmitter(), {
+    write: sinon.stub(),
+    end: sinon.stub(),
+    destroy: sinon.stub(),
+  });
+}
 
 // Group 1: mid-response stall handling
 //
@@ -28,14 +66,6 @@ const apiKey = 'test-api-key';
 
 
 const HANG_DETECT_MS = 300;
-
-function makeFakeResponse(statusCode: number, headers: Record<string, string>) {
-  return Object.assign(new EventEmitter(), {
-    statusCode,
-    headers,
-    setEncoding: sinon.stub(),
-  });
-}
 
 test.serial('postRequest: socket timeout fires mid-response - promise must reject not hang', async (t) => {
   const fakeResponse = makeFakeResponse(200, {});
@@ -99,4 +129,181 @@ test.serial('postRequest: socket timeout fires mid-response - promise must rejec
     'rejected',
     'postRequest hung instead of rejecting: res.on("error") must be wired inside the response callback',
   );
+});
+
+// Group 2: promiseRetriable wiring
+
+test('postRequestWithRetry: passes retryPolicy to promiseRetriable', async (t) => {
+  const promiseRetriableSpy = sinon.stub().resolves([mockEvalResponse, 0]);
+  const client = new APIClient(host, apiKey, retryPolicy, promiseRetriableSpy);
+
+  await client.getEvaluation('tag', user, 'feat-1', defaultSourceId, sdkVersion);
+
+  const [, receivedRetryPolicy] = promiseRetriableSpy.firstCall.args;
+  t.true(promiseRetriableSpy.calledOnce);
+  t.deepEqual(receivedRetryPolicy, retryPolicy);
+});
+
+test('postRequestWithRetry: passes isRetryable as the shouldRetry predicate', async (t) => {
+  const promiseRetriableSpy = sinon.stub().resolves([mockEvalResponse, 0]);
+  const client = new APIClient(host, apiKey, retryPolicy, promiseRetriableSpy);
+
+  await client.getEvaluation('tag', user, 'feat-1', defaultSourceId, sdkVersion);
+
+  const [, , receivedShouldRetry] = promiseRetriableSpy.firstCall.args;
+  t.is(receivedShouldRetry, isRetryable);
+});
+
+test('postRequestWithRetry: forwards the AbortSignal to promiseRetriable', async (t) => {
+  const promiseRetriableSpy = sinon.stub().resolves([mockEvalResponse, 0]);
+  const client = new APIClient(host, apiKey, retryPolicy, promiseRetriableSpy);
+  const controller = new AbortController();
+
+  await client.getEvaluation('tag', user, 'feat-1', defaultSourceId, sdkVersion, controller.signal);
+
+  const [, , , receivedSignal] = promiseRetriableSpy.firstCall.args;
+  t.is(receivedSignal, controller.signal);
+});
+
+// Group 3: postRequest URL and body wiring
+//
+// Each test uses a passthrough promiseRetriable that immediately invokes fn so that
+// postRequest is actually called, letting us assert the URL and body it received.
+
+function makePassthroughRetriable(): sinon.SinonStub {
+  return sinon.stub().callsFake((fn: (s: AbortSignal | undefined) => Promise<unknown>) => fn(undefined));
+}
+
+test('getEvaluation: builds correct URL and request body', async (t) => {
+  const sandbox = sinon.createSandbox();
+  t.teardown(() => sandbox.restore());
+
+  const client = new APIClient(host, apiKey, retryPolicy, makePassthroughRetriable());
+  const postRequestSpy = sandbox.stub(client as any, 'postRequest').resolves([mockEvalResponse, 0]);
+
+  await client.getEvaluation('my-tag', user, 'feat-1', defaultSourceId, sdkVersion);
+
+  const [receivedUrl, receivedBody] = postRequestSpy.firstCall.args;
+  t.true(postRequestSpy.calledOnce);
+  t.is(receivedUrl, `https://${host}/get_evaluation`);
+  t.is(receivedBody, JSON.stringify({ tag: 'my-tag', user, featureId: 'feat-1', sourceId: defaultSourceId, sdkVersion }));
+});
+
+test('registerEvents: builds correct URL and request body', async (t) => {
+  const sandbox = sinon.createSandbox();
+  t.teardown(() => sandbox.restore());
+
+  const client = new APIClient(host, apiKey, retryPolicy, makePassthroughRetriable());
+  const postRequestSpy = sandbox.stub(client as any, 'postRequest').resolves([{}, 0]);
+
+  const events = [] as any[];
+  await client.registerEvents(events, defaultSourceId, sdkVersion);
+
+  const [receivedUrl, receivedBody] = postRequestSpy.firstCall.args;
+  t.true(postRequestSpy.calledOnce);
+  t.is(receivedUrl, `https://${host}/register_events`);
+  t.is(receivedBody, JSON.stringify({ events, sdkVersion, sourceId: defaultSourceId }));
+});
+
+test('getFeatureFlags: builds correct URL and request body', async (t) => {
+  const sandbox = sinon.createSandbox();
+  t.teardown(() => sandbox.restore());
+
+  const client = new APIClient(host, apiKey, retryPolicy, makePassthroughRetriable());
+  const postRequestSpy = sandbox.stub(client as any, 'postRequest').resolves([{}, 0]);
+
+  await client.getFeatureFlags('my-tag', 'flags-id-1', 12345, defaultSourceId, sdkVersion);
+
+  const [receivedUrl, receivedBody] = postRequestSpy.firstCall.args;
+  t.true(postRequestSpy.calledOnce);
+  t.is(receivedUrl, `https://${host}/get_feature_flags`);
+  t.is(receivedBody, JSON.stringify({ tag: 'my-tag', featureFlagsId: 'flags-id-1', requestedAt: 12345, sourceId: defaultSourceId, sdkVersion }));
+});
+
+test('getSegmentUsers: builds correct URL and request body', async (t) => {
+  const sandbox = sinon.createSandbox();
+  t.teardown(() => sandbox.restore());
+
+  const client = new APIClient(host, apiKey, retryPolicy, makePassthroughRetriable());
+  const postRequestSpy = sandbox.stub(client as any, 'postRequest').resolves([{}, 0]);
+
+  await client.getSegmentUsers(['seg-1', 'seg-2'], 99999, defaultSourceId, sdkVersion);
+
+  const [receivedUrl, receivedBody] = postRequestSpy.firstCall.args;
+  t.true(postRequestSpy.calledOnce);
+  t.is(receivedUrl, `https://${host}/get_segment_users`);
+  t.is(receivedBody, JSON.stringify({ segmentIds: ['seg-1', 'seg-2'], requestedAt: 99999, sourceId: defaultSourceId, sdkVersion }));
+});
+
+test('postRequestWithRetry: fn forwards signal from promiseRetriable to postRequest', async (t) => {
+  const sandbox = sinon.createSandbox();
+  t.teardown(() => sandbox.restore());
+
+  const innerSignal = AbortSignal.timeout(9999);
+  const passthroughRetriable = sinon.stub().callsFake(
+    (fn: (s: AbortSignal | undefined) => Promise<unknown>) => fn(innerSignal),
+  );
+  const client = new APIClient(host, apiKey, retryPolicy, passthroughRetriable);
+  const postRequestSpy = sandbox.stub(client as any, 'postRequest').resolves([mockEvalResponse, 0]);
+
+  await client.getEvaluation('tag', user, 'feat-1', defaultSourceId, sdkVersion);
+
+  const [, , receivedSignal] = postRequestSpy.firstCall.args;
+  t.is(receivedSignal, innerSignal);
+});
+
+// Group 4: Retry-After header capture in postRequest
+
+test.serial('postRequest: Retry-After delta-seconds header is captured as retryAfterMs', async (t) => {
+  const fakeResponse = makeFakeResponse(503, { 'retry-after': '60' });
+  const httpsRequestStub = sinon.stub(https, 'request').callsFake((_url, _opts, callback: any) => {
+    callback(fakeResponse);
+    fakeResponse.emit('end');
+    return makeFakeClientReq() as any;
+  });
+  t.teardown(() => httpsRequestStub.restore());
+
+  const client = new APIClient(host, apiKey);
+  const error = await t.throwsAsync<InvalidStatusError>(() =>
+    (client as any).postRequest(`https://${host}/get_evaluation`, '{}'),
+  );
+
+  t.true(error instanceof InvalidStatusError);
+  t.is(error.retryAfterMs, 60_000);
+});
+
+test.serial('postRequest: absent Retry-After header leaves retryAfterMs undefined', async (t) => {
+  const fakeResponse = makeFakeResponse(503, {});
+  const httpsRequestStub = sinon.stub(https, 'request').callsFake((_url, _opts, callback: any) => {
+    callback(fakeResponse);
+    fakeResponse.emit('end');
+    return makeFakeClientReq() as any;
+  });
+  t.teardown(() => httpsRequestStub.restore());
+
+  const client = new APIClient(host, apiKey);
+  const error = await t.throwsAsync<InvalidStatusError>(() =>
+    (client as any).postRequest(`https://${host}/get_evaluation`, '{}'),
+  );
+
+  t.true(error instanceof InvalidStatusError);
+  t.is(error.retryAfterMs, undefined);
+});
+
+test.serial('postRequest: Retry-After: 0 is captured as retryAfterMs === 0', async (t) => {
+  const fakeResponse = makeFakeResponse(429, { 'retry-after': '0' });
+  const httpsRequestStub = sinon.stub(https, 'request').callsFake((_url, _opts, callback: any) => {
+    callback(fakeResponse);
+    fakeResponse.emit('end');
+    return makeFakeClientReq() as any;
+  });
+  t.teardown(() => httpsRequestStub.restore());
+
+  const client = new APIClient(host, apiKey);
+  const error = await t.throwsAsync<InvalidStatusError>(() =>
+    (client as any).postRequest(`https://${host}/get_evaluation`, '{}'),
+  );
+
+  t.true(error instanceof InvalidStatusError);
+  t.is(error.retryAfterMs, 0);
 });
