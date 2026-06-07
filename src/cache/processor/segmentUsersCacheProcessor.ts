@@ -8,7 +8,7 @@ import { createSchedule, removeSchedule } from '../../schedule';
 import { Clock } from '../../utils/clock';
 import { SourceId } from '../../objects/sourceId';
 import { toProtoSegmentUsers } from './converter';
-import { PollController, isDeadlineExceeded } from '../../utils/pollController';
+import { PollController, isOperationAbortedError, isOperationTimedOutError } from '../../utils/pollController';
 import { TimeoutError } from '../../objects/errors';
 
 interface SegementUsersCacheProcessor {
@@ -92,7 +92,8 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
     try {
       await this.getSegmentUsers();
     } catch (error) {
-      if (isDeadlineExceeded(error)) {
+      if (isOperationAbortedError(error)) return;
+      if (isOperationTimedOutError(error)) {
         if (!this.stopped) {
           this.pushErrorMetricsEvent(new TimeoutError(this.pollingInterval, 'poll timed out'));
         }

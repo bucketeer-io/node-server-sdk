@@ -117,6 +117,10 @@ export class NetworkError extends BKTBaseError {
   name = 'NetworkError' as const;
 }
 
+export class AbortError extends BKTBaseError {
+  name = 'AbortError' as const;
+}
+
 // SDK errors
 export class IllegalArgumentError extends BKTBaseError {
   name = 'IllegalArgumentError' as const;

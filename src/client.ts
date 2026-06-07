@@ -32,6 +32,7 @@ import { Bucketeer, BuildInfo } from '.';
 import { IllegalStateError, TimeoutError, toBKTError } from './objects/errors';
 import { assertGetEvaluationRequest } from './assert';
 import { InternalConfig } from './internalConfig';
+import { createTimeoutSignal } from './utils/pollController';
 
 // Default timeout for graceful shutdown in milliseconds (30 seconds)
 // For high-traffic applications with large event queues, consider increasing this value
@@ -246,7 +247,7 @@ export class BKTClientImpl implements Bucketeer {
         events,
         this.config.sourceId,
         this.config.sdkVersion,
-        AbortSignal.timeout(computeRegisterEventsDeadline(this.config.eventsFlushInterval)),
+        createTimeoutSignal(computeRegisterEventsDeadline(this.config.eventsFlushInterval)),
       )
       .catch((e) => {
         this.saveErrorMetricsEvent(this.config.featureTag, e, ApiId.REGISTER_EVENTS);
@@ -294,7 +295,7 @@ export class BKTClientImpl implements Bucketeer {
           eventsToFlush,
           this.config.sourceId,
           this.config.sdkVersion,
-          AbortSignal.timeout(computeRegisterEventsDeadline(this.config.eventsFlushInterval)),
+          createTimeoutSignal(computeRegisterEventsDeadline(this.config.eventsFlushInterval)),
         );
         flushedCount += eventsToFlush.length;
         this.config.logger?.debug(
@@ -417,7 +418,7 @@ export class BKTClientImpl implements Bucketeer {
         featureId,
         this.config.sourceId,
         this.config.sdkVersion,
-        AbortSignal.timeout(DEFAULT_EVALUATION_TIMEOUT_MS),
+        createTimeoutSignal(DEFAULT_EVALUATION_TIMEOUT_MS),
       );
       const second = this.clock.latencySecondsSince(startMark);
       this.eventEmitter.emit('pushLatencyMetricsEvent', {

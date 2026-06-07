@@ -9,7 +9,7 @@ import {
   calculateBackoff,
   isRetryable,
 } from '../utils/promiseRetriable';
-import { InvalidStatusError } from '../objects/errors';
+import { AbortError, InvalidStatusError, TimeoutError } from '../objects/errors';
 
 const test = anyTest as TestFn<{ clock: sinon.SinonFakeTimers; mathRandom: sinon.SinonStub }>;
 
@@ -443,6 +443,14 @@ test.serial('isRetryable returns false for 401', (t) => {
   t.false(isRetryable(err).retry);
 });
 
+test.serial('isRetryable returns false for AbortError', (t) => {
+  t.false(isRetryable(new AbortError()).retry);
+});
+
+test.serial('isRetryable returns false for TimeoutError', (t) => {
+  t.false(isRetryable(new TimeoutError(5000)).retry);
+});
+
 // AbortSignal support
 
 test.serial('throws immediately if signal is already aborted', async (t) => {
@@ -498,6 +506,32 @@ test.serial('signal is forwarded to fn on each attempt', async (t) => {
 
   t.is(receivedSignals.length, 1);
   t.is(receivedSignals[0], controller.signal);
+});
+
+test.serial('promiseRetriable - AbortError is not retried (routed through shouldRetry)', async (t) => {
+  const abortErr = new AbortError();
+  const fn = sinon.stub<[AbortSignal | undefined], Promise<never>>().rejects(abortErr);
+  const shouldRetrySpy = sinon.spy(isRetryable);
+
+  const thrownError = await t.throwsAsync(
+    promiseRetriable(fn as (signal: AbortSignal | undefined) => Promise<never>, { ...policy, maxRetries: 3 }, shouldRetrySpy),
+  );
+  t.is(thrownError, abortErr);
+  t.is(fn.callCount, 1);
+  t.is(shouldRetrySpy.callCount, 1);
+});
+
+test.serial('promiseRetriable - TimeoutError is not retried (routed through shouldRetry)', async (t) => {
+  const timeoutErr = new TimeoutError(5000);
+  const fn = sinon.stub<[AbortSignal | undefined], Promise<never>>().rejects(timeoutErr);
+  const shouldRetrySpy = sinon.spy(isRetryable);
+
+  const thrownError = await t.throwsAsync(
+    promiseRetriable(fn as (signal: AbortSignal | undefined) => Promise<never>, { ...policy, maxRetries: 3 }, shouldRetrySpy),
+  );
+  t.is(thrownError, timeoutErr);
+  t.is(fn.callCount, 1);
+  t.is(shouldRetrySpy.callCount, 1);
 });
 
 test.serial('signal fired mid-request propagates abort into fn', async (t) => {

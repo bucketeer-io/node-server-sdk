@@ -4,8 +4,9 @@ import https from 'https';
 import { EventEmitter } from 'events';
 import { APIClient } from '../api/client';
 import { User } from '../bootstrap';
-import { InvalidStatusError } from '../objects/errors';
+import { AbortError, InvalidStatusError, TimeoutError } from '../objects/errors';
 import { isRetryable, RetryPolicy } from '../utils/promiseRetriable';
+import { createTimeoutSignal, isOperationAbortedError, isOperationTimedOutError } from '../utils/pollController';
 import { SourceId } from '../objects/sourceId';
 
 const host = 'api.example.com:443';
@@ -306,4 +307,104 @@ test.serial('postRequest: Retry-After: 0 is captured as retryAfterMs === 0', asy
 
   t.true(error instanceof InvalidStatusError);
   t.is(error.retryAfterMs, 0);
+});
+
+// Group 4: DOMException-to-SDK-type conversion at the postRequest boundary
+
+test.serial('postRequest: AbortSignal.timeout fires - error is SDK TimeoutError', async (t) => {
+  const fakeReq = makeFakeClientReq();
+  const httpsRequestStub = sinon.stub(https, 'request').callsFake((_url, opts: any) => {
+    const signal: AbortSignal | undefined = opts?.signal;
+    if (signal) {
+      signal.addEventListener('abort', () => fakeReq.emit('error', signal.reason), { once: true });
+    }
+    return fakeReq as any;
+  });
+  t.teardown(() => httpsRequestStub.restore());
+
+  const client = new APIClient(host, apiKey);
+  const signal = AbortSignal.timeout(50);
+
+  // AbortSignal.timeout() uses an unref'd timer; the interval keeps the event loop alive so it fires.
+  const keepAlive = setInterval(() => {}, 100);
+  t.teardown(() => clearInterval(keepAlive));
+
+  const err = await t.throwsAsync(() =>
+    (client as any).postRequest(`https://${host}/get_evaluation`, '{}', signal),
+  );
+
+  t.true(err instanceof TimeoutError);
+  t.is((err as TimeoutError).timeoutMillis, 5000);
+  t.true(isOperationTimedOutError(err));
+  t.false(isOperationAbortedError(err));
+});
+
+test.serial('postRequest: pre-aborted signal with TimeoutError reason preserves timeoutMillis', async (t) => {
+  const fakeReq = makeFakeClientReq();
+  const httpsRequestStub = sinon.stub(https, 'request').returns(fakeReq as any);
+  t.teardown(() => httpsRequestStub.restore());
+
+  const controller = new AbortController();
+  controller.abort(new TimeoutError(1234));
+
+  const err = await t.throwsAsync<TimeoutError>(() =>
+    (new APIClient(host, apiKey) as any).postRequest(
+      `https://${host}/get_evaluation`,
+      '{}',
+      controller.signal,
+    ),
+  );
+
+  t.true(err instanceof TimeoutError);
+  t.is(err.timeoutMillis, 1234);
+});
+
+test.serial('postRequest: createTimeoutSignal fires during request - TimeoutError preserves original timeoutMillis', async (t) => {
+  const fakeReq = makeFakeClientReq();
+  const httpsRequestStub = sinon.stub(https, 'request').callsFake((_url, opts: any) => {
+    const signal: AbortSignal | undefined = opts?.signal;
+    if (signal) {
+      signal.addEventListener('abort', () => fakeReq.emit('error', signal.reason), { once: true });
+    }
+    return fakeReq as any;
+  });
+  t.teardown(() => httpsRequestStub.restore());
+
+  const client = new APIClient(host, apiKey);
+  const signal = createTimeoutSignal(50);
+
+  const keepAlive = setInterval(() => {}, 100);
+  t.teardown(() => clearInterval(keepAlive));
+
+  const err = await t.throwsAsync<TimeoutError>(() =>
+    (client as any).postRequest(`https://${host}/get_evaluation`, '{}', signal),
+  );
+
+  t.true(err instanceof TimeoutError);
+  t.is(err.timeoutMillis, 50);
+  t.true(isOperationTimedOutError(err));
+  t.false(isOperationAbortedError(err));
+});
+
+test.serial('postRequest: AbortController.abort() - error is SDK AbortError', async (t) => {
+  const fakeReq = makeFakeClientReq();
+  const controller = new AbortController();
+  const httpsRequestStub = sinon.stub(https, 'request').callsFake((_url, opts: any) => {
+    const signal: AbortSignal | undefined = opts?.signal;
+    if (signal) {
+      signal.addEventListener('abort', () => fakeReq.emit('error', signal.reason), { once: true });
+    }
+    return fakeReq as any;
+  });
+  t.teardown(() => httpsRequestStub.restore());
+
+  const client = new APIClient(host, apiKey);
+  setTimeout(() => controller.abort(), 10);
+  const err = await t.throwsAsync(() =>
+    (client as any).postRequest(`https://${host}/get_evaluation`, '{}', controller.signal),
+  );
+
+  t.true(err instanceof AbortError);
+  t.true(isOperationAbortedError(err));
+  t.false(isOperationTimedOutError(err));
 });

@@ -1,4 +1,5 @@
 import { InvalidStatusError } from '../objects/errors';
+import { isOperationAbortedError, isOperationTimedOutError } from './pollController';
 
 export interface RetryPolicy {
   /** Maximum number of retry attempts */
@@ -48,6 +49,8 @@ const RETRYABLE_STATUS_CODES = new Set<number>([
  * header the delay override is threaded back via RetryDecision.
  */
 export function isRetryable(error: Error): RetryDecision {
+  if (isOperationAbortedError(error) || isOperationTimedOutError(error)) return { retry: false };
+
   const code = (error as NodeJS.ErrnoException).code;
   if (RETRYABLE_CODES.has(code ?? '')) return { retry: true };
 

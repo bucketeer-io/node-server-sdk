@@ -14,12 +14,13 @@ import {
   GetSegmentUsersResponse,
   RegisterEventsResponse,
 } from '../objects/response';
-import { InvalidStatusError, parseRetryAfter } from '../objects/errors';
+import { AbortError, InvalidStatusError, TimeoutError, parseRetryAfter } from '../objects/errors';
 import {
   RetryPolicy,
   promiseRetriable as defaultPromiseRetriable,
   isRetryable,
 } from '../utils/promiseRetriable';
+import { isOperationAbortedError, isOperationTimedOutError } from '../utils/pollController';
 
 const scheme = 'https://';
 const evaluationAPI = '/get_evaluation';
@@ -144,18 +145,23 @@ export class APIClient {
     chunk: string,
     signal?: AbortSignal,
   ): Promise<[T, number]> {
+    const REQUEST_TIMEOUT_MS = 5000;
     const opts: https.RequestOptions = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         authorization: this.apiKey,
       },
-      timeout: 5000,
+      timeout: REQUEST_TIMEOUT_MS,
       signal: signal,
     };
     return new Promise((resolve, reject) => {
       if (signal?.aborted) {
-        return reject(signal.reason);
+        const reason = signal.reason;
+        if (isOperationTimedOutError(reason))
+          return reject(reason instanceof TimeoutError ? reason : new TimeoutError(REQUEST_TIMEOUT_MS));
+        if (isOperationAbortedError(reason)) return reject(new AbortError());
+        return reject(reason);
       }
       const clientReq = https.request(url, opts, (res) => {
         res.setEncoding('utf8');
@@ -186,7 +192,13 @@ export class APIClient {
         });
       });
       clientReq.on('error', (e) => {
-        reject(e);
+        if (isOperationTimedOutError(e)) {
+          reject(e instanceof TimeoutError ? e : new TimeoutError(REQUEST_TIMEOUT_MS));
+        } else if (isOperationAbortedError(e)) {
+          reject(new AbortError());
+        } else {
+          reject(e);
+        }
       });
       clientReq.on('timeout', () => {
         // No error arg: Node.js emits ECONNRESET on clientReq (pre-response phase)

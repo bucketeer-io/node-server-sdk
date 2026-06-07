@@ -8,7 +8,7 @@ import { ApiId } from '../../objects/apiId';
 import { Clock } from '../../utils/clock';
 import { SourceId } from '../../objects/sourceId';
 import { toProtoFeature } from './converter';
-import { PollController as PollAbortController, isDeadlineExceeded } from '../../utils/pollController';
+import { PollController as PollAbortController, isOperationAbortedError, isOperationTimedOutError } from '../../utils/pollController';
 import { TimeoutError } from '../../objects/errors';
 
 interface FeatureFlagProcessor {
@@ -97,7 +97,8 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
     try {
       await this.getFeatureFlags();
     } catch (error) {
-      if (isDeadlineExceeded(error)) {
+      if (isOperationAbortedError(error)) return;
+      if (isOperationTimedOutError(error)) {
         if (!this.stopped) {
           this.pushErrorMetricsEvent(new TimeoutError(this.pollingInterval, 'poll timed out'));
         }

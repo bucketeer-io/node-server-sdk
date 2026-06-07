@@ -13,7 +13,7 @@ import { MockCache } from '../../../mocks/cache';
 import { MockAPIClient } from '../../../mocks/api';
 import { SourceId } from '../../../../objects/sourceId';
 import { ApiId } from '../../../../objects/apiId';
-import { TimeoutError } from '../../../../objects/errors';
+import { AbortError, TimeoutError } from '../../../../objects/errors';
 
 const test = anyTest as TestFn<{
   processor: DefaultSegementUserCacheProcessor;
@@ -191,6 +191,38 @@ test.serial('runUpdateCache(): poll abort emits an error metric', async (t) => {
 
   mockEventEmitter.verify();
   t.pass();
+});
+
+test.serial('stop() abort reason is SDK AbortError, not TimeoutError', async (t) => {
+  const { processor, options, sandbox } = t.context;
+
+  options.eventEmitter.on('error', () => {});
+  sandbox.stub(options.cache, 'get').resolves('');
+  sandbox.stub(options.cache, 'scan').resolves([]);
+
+  let capturedReason: unknown;
+  let resolveInFlight!: () => void;
+  const inFlightStarted = new Promise<void>((resolve) => { resolveInFlight = resolve; });
+
+  sandbox.stub(options.apiClient, 'getSegmentUsers').callsFake(
+    (_segmentIds, _requestedAt, _sourceId, _sdkVersion, signal) => {
+      resolveInFlight();
+      return new Promise<never>((_, reject) => {
+        signal?.addEventListener('abort', () => {
+          capturedReason = signal.reason;
+          reject(signal.reason);
+        }, { once: true });
+      });
+    },
+  );
+
+  const startPromise = processor.start();
+  await inFlightStarted;
+  await processor.stop();
+  await startPromise.catch(() => {});
+
+  t.true(capturedReason instanceof AbortError);
+  t.false(capturedReason instanceof TimeoutError);
 });
 
 test.serial('polling interval deadline aborts a hanging getSegmentUsers call', async (t) => {
