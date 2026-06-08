@@ -78,7 +78,7 @@ interface BKTConfig {
   featureTag: string;
   /**
    * Interval for flushing events to the server. Specify in milliseconds.
-   * Default: 10 seconds
+   * Default: 30 seconds
    */
   eventsFlushInterval: number;
   /**

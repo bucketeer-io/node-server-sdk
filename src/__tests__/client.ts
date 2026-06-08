@@ -39,11 +39,9 @@ test.serial('getEvaluation: default evaluation details', async (t) => {
   const featureId = 'stringEvaluationDetails';
   t.context.server.use(
     rest.post(evaluationAPI, (_req, res, ctx) => {
-      // Use 400 (not 5xx): 500 is in RETRYABLE_STATUS_CODES (see promiseRetriable.ts),
-      // so using it causes the SDK to exhaust all retry attempts before falling back to
-      // the default evaluation — requiring the test timeout to be extended to ~2 minutes
-      // just to pass. With 400, no retry is triggered, the default fallback is returned
-      // immediately, and the test completes in under 30 seconds.
+       // Use 400 (not 5xx): 5xx responses are considered retryable (see RETRYABLE_STATUS_CODES in promiseRetriable.ts),
+       // so using 500 can trigger retries/backoff and significantly slow this test (potentially up to the 30s evaluation deadline).
+       // With 400, no retry is triggered, the default fallback is returned immediately, and the test stays fast/deterministic.
       return res(ctx.status(400));
     }),
   );
