@@ -408,3 +408,74 @@ test.serial('postRequest: AbortController.abort() - error is SDK AbortError', as
   t.true(isOperationAbortedError(err));
   t.false(isOperationTimedOutError(err));
 });
+
+// Group 5: Node DOMException wrapping
+//
+// When https.request is aborted via its signal option, Node does NOT emit the abort
+// reason directly. It emits a DOMException with name='AbortError' and the original
+// reason (e.g. TimeoutError) on e.cause. The tests above in Group 4 emit signal.reason
+// directly and therefore do not cover this path. These tests simulate the real wrapping
+// to ensure the error handler correctly unwraps e.cause.
+
+test.serial('postRequest: Node DOMException wrapping TimeoutError cause - error is SDK TimeoutError', async (t) => {
+  const fakeReq = makeFakeClientReq();
+  const httpsRequestStub = sinon.stub(https, 'request').callsFake((_url, opts: any) => {
+    const signal: AbortSignal | undefined = opts?.signal;
+    if (signal) {
+      signal.addEventListener('abort', () => {
+        const nodeError = Object.assign(new Error('The operation was aborted'), {
+          name: 'AbortError',
+          code: 'ABORT_ERR',
+          cause: signal.reason,
+        });
+        fakeReq.emit('error', nodeError);
+      }, { once: true });
+    }
+    return fakeReq as any;
+  });
+  t.teardown(() => httpsRequestStub.restore());
+
+  const client = new APIClient(host, apiKey);
+  const signal = createTimeoutSignal(50);
+  const keepAlive = setInterval(() => {}, 100);
+  t.teardown(() => clearInterval(keepAlive));
+
+  const err = await t.throwsAsync<TimeoutError>(() =>
+    (client as any).postRequest(`https://${host}/get_evaluation`, '{}', signal),
+  );
+
+  t.true(err instanceof TimeoutError);
+  t.is(err.timeoutMillis, 50);
+  t.true(isOperationTimedOutError(err));
+  t.false(isOperationAbortedError(err));
+});
+
+test.serial('postRequest: Node DOMException wrapping AbortError cause - error is SDK AbortError', async (t) => {
+  const fakeReq = makeFakeClientReq();
+  const controller = new AbortController();
+  const httpsRequestStub = sinon.stub(https, 'request').callsFake((_url, opts: any) => {
+    const signal: AbortSignal | undefined = opts?.signal;
+    if (signal) {
+      signal.addEventListener('abort', () => {
+        const nodeError = Object.assign(new Error('The operation was aborted'), {
+          name: 'AbortError',
+          code: 'ABORT_ERR',
+          cause: signal.reason,
+        });
+        fakeReq.emit('error', nodeError);
+      }, { once: true });
+    }
+    return fakeReq as any;
+  });
+  t.teardown(() => httpsRequestStub.restore());
+
+  const client = new APIClient(host, apiKey);
+  setTimeout(() => controller.abort(), 10);
+  const err = await t.throwsAsync(() =>
+    (client as any).postRequest(`https://${host}/get_evaluation`, '{}', controller.signal),
+  );
+
+  t.true(err instanceof AbortError);
+  t.true(isOperationAbortedError(err));
+  t.false(isOperationTimedOutError(err));
+});

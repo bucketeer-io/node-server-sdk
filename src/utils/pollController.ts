@@ -40,7 +40,7 @@ export function createTimeoutSignal(timeoutMs: number): AbortSignal {
 }
 
 export function isOperationTimedOutError(e: unknown): boolean {
-  return e instanceof TimeoutError || (e as any)?.name === 'TimeoutError';
+  return e instanceof TimeoutError || (e as any)?.name === 'TimeoutError' || (e as any)?.cause instanceof TimeoutError;
 }
 
 export function isOperationAbortedError(e: unknown): boolean {

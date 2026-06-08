@@ -5,9 +5,10 @@ import fs from 'fs';
 import path from 'path';
 import { APIClient } from '../api/client';
 import { User } from '../bootstrap';
-import { InvalidStatusError } from '../objects/errors';
+import { AbortError, InvalidStatusError, TimeoutError } from '../objects/errors';
 import { RetryPolicy } from '../utils/promiseRetriable';
 import { SourceId } from '../objects/sourceId';
+import { createTimeoutSignal, isOperationAbortedError, isOperationTimedOutError } from '../utils/pollController';
 
 const port = 9997;
 const host = `localhost:${port}`;
@@ -58,7 +59,7 @@ test.after.always((t) => {
   t.context.server.close();
 });
 
-// --- Test 1: retry succeeds (503 → 200) ---
+// Test 1: retry succeeds (503 then 200)
 
 test.serial('getEvaluation: retries on 503 and succeeds on second attempt', async (t) => {
   let requestCount = 0;
@@ -82,7 +83,7 @@ test.serial('getEvaluation: retries on 503 and succeeds on second attempt', asyn
   t.is(requestCount, 2);
 });
 
-// --- Test 2: non-retryable status is not retried ---
+// Test 2: non-retryable status is not retried
 
 test.serial('getEvaluation: 401 is not retried', async (t) => {
   let requestCount = 0;
@@ -104,7 +105,7 @@ test.serial('getEvaluation: 401 is not retried', async (t) => {
   t.is(requestCount, 1);
 });
 
-// --- Test 3: Retry-After:0 wiring (end-to-end) ---
+// Test 3: Retry-After:0 wiring (end-to-end)
 
 test.serial('getEvaluation: Retry-After:0 threads through to promiseRetriable (immediate retry)', async (t) => {
   let requestCount = 0;
@@ -133,7 +134,7 @@ test.serial('getEvaluation: Retry-After:0 threads through to promiseRetriable (i
   t.true(elapsed < 1000, `expected elapsed < 1000ms, got ${elapsed}ms`);
 });
 
-// --- Test 4: AbortSignal cancels mid-retry backoff ---
+// Test 4: AbortSignal cancels mid-retry backoff
 
 test.serial('getEvaluation: AbortSignal cancels mid-retry backoff', async (t) => {
   let requestCount = 0;
@@ -168,4 +169,97 @@ test.serial('getEvaluation: AbortSignal cancels mid-retry backoff', async (t) =>
   await t.throwsAsync(() => resultPromise);
   // Only one HTTP request should have been made before abort cancelled the backoff
   t.is(requestCount, 1);
+});
+
+// Test 5: real Node DOMException wrapping
+//
+// When https.request is aborted via its signal option, Node does NOT emit the abort
+// reason directly. It emits a DOMException with name='AbortError' and the original
+// reason (e.g. TimeoutError) on e.cause. The postRequest error handler must unwrap
+// e.cause to classify the error correctly; otherwise a deadline timeout is reported
+// as AbortError and no TimeoutErrorMetricsEvent is ever emitted.
+
+test.serial('getEvaluation: createTimeoutSignal fires with timeout - error is TimeoutError not AbortError', async (t) => {
+  currentHandler = (_req, _res) => {
+    // Never respond so the signal deadline fires against a real TLS connection
+  };
+
+  const retryPolicy: RetryPolicy = { maxRetries: 0, initialInterval: 100, maxInterval: 1000 };
+  const client = new APIClient(host, apiKey, retryPolicy);
+  const signal = createTimeoutSignal(50);
+
+  const err = await t.throwsAsync(() =>
+    client.getEvaluation('tag', user, 'feature-id', defaultSourceId, sdkVersion, signal),
+  );
+
+  t.true(err instanceof TimeoutError, `expected TimeoutError, got ${err?.constructor?.name}`);
+  t.is((err as TimeoutError).timeoutMillis, 50);
+});
+
+test.serial('getEvaluation: AbortController aborts mid-request - error is AbortError not TimeoutError', async (t) => {
+  currentHandler = (_req, _res) => {
+    // Never respond so the abort fires against a real TLS connection (Node DOMException wrapping path)
+  };
+
+  const retryPolicy: RetryPolicy = { maxRetries: 0, initialInterval: 100, maxInterval: 1000 };
+  const client = new APIClient(host, apiKey, retryPolicy);
+  const controller = new AbortController();
+  setTimeout(() => controller.abort(new AbortError()), 50);
+
+  const err = await t.throwsAsync(() =>
+    client.getEvaluation('tag', user, 'feature-id', defaultSourceId, sdkVersion, controller.signal),
+  );
+
+  t.true(err instanceof AbortError, `expected AbortError, got ${err?.constructor?.name}`);
+  t.true(isOperationAbortedError(err));
+  t.false(isOperationTimedOutError(err));
+});
+
+// Test 6: pre-aborted signal with AbortError/Timeout reason
+//
+// When a signal is already aborted before postRequest runs, the code reads signal.reason
+// directly (no Node DOMException wrapping involved). This test covers the
+// isOperationAbortedError(reason) branch at the top of postRequest.
+
+test.serial('getEvaluation: pre-aborted signal with AbortError reason - error is SDK AbortError', async (t) => {
+  currentHandler = (_req, res) => {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end('{}');
+  };
+
+  const retryPolicy: RetryPolicy = { maxRetries: 0, initialInterval: 100, maxInterval: 1000 };
+  const client = new APIClient(host, apiKey, retryPolicy);
+
+  const controller = new AbortController();
+  controller.abort(new AbortError());
+
+  const err = await t.throwsAsync(() =>
+    client.getEvaluation('tag', user, 'feature-id', defaultSourceId, sdkVersion, controller.signal),
+  );
+
+  t.true(err instanceof AbortError, `expected AbortError, got ${err?.constructor?.name}`);
+  t.true(isOperationAbortedError(err));
+  t.false(isOperationTimedOutError(err));
+});
+
+test.serial('getEvaluation: pre-aborted signal with TimeoutError reason - error is SDK TimeoutError', async (t) => {
+  currentHandler = (_req, res) => {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end('{}');
+  };
+
+  const retryPolicy: RetryPolicy = { maxRetries: 0, initialInterval: 100, maxInterval: 1000 };
+  const client = new APIClient(host, apiKey, retryPolicy);
+
+  const controller = new AbortController();
+  controller.abort(new TimeoutError(100));
+
+  const err = await t.throwsAsync(() =>
+    client.getEvaluation('tag', user, 'feature-id', defaultSourceId, sdkVersion, controller.signal),
+  );
+
+  t.true(err instanceof TimeoutError, `expected TimeoutError, got ${err?.constructor?.name}`);
+  t.true((err as TimeoutError).timeoutMillis == 100);
+  t.false(isOperationAbortedError(err));
+  t.true(isOperationTimedOutError(err));
 });

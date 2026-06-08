@@ -192,9 +192,12 @@ export class APIClient {
         });
       });
       clientReq.on('error', (e) => {
-        if (isOperationTimedOutError(e)) {
-          reject(e instanceof TimeoutError ? e : new TimeoutError(REQUEST_TIMEOUT_MS));
-        } else if (isOperationAbortedError(e)) {
+        // Important note: Node wraps the abort reason in a DOMException{name:'AbortError', cause: <reason>}
+        // when the request is cancelled via its signal option. Unwrap to get the true reason.
+        const reason = isOperationAbortedError(e) && (e as any).cause != null ? (e as any).cause : e;
+        if (isOperationTimedOutError(reason)) {
+          reject(reason instanceof TimeoutError ? reason : new TimeoutError(REQUEST_TIMEOUT_MS));
+        } else if (isOperationAbortedError(reason)) {
           reject(new AbortError());
         } else {
           reject(e);
