@@ -1,7 +1,7 @@
 import test from 'ava';
 import sinon from 'sinon';
-import { PollController, createTimeoutSignal, isOperationTimedOutError, isOperationAbortedError } from '../utils/pollController';
-import { TimeoutError, AbortError } from '../objects/errors';
+import { PollController, createTimeoutSignal, isDeadlineExceededError, isOperationAbortedError } from '../utils/pollController';
+import { DeadlineExceededError, AbortError } from '../objects/errors';
 
 test('createSignal returns a non-aborted signal', (t) => {
   const pc = new PollController();
@@ -52,14 +52,14 @@ test.serial('signal is aborted after pollingInterval elapses', (t) => {
   }
 });
 
-test.serial('createSignal timeout fires with TimeoutError as abort reason', async (t) => {
+test.serial('createSignal timeout fires with DeadlineExceededError as abort reason', async (t) => {
   const pc = new PollController();
   const signal = pc.createSignal(50);
   await new Promise<void>((resolve) => {
     signal.addEventListener('abort', () => resolve(), { once: true });
   });
-  t.true(signal.reason instanceof TimeoutError);
-  t.true(isOperationTimedOutError(signal.reason));
+  t.true(signal.reason instanceof DeadlineExceededError);
+  t.true(isDeadlineExceededError(signal.reason));
 });
 
 test('abort() fires with AbortError as abort reason', (t) => {
@@ -75,7 +75,7 @@ test('createSignal replacing previous gives old signal AbortError reason', (t) =
   const first = pc.createSignal(10_000);
   pc.createSignal(10_000);
   t.true(isOperationAbortedError(first.reason));
-  t.false(isOperationTimedOutError(first.reason));
+  t.false(isDeadlineExceededError(first.reason));
   pc.abort();
 });
 
@@ -84,7 +84,7 @@ test('createTimeoutSignal: returns a non-aborted signal initially', (t) => {
   t.false(signal.aborted);
 });
 
-test.serial('createTimeoutSignal: signal aborts with TimeoutError after timeoutMs elapses', (t) => {
+test.serial('createTimeoutSignal: signal aborts with DeadlineExceededError after timeoutMs elapses', (t) => {
   const clock = sinon.useFakeTimers();
   try {
     const signal = createTimeoutSignal(100);
@@ -96,14 +96,14 @@ test.serial('createTimeoutSignal: signal aborts with TimeoutError after timeoutM
   }
 });
 
-test.serial('createTimeoutSignal: signal.reason is TimeoutError with correct timeoutMillis', (t) => {
+test.serial('createTimeoutSignal: signal.reason is DeadlineExceededError with correct timeoutMillis', (t) => {
   const clock = sinon.useFakeTimers();
   try {
     const signal = createTimeoutSignal(250);
     clock.tick(250);
-    t.true(signal.reason instanceof TimeoutError);
-    t.is((signal.reason as TimeoutError).timeoutMillis, 250);
-    t.true(isOperationTimedOutError(signal.reason));
+    t.true(signal.reason instanceof DeadlineExceededError);
+    t.is((signal.reason as DeadlineExceededError).timeoutMillis, 250);
+    t.true(isDeadlineExceededError(signal.reason));
   } finally {
     clock.restore();
   }
@@ -123,12 +123,12 @@ function makeDOMException(cause: unknown) {
   });
 }
 
-test('isOperationTimedOutError: DOMException wrapping TimeoutError cause returns true', (t) => {
-  t.true(isOperationTimedOutError(makeDOMException(new TimeoutError(50))));
+test('isDeadlineExceededError: DOMException wrapping DeadlineExceededError cause returns true', (t) => {
+  t.true(isDeadlineExceededError(makeDOMException(new DeadlineExceededError(50))));
 });
 
-test('isOperationTimedOutError: DOMException wrapping AbortError cause returns false', (t) => {
-  t.false(isOperationTimedOutError(makeDOMException(new AbortError())));
+test('isDeadlineExceededError: DOMException wrapping AbortError cause returns false', (t) => {
+  t.false(isDeadlineExceededError(makeDOMException(new AbortError())));
 });
 
 test('isOperationAbortedError: DOMException wrapping AbortError cause returns true', (t) => {

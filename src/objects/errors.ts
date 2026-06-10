@@ -103,6 +103,19 @@ export class ServiceUnavailableError extends BKTBaseError {
 }
 
 // Network errors
+
+// DeadlineExceededError: fired when a per-request or polling-interval AbortSignal expires.
+// Distinct from TimeoutError which is thrown by waitForInitialization/destroy.
+export class DeadlineExceededError extends BKTBaseError {
+  name = 'DeadlineExceededError' as const;
+  timeoutMillis: number;
+
+  constructor(timeoutMillis: number, msg?: string) {
+    super(msg);
+    this.timeoutMillis = timeoutMillis;
+  }
+}
+
 export class TimeoutError extends BKTBaseError {
   name = 'TimeoutError' as const;
   timeoutMillis: number;

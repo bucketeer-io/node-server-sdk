@@ -9,7 +9,7 @@ import {
   calculateBackoff,
   isRetryable,
 } from '../utils/promiseRetriable';
-import { AbortError, InvalidStatusError, TimeoutError } from '../objects/errors';
+import { AbortError, DeadlineExceededError, InvalidStatusError } from '../objects/errors';
 
 const test = anyTest as TestFn<{ clock: sinon.SinonFakeTimers; mathRandom: sinon.SinonStub }>;
 
@@ -447,8 +447,8 @@ test.serial('isRetryable returns false for AbortError', (t) => {
   t.false(isRetryable(new AbortError()).retry);
 });
 
-test.serial('isRetryable returns false for TimeoutError', (t) => {
-  t.false(isRetryable(new TimeoutError(5000)).retry);
+test.serial('isRetryable returns false for DeadlineExceededError', (t) => {
+  t.false(isRetryable(new DeadlineExceededError(5000)).retry);
 });
 
 // AbortSignal support
@@ -521,17 +521,17 @@ test.serial('promiseRetriable - AbortError is not retried (routed through should
   t.is(shouldRetrySpy.callCount, 1);
 });
 
-test.serial('promiseRetriable - TimeoutError is not retried (intercepted before shouldRetry)', async (t) => {
-  const timeoutErr = new TimeoutError(5000);
-  const fn = sinon.stub<[AbortSignal | undefined], Promise<never>>().rejects(timeoutErr);
+test.serial('promiseRetriable - DeadlineExceededError is not retried (intercepted before shouldRetry)', async (t) => {
+  const deadlineErr = new DeadlineExceededError(5000);
+  const fn = sinon.stub<[AbortSignal | undefined], Promise<never>>().rejects(deadlineErr);
   const shouldRetrySpy = sinon.spy(isRetryable);
 
   const thrownError = await t.throwsAsync(
     promiseRetriable(fn as (signal: AbortSignal | undefined) => Promise<never>, { ...policy, maxRetries: 3 }, shouldRetrySpy),
   );
-  t.is(thrownError, timeoutErr);
+  t.is(thrownError, deadlineErr);
   t.is(fn.callCount, 1);
-  t.is(shouldRetrySpy.callCount, 0); // TimeoutError is intercepted before shouldRetry
+  t.is(shouldRetrySpy.callCount, 0); // DeadlineExceededError is intercepted before shouldRetry
 });
 
 test.serial('signal fired mid-request propagates abort into fn', async (t) => {

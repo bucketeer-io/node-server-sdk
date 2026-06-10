@@ -14,13 +14,13 @@ import {
   GetSegmentUsersResponse,
   RegisterEventsResponse,
 } from '../objects/response';
-import { AbortError, InvalidStatusError, TimeoutError, parseRetryAfter } from '../objects/errors';
+import { AbortError, DeadlineExceededError, InvalidStatusError, parseRetryAfter } from '../objects/errors';
 import {
   RetryPolicy,
   promiseRetriable as defaultPromiseRetriable,
   isRetryable,
 } from '../utils/promiseRetriable';
-import { isOperationAbortedError, isOperationTimedOutError } from '../utils/pollController';
+import { isOperationAbortedError, isDeadlineExceededError } from '../utils/pollController';
 
 const scheme = 'https://';
 const evaluationAPI = '/get_evaluation';
@@ -204,10 +204,10 @@ export class APIClient {
   }
 
   private normalizeRequestError(e: unknown): Error {
-    if (isOperationTimedOutError(e)) {
-      if (e instanceof TimeoutError) return e;
+    if (isDeadlineExceededError(e)) {
+      if (e instanceof DeadlineExceededError) return e;
       const cause = (e as any)?.cause;
-      return cause instanceof TimeoutError ? cause : new TimeoutError(REQUEST_TIMEOUT_MS);
+      return cause instanceof DeadlineExceededError ? cause : new DeadlineExceededError(REQUEST_TIMEOUT_MS);
     }
     if (isOperationAbortedError(e)) return new AbortError();
     return e as Error;

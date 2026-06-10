@@ -5,10 +5,10 @@ import fs from 'fs';
 import path from 'path';
 import { APIClient } from '../api/client';
 import { User } from '../bootstrap';
-import { AbortError, InvalidStatusError, TimeoutError } from '../objects/errors';
+import { AbortError, DeadlineExceededError, InvalidStatusError } from '../objects/errors';
 import { RetryPolicy } from '../utils/promiseRetriable';
 import { SourceId } from '../objects/sourceId';
-import { createTimeoutSignal, isOperationAbortedError, isOperationTimedOutError } from '../utils/pollController';
+import { createTimeoutSignal, isOperationAbortedError, isDeadlineExceededError } from '../utils/pollController';
 
 const port = 9997;
 const host = `localhost:${port}`;
@@ -175,11 +175,11 @@ test.serial('getEvaluation: AbortSignal cancels mid-retry backoff', async (t) =>
 //
 // When https.request is aborted via its signal option, Node does NOT emit the abort
 // reason directly. It emits a DOMException with name='AbortError' and the original
-// reason (e.g. TimeoutError) on e.cause. The postRequest error handler must unwrap
+// reason (e.g. DeadlineExceededError) on e.cause. The postRequest error handler must unwrap
 // e.cause to classify the error correctly; otherwise a deadline timeout is reported
 // as AbortError and no TimeoutErrorMetricsEvent is ever emitted.
 
-test.serial('getEvaluation: createTimeoutSignal fires with timeout - error is TimeoutError not AbortError', async (t) => {
+test.serial('getEvaluation: createTimeoutSignal fires with timeout - error is DeadlineExceededError not AbortError', async (t) => {
   currentHandler = (_req, _res) => {
     // Never respond so the signal deadline fires against a real TLS connection
   };
@@ -192,11 +192,11 @@ test.serial('getEvaluation: createTimeoutSignal fires with timeout - error is Ti
     client.getEvaluation('tag', user, 'feature-id', defaultSourceId, sdkVersion, signal),
   );
 
-  t.true(err instanceof TimeoutError, `expected TimeoutError, got ${err?.constructor?.name}`);
-  t.is((err as TimeoutError).timeoutMillis, 50);
+  t.true(err instanceof DeadlineExceededError, `expected DeadlineExceededError, got ${err?.constructor?.name}`);
+  t.is((err as DeadlineExceededError).timeoutMillis, 50);
 });
 
-test.serial('getEvaluation: AbortController aborts mid-request - error is AbortError not TimeoutError', async (t) => {
+test.serial('getEvaluation: AbortController aborts mid-request - error is AbortError not DeadlineExceededError', async (t) => {
   currentHandler = (_req, _res) => {
     // Never respond so the abort fires against a real TLS connection (Node DOMException wrapping path)
   };
@@ -212,7 +212,7 @@ test.serial('getEvaluation: AbortController aborts mid-request - error is AbortE
 
   t.true(err instanceof AbortError, `expected AbortError, got ${err?.constructor?.name}`);
   t.true(isOperationAbortedError(err));
-  t.false(isOperationTimedOutError(err));
+  t.false(isDeadlineExceededError(err));
 });
 
 // Test 6: pre-aborted signal with AbortError/Timeout reason
@@ -239,10 +239,10 @@ test.serial('getEvaluation: pre-aborted signal with AbortError reason - error is
 
   t.true(err instanceof AbortError, `expected AbortError, got ${err?.constructor?.name}`);
   t.true(isOperationAbortedError(err));
-  t.false(isOperationTimedOutError(err));
+  t.false(isDeadlineExceededError(err));
 });
 
-test.serial('getEvaluation: pre-aborted signal with TimeoutError reason - error is SDK TimeoutError', async (t) => {
+test.serial('getEvaluation: pre-aborted signal with DeadlineExceededError reason - error is SDK DeadlineExceededError', async (t) => {
   currentHandler = (_req, res) => {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end('{}');
@@ -252,14 +252,14 @@ test.serial('getEvaluation: pre-aborted signal with TimeoutError reason - error 
   const client = new APIClient(host, apiKey, retryPolicy);
 
   const controller = new AbortController();
-  controller.abort(new TimeoutError(100));
+  controller.abort(new DeadlineExceededError(100));
 
   const err = await t.throwsAsync(() =>
     client.getEvaluation('tag', user, 'feature-id', defaultSourceId, sdkVersion, controller.signal),
   );
 
-  t.true(err instanceof TimeoutError, `expected TimeoutError, got ${err?.constructor?.name}`);
-  t.true((err as TimeoutError).timeoutMillis == 100);
+  t.true(err instanceof DeadlineExceededError, `expected DeadlineExceededError, got ${err?.constructor?.name}`);
+  t.true((err as DeadlineExceededError).timeoutMillis == 100);
   t.false(isOperationAbortedError(err));
-  t.true(isOperationTimedOutError(err));
+  t.true(isDeadlineExceededError(err));
 });

@@ -8,8 +8,8 @@ import { ApiId } from '../../objects/apiId';
 import { Clock } from '../../utils/clock';
 import { SourceId } from '../../objects/sourceId';
 import { toProtoFeature } from './converter';
-import { PollController as PollAbortController, isOperationAbortedError, isOperationTimedOutError } from '../../utils/pollController';
-import { TimeoutError } from '../../objects/errors';
+import { PollController as PollAbortController, isOperationAbortedError, isDeadlineExceededError } from '../../utils/pollController';
+import { DeadlineExceededError } from '../../objects/errors';
 
 interface FeatureFlagProcessor {
   start(): Promise<void>;
@@ -98,9 +98,9 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
       await this.getFeatureFlags();
     } catch (error) {
       if (isOperationAbortedError(error)) return;
-      if (isOperationTimedOutError(error)) {
+      if (isDeadlineExceededError(error)) {
         if (!this.stopped) {
-          this.pushErrorMetricsEvent(new TimeoutError(this.pollingInterval, 'poll timed out'));
+          this.pushErrorMetricsEvent(new DeadlineExceededError(this.pollingInterval, 'poll timed out'));
         }
         return;
       }

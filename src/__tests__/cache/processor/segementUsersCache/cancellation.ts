@@ -13,7 +13,7 @@ import { MockCache } from '../../../mocks/cache';
 import { MockAPIClient } from '../../../mocks/api';
 import { SourceId } from '../../../../objects/sourceId';
 import { ApiId } from '../../../../objects/apiId';
-import { AbortError, TimeoutError } from '../../../../objects/errors';
+import { AbortError, DeadlineExceededError } from '../../../../objects/errors';
 
 const test = anyTest as TestFn<{
   processor: DefaultSegementUserCacheProcessor;
@@ -171,7 +171,7 @@ test.serial('runUpdateCache(): poll abort emits an error metric', async (t) => {
   const mockEventEmitter = sandbox.mock(options.eventEmitter);
   mockEventEmitter.expects('emit').once().withArgs(
     'error',
-    sino.match({ error: sino.match.instanceOf(TimeoutError), apiId: ApiId.GET_SEGMENT_USERS }),
+    sino.match({ error: sino.match.instanceOf(DeadlineExceededError), apiId: ApiId.GET_SEGMENT_USERS }),
   );
 
   // Simulate a stalled network call that never resolves on its own.
@@ -193,7 +193,7 @@ test.serial('runUpdateCache(): poll abort emits an error metric', async (t) => {
   t.pass();
 });
 
-test.serial('stop() abort reason is SDK AbortError, not TimeoutError', async (t) => {
+test.serial('stop() abort reason is SDK AbortError, not DeadlineExceededError', async (t) => {
   const { processor, options, sandbox } = t.context;
 
   options.eventEmitter.on('error', () => {});
@@ -222,7 +222,7 @@ test.serial('stop() abort reason is SDK AbortError, not TimeoutError', async (t)
   await startPromise.catch(() => {});
 
   t.true(capturedReason instanceof AbortError);
-  t.false(capturedReason instanceof TimeoutError);
+  t.false(capturedReason instanceof DeadlineExceededError);
 });
 
 test.serial('polling interval deadline aborts a hanging getSegmentUsers call', async (t) => {

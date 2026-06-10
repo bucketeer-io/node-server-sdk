@@ -1,6 +1,6 @@
 import { Logger } from '../logger';
-import { AbortError, IllegalArgumentError, IllegalStateError, InvalidStatusError, TimeoutError, isNodeError } from '../objects/errors';
-import { isOperationAbortedError, isOperationTimedOutError } from '../utils/pollController';
+import { AbortError, DeadlineExceededError, IllegalArgumentError, IllegalStateError, InvalidStatusError, isNodeError } from '../objects/errors';
+import { isOperationAbortedError, isDeadlineExceededError } from '../utils/pollController';
 import { createTimestamp } from '../utils/time';
 import { NodeApiIds } from './apiId';
 import { createEvent, Event } from './event';
@@ -222,11 +222,12 @@ export function createUnknownErrorMetricsEvent(
 
 // Error routing:
 //
-// Error source                                          | Error type    | Metric
-// PollController: polling interval setTimeout fires    | TimeoutError  | TimeoutErrorMetricsEvent
-// PollController.abort() / processor.stop()            | AbortError    | null (ignored)
-// API client: AbortSignal.timeout() deadline fires     | TimeoutError  | TimeoutErrorMetricsEvent
-// API client: AbortController.abort() called           | AbortError    | null (ignored)
+// Error source                                              | Error type             | Metric
+// PollController: polling interval setTimeout fires        | DeadlineExceededError  | TimeoutErrorMetricsEvent
+// PollController.abort() / processor.stop()                | AbortError             | null (ignored)
+// API client: createTimeoutSignal() deadline fires         | DeadlineExceededError  | TimeoutErrorMetricsEvent
+// API client: AbortSignal.timeout() deadline fires         | DOMException(TimeoutError name) | TimeoutErrorMetricsEvent
+// API client: AbortController.abort() called               | AbortError             | null (ignored)
 export const toErrorMetricsEvent = (
   e: any,
   tag: string,
@@ -238,7 +239,7 @@ export const toErrorMetricsEvent = (
   if (e instanceof AbortError || isOperationAbortedError(e)) {
     return null;
   }
-  if (e instanceof TimeoutError || isOperationTimedOutError(e)) {
+  if (e instanceof DeadlineExceededError || isDeadlineExceededError(e)) {
     return createTimeoutErrorMetricsEvent(tag, apiId, sourceId, sdkVersion);
   }
   if (e instanceof IllegalArgumentError || e instanceof IllegalStateError) {

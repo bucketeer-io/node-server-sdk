@@ -1,12 +1,12 @@
 import { InvalidStatusError } from '../objects/errors';
-import { isOperationAbortedError, isOperationTimedOutError } from './pollController';
+import { isOperationAbortedError, isDeadlineExceededError } from './pollController';
 
 // When a deadline or abort fires, decide what error to surface to the caller.
 // For timeout: prefer the last meaningful HTTP error over a bare TimeoutError.
 // For abort: always surface the AbortError (intentional cancel, no HTTP context).
 function resolveThrowable(e: unknown, lastHttpError: Error | undefined): Error {
   const err = e instanceof Error ? e : new Error(String(e));
-  if (lastHttpError !== undefined && isOperationTimedOutError(err)) return lastHttpError;
+  if (lastHttpError !== undefined && isDeadlineExceededError(err)) return lastHttpError;
   return err;
 }
 
@@ -58,7 +58,7 @@ const RETRYABLE_STATUS_CODES = new Set<number>([
  * header the delay override is threaded back via RetryDecision.
  */
 export function isRetryable(error: Error): RetryDecision {
-  if (isOperationAbortedError(error) || isOperationTimedOutError(error)) return { retry: false };
+  if (isOperationAbortedError(error) || isDeadlineExceededError(error)) return { retry: false };
 
   const code = (error as NodeJS.ErrnoException).code;
   if (RETRYABLE_CODES.has(code ?? '')) return { retry: true };
@@ -148,7 +148,7 @@ export async function promiseRetriable<T>(
       const lastError = error instanceof Error ? error : new Error(String(error));
 
       // Path A: timeout may be replaced by the last HTTP error
-      if (isOperationTimedOutError(lastError)) {
+      if (isDeadlineExceededError(lastError)) {
         throw resolveThrowable(lastError, lastHttpError);
       }
 

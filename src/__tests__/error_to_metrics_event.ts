@@ -14,7 +14,7 @@ import {
   createPayloadTooLargeErrorMetricsEvent,
   createServiceUnavailableErrorMetricsEvent,
 } from '../objects/status';
-import { InvalidStatusError, IllegalStateError, IllegalArgumentError, TimeoutError } from '../objects/errors';
+import { InvalidStatusError, IllegalStateError, IllegalArgumentError, DeadlineExceededError } from '../objects/errors';
 import { SourceId } from '../objects/sourceId';
 import { createNodeJSError } from './utils/native_error';
 
@@ -355,8 +355,8 @@ test('toErrorMetricsEvent returns correct event for unknown object', (t) => {
   t.deepEqual(actualEvent, expectedEvent);
 });
 
-test('toErrorMetricsEvent returns correct event for TimeoutError', (t) => {
-  const error = new TimeoutError(5000, 'poll timed out');
+test('toErrorMetricsEvent returns correct event for DeadlineExceededError', (t) => {
+  const error = new DeadlineExceededError(5000, 'poll timed out');
   const tag = 'test-tag';
   const apiId = ApiId.GET_FEATURE_FLAGS;
 
