@@ -39,6 +39,12 @@ export function createTimeoutSignal(timeoutMs: number): AbortSignal {
   return controller.signal;
 }
 
+// Ordering rule: always call isOperationTimedOutError before isOperationAbortedError.
+// Node wraps the abort reason in a DOMException{name:'AbortError', cause:<reason>} when
+// https.request is cancelled via its signal. isOperationAbortedError returns true for any
+// such DOMException regardless of cause, so checking for timeout first is required to
+// distinguish a deadline expiry from a genuine abort.
+
 export function isOperationTimedOutError(e: unknown): boolean {
   return e instanceof TimeoutError || (e as any)?.name === 'TimeoutError' || (e as any)?.cause instanceof TimeoutError;
 }

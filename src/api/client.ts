@@ -28,6 +28,8 @@ const featureFlagsAPI = '/get_feature_flags';
 const segmentUsersAPI = '/get_segment_users';
 const eventsAPI = '/register_events';
 
+const REQUEST_TIMEOUT_MS = 5000;
+
 const DEFAULT_RETRY_POLICY: RetryPolicy = {
   maxRetries: 0,
   initialInterval: 1000,
@@ -145,7 +147,6 @@ export class APIClient {
     chunk: string,
     signal?: AbortSignal,
   ): Promise<[T, number]> {
-    const REQUEST_TIMEOUT_MS = 5000;
     const opts: https.RequestOptions = {
       method: 'POST',
       headers: {
@@ -157,11 +158,7 @@ export class APIClient {
     };
     return new Promise((resolve, reject) => {
       if (signal?.aborted) {
-        const reason = signal.reason;
-        if (isOperationTimedOutError(reason))
-          return reject(reason instanceof TimeoutError ? reason : new TimeoutError(REQUEST_TIMEOUT_MS));
-        if (isOperationAbortedError(reason)) return reject(new AbortError());
-        return reject(reason);
+        return reject(this.normalizeRequestError(signal.reason));
       }
       const clientReq = https.request(url, opts, (res) => {
         res.setEncoding('utf8');
@@ -192,16 +189,7 @@ export class APIClient {
         });
       });
       clientReq.on('error', (e) => {
-        // Important note: Node wraps the abort reason in a DOMException{name:'AbortError', cause: <reason>}
-        // when the request is cancelled via its signal option. Unwrap to get the true reason.
-        const reason = isOperationAbortedError(e) && (e as any).cause != null ? (e as any).cause : e;
-        if (isOperationTimedOutError(reason)) {
-          reject(reason instanceof TimeoutError ? reason : new TimeoutError(REQUEST_TIMEOUT_MS));
-        } else if (isOperationAbortedError(reason)) {
-          reject(new AbortError());
-        } else {
-          reject(e);
-        }
+        reject(this.normalizeRequestError(e));
       });
       clientReq.on('timeout', () => {
         // No error arg: Node.js emits ECONNRESET on clientReq (pre-response phase)
@@ -213,5 +201,15 @@ export class APIClient {
       clientReq.write(chunk);
       clientReq.end();
     });
+  }
+
+  private normalizeRequestError(e: unknown): Error {
+    if (isOperationTimedOutError(e)) {
+      if (e instanceof TimeoutError) return e;
+      const cause = (e as any)?.cause;
+      return cause instanceof TimeoutError ? cause : new TimeoutError(REQUEST_TIMEOUT_MS);
+    }
+    if (isOperationAbortedError(e)) return new AbortError();
+    return e as Error;
   }
 }

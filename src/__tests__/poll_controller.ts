@@ -109,6 +109,32 @@ test.serial('createTimeoutSignal: signal.reason is TimeoutError with correct tim
   }
 });
 
+// Predicate cause-awareness tests
+//
+// Node wraps the abort reason in a DOMException{name:'AbortError', cause:<reason>} when
+// https.request is cancelled via its signal. These tests verify that the predicates
+// correctly classify the error based on the cause, not just the outer DOMException type.
+
+function makeDOMException(cause: unknown) {
+  return Object.assign(new Error('The operation was aborted'), {
+    name: 'AbortError',
+    code: 'ABORT_ERR',
+    cause,
+  });
+}
+
+test('isOperationTimedOutError: DOMException wrapping TimeoutError cause returns true', (t) => {
+  t.true(isOperationTimedOutError(makeDOMException(new TimeoutError(50))));
+});
+
+test('isOperationTimedOutError: DOMException wrapping AbortError cause returns false', (t) => {
+  t.false(isOperationTimedOutError(makeDOMException(new AbortError())));
+});
+
+test('isOperationAbortedError: DOMException wrapping AbortError cause returns true', (t) => {
+  t.true(isOperationAbortedError(makeDOMException(new AbortError())));
+});
+
 test.serial('replacing signal before timeout fires clears the old timer and arms a new one', (t) => {
   const clock = sinon.useFakeTimers();
   try {
