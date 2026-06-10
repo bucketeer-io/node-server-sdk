@@ -1,6 +1,8 @@
 import { InvalidStatusError } from '../objects/errors';
 import { isOperationAbortedError, isDeadlineExceededError } from './pollController';
 
+const DEFAULT_INITIAL_INTERVAL_MS = 1_000;
+
 // When a deadline or abort fires, decide what error to surface to the caller.
 // For timeout: prefer the last meaningful HTTP error over a bare TimeoutError.
 // For abort: always surface the AbortError (intentional cancel, no HTTP context).
@@ -76,12 +78,7 @@ export function isRetryable(error: Error): RetryDecision {
  * Exported for testing purposes.
  */
 export function calculateBackoff(attempt: number, policy: RetryPolicy): number {
-  const initialInterval = Math.max(0, policy.initialInterval);
-  // initialInterval=0 means "no delay" — retries fire immediately with no wait.
-  if (initialInterval === 0) {
-    return 0;
-  }
-
+  const initialInterval = policy.initialInterval > 0 ? policy.initialInterval : DEFAULT_INITIAL_INTERVAL_MS;
   const multiplier = policy.multiplier && policy.multiplier > 0 ? policy.multiplier : 2.0;
 
   // Exponential backoff: initialInterval * (multiplier ^ attempt)

@@ -4,7 +4,7 @@ import { promiseRetriable, isRetryable, RetryPolicy } from '../utils/promiseRetr
 import { InvalidStatusError, DeadlineExceededError, AbortError } from '../objects/errors';
 
 const POLICY: RetryPolicy = { maxRetries: 3, initialInterval: 100, maxInterval: 5_000 };
-const ZERO_DELAY_POLICY: RetryPolicy = { maxRetries: 3, initialInterval: 0, maxInterval: 0 };
+const NEAR_ZERO_DELAY_POLICY: RetryPolicy = { maxRetries: 3, initialInterval: 1, maxInterval: 0 };
 
 // Path A: deadline fires during an in-flight request, lastErr = HTTP 499
 test.serial('Path A: TimeoutError from fn is replaced by lastHttpError (499)', async (t) => {
@@ -19,7 +19,7 @@ test.serial('Path A: TimeoutError from fn is replaced by lastHttpError (499)', a
     return Promise.reject(new DeadlineExceededError(30_000));
   });
 
-  const p = promiseRetriable(fn, ZERO_DELAY_POLICY, isRetryable, controller.signal);
+  const p = promiseRetriable(fn, NEAR_ZERO_DELAY_POLICY, isRetryable, controller.signal);
   await clock.tickAsync(10);
 
   const err = await t.throwsAsync(() => p);
@@ -64,7 +64,7 @@ test.serial('Path A: TimeoutError replaced by lastHttpError (503)', async (t) =>
     return Promise.reject(new DeadlineExceededError(30_000));
   });
 
-  const p = promiseRetriable(fn, ZERO_DELAY_POLICY, isRetryable, controller.signal);
+  const p = promiseRetriable(fn, NEAR_ZERO_DELAY_POLICY, isRetryable, controller.signal);
   await clock.tickAsync(10);
 
   const err = await t.throwsAsync(() => p);
@@ -84,7 +84,7 @@ test.serial('No prior HTTP error: bare TimeoutError is surfaced unchanged', asyn
     return Promise.reject(new DeadlineExceededError(30_000));
   });
 
-  const p = promiseRetriable(fn, ZERO_DELAY_POLICY, isRetryable, controller.signal);
+  const p = promiseRetriable(fn, NEAR_ZERO_DELAY_POLICY, isRetryable, controller.signal);
   await clock.tickAsync(10);
 
   const err = await t.throwsAsync(() => p);
@@ -98,7 +98,7 @@ test.serial('Path C: pre-aborted TimeoutError signal with no prior HTTP error th
 
   const fn = sinon.stub<[AbortSignal | undefined], Promise<unknown>>();
 
-  const p = promiseRetriable(fn, ZERO_DELAY_POLICY, isRetryable, controller.signal);
+  const p = promiseRetriable(fn, NEAR_ZERO_DELAY_POLICY, isRetryable, controller.signal);
 
   const err = await t.throwsAsync(() => p);
   t.true(err instanceof DeadlineExceededError);
@@ -118,7 +118,7 @@ test.serial('AbortError is always thrown as-is regardless of lastHttpError', asy
     return Promise.reject(new AbortError());
   });
 
-  const p = promiseRetriable(fn, ZERO_DELAY_POLICY, isRetryable, controller.signal);
+  const p = promiseRetriable(fn, NEAR_ZERO_DELAY_POLICY, isRetryable, controller.signal);
   await clock.tickAsync(10);
 
   const err = await t.throwsAsync(() => p);

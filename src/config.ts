@@ -275,9 +275,9 @@ const defineBKTConfig = (config: Partial<BKTConfig>): BKTConfig => {
     baseConfig.maxRetries = DEFAULT_MAX_RETRIES;
   }
 
-  if (baseConfig.retryInitialInterval < 0) {
+  if (baseConfig.retryInitialInterval <= 0) {
     baseConfig.logger?.warn?.(
-      `retryInitialInterval (${baseConfig.retryInitialInterval}) must be >= 0. Using default value (${DEFAULT_RETRY_INITIAL_INTERVAL_MILLIS}).`,
+      `retryInitialInterval (${baseConfig.retryInitialInterval}) must be > 0. Using default value (${DEFAULT_RETRY_INITIAL_INTERVAL_MILLIS}).`,
     );
     baseConfig.retryInitialInterval = DEFAULT_RETRY_INITIAL_INTERVAL_MILLIS;
   }

@@ -415,6 +415,16 @@ test('should reset negative retryInitialInterval to default', (t) => {
   t.is(config.retryMultiplier, 2.0);
 });
 
+test('should reset zero retryInitialInterval to default', (t) => {
+  const config = defineBKTConfig({
+    apiKey: 'key',
+    apiEndpoint: 'endpoint',
+    appVersion: '1.2.3',
+    retryInitialInterval: 0,
+  });
+  t.is(config.retryInitialInterval, 1000);
+});
+
 test('should reset retryMaxInterval to default when less than retryInitialInterval', (t) => {
   const config = defineBKTConfig({
     apiKey: 'key',

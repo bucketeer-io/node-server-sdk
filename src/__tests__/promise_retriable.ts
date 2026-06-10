@@ -246,11 +246,11 @@ test.serial('calculateBackoff - caps at maxInterval', (t) => {
   t.is(calculateBackoff(10, p), 5000);
 });
 
-test.serial('calculateBackoff - returns 0 for any attempt when initialInterval is 0 (no-delay mode)', (t) => {
+test.serial('calculateBackoff - falls back to default interval when initialInterval is 0', (t) => {
   const p: RetryPolicy = { maxRetries: 3, initialInterval: 0, maxInterval: 10_000, multiplier: 2.0 };
-  t.is(calculateBackoff(0, p), 0);
-  t.is(calculateBackoff(1, p), 0);
-  t.is(calculateBackoff(5, p), 0);
+  t.true(calculateBackoff(0, p) > 0);
+  t.true(calculateBackoff(1, p) > 0);
+  t.true(calculateBackoff(5, p) > 0);
 });
 
 test.serial('calculateBackoff - uses custom multiplier', (t) => {
