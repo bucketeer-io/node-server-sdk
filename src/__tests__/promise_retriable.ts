@@ -521,7 +521,7 @@ test.serial('promiseRetriable - AbortError is not retried (routed through should
   t.is(shouldRetrySpy.callCount, 1);
 });
 
-test.serial('promiseRetriable - TimeoutError is not retried (routed through shouldRetry)', async (t) => {
+test.serial('promiseRetriable - TimeoutError is not retried (intercepted before shouldRetry)', async (t) => {
   const timeoutErr = new TimeoutError(5000);
   const fn = sinon.stub<[AbortSignal | undefined], Promise<never>>().rejects(timeoutErr);
   const shouldRetrySpy = sinon.spy(isRetryable);
@@ -531,7 +531,7 @@ test.serial('promiseRetriable - TimeoutError is not retried (routed through shou
   );
   t.is(thrownError, timeoutErr);
   t.is(fn.callCount, 1);
-  t.is(shouldRetrySpy.callCount, 1);
+  t.is(shouldRetrySpy.callCount, 0); // TimeoutError is intercepted before shouldRetry
 });
 
 test.serial('signal fired mid-request propagates abort into fn', async (t) => {

@@ -1,6 +1,15 @@
 import { InvalidStatusError } from '../objects/errors';
 import { isOperationAbortedError, isOperationTimedOutError } from './pollController';
 
+// When a deadline or abort fires, decide what error to surface to the caller.
+// For timeout: prefer the last meaningful HTTP error over a bare TimeoutError.
+// For abort: always surface the AbortError (intentional cancel, no HTTP context).
+function resolveThrowable(e: unknown, lastHttpError: Error | undefined): Error {
+  const err = e instanceof Error ? e : new Error(String(e));
+  if (lastHttpError !== undefined && isOperationTimedOutError(err)) return lastHttpError;
+  return err;
+}
+
 export interface RetryPolicy {
   /** Maximum number of retry attempts */
   maxRetries: number;
@@ -127,14 +136,26 @@ export async function promiseRetriable<T>(
 ): Promise<T> {
   const { maxRetries } = retryPolicy;
   let retriesPerformed = 0;
+  let lastHttpError: Error | undefined;
 
   while (true) {
-    if (signal?.aborted) throw signal.reason;
+    // Path C: deadline may have fired between attempts
+    if (signal?.aborted) throw resolveThrowable(signal.reason, lastHttpError);
 
     try {
       return await fn(signal);
     } catch (error) {
       const lastError = error instanceof Error ? error : new Error(String(error));
+
+      // Path A: timeout may be replaced by the last HTTP error
+      if (isOperationTimedOutError(lastError)) {
+        throw resolveThrowable(lastError, lastHttpError);
+      }
+
+      // AbortError carries no HTTP context; exclude it from lastHttpError
+      if (!isOperationAbortedError(lastError)) {
+        lastHttpError = lastError;
+      }
 
       // If we have no more retries allowed, throw immediately
       if (retriesPerformed >= maxRetries) {
@@ -163,7 +184,12 @@ export async function promiseRetriable<T>(
       }
 
       if (waitTime > 0) {
-        await abortableSleep(waitTime, signal);
+        // Path B: deadline may fire during inter-retry sleep
+        try {
+          await abortableSleep(waitTime, signal);
+        } catch (sleepError) {
+          throw resolveThrowable(sleepError, lastHttpError);
+        }
       }
 
       retriesPerformed++;
