@@ -195,7 +195,7 @@ export class APIClient {
         // No error arg: Node.js emits ECONNRESET on clientReq (pre-response phase)
         // or on res (post-headers phase). Both paths are handled — clientReq.on('error')
         // and res.on('error') above — so the promise always rejects. 
-        // ECONNRESET is retriable.
+        // ECONNRESET is in RETRYABLE_CODES, so the attempt is retried.
         clientReq.destroy();
       });
       clientReq.write(chunk);
