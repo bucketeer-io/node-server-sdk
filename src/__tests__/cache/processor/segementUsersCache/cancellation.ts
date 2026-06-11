@@ -56,7 +56,10 @@ test.serial('stop() aborts an in-flight getSegmentUsers call', async (t) => {
   mockCache.expects('get').withArgs(SEGEMENT_USERS_REQUESTED_AT).returns(0);
 
   const mockEventEmitter = sandbox.mock(options.eventEmitter);
-  mockEventEmitter.expects('emit').once().withArgs('error', sino.match.any);
+  mockEventEmitter.expects('emit').once().withArgs(
+    'error',
+    sino.match({ error: sino.match.instanceOf(AbortError), apiId: ApiId.GET_SEGMENT_USERS }),
+  );
 
   // Deferred promise: capture `resolve` so the stub can signal "request started"
   // from outside the constructor. Without this, inFlightStarted would never resolve.
@@ -239,8 +242,12 @@ test.serial('polling interval deadline aborts a hanging getSegmentUsers call', a
   mockCache.expects('get').withArgs(SEGEMENT_USERS_REQUESTED_AT).atLeast(1).returns(0);
 
   let errorEmitted = false;
-  options.eventEmitter.on('error', ({ apiId }) => {
-    if (apiId === ApiId.GET_SEGMENT_USERS) errorEmitted = true;
+  let emittedError: unknown;
+  options.eventEmitter.on('error', ({ apiId, error }) => {
+    if (apiId === ApiId.GET_SEGMENT_USERS) {
+      errorEmitted = true;
+      emittedError = error;
+    }
   });
 
   // Deferred promise: capture `resolve` so the stub can signal "request started"
@@ -267,5 +274,6 @@ test.serial('polling interval deadline aborts a hanging getSegmentUsers call', a
   await processor.stop();
 
   t.true(errorEmitted, 'expected an error event to be emitted when poll deadline fires');
+  t.true(emittedError instanceof DeadlineExceededError, 'expected a DeadlineExceededError on poll deadline');
   t.pass();
 });

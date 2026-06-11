@@ -58,7 +58,10 @@ test.serial('stop() aborts an in-flight getFeatureFlags call', async (t) => {
   mockCache.expects('get').withArgs(FEATURE_FLAG_REQUESTED_AT).returns(0);
 
   const mockEventEmitter = sandbox.mock(options.eventEmitter);
-  mockEventEmitter.expects('emit').once().withArgs('error', sino.match.any);
+  mockEventEmitter.expects('emit').once().withArgs(
+    'error',
+    sino.match({ error: sino.match.instanceOf(AbortError), apiId: ApiId.GET_FEATURE_FLAGS }),
+  );
 
   // Signal that the stub has started so we know when to call stop()
   let resolveInFlight!: () => void;
@@ -246,8 +249,12 @@ test.serial('polling interval deadline aborts a hanging getFeatureFlags call', a
   mockCache.expects('get').withArgs(FEATURE_FLAG_REQUESTED_AT).atLeast(1).returns(0);
 
   let errorEmitted = false;
-  options.eventEmitter.on('error', ({ apiId }) => {
-    if (apiId === ApiId.GET_FEATURE_FLAGS) errorEmitted = true;
+  let emittedError: unknown;
+  options.eventEmitter.on('error', ({ apiId, error }) => {
+    if (apiId === ApiId.GET_FEATURE_FLAGS) {
+      errorEmitted = true;
+      emittedError = error;
+    }
   });
 
   let resolveInFlight!: () => void;
@@ -277,5 +284,6 @@ test.serial('polling interval deadline aborts a hanging getFeatureFlags call', a
   await processor.stop();
 
   t.true(errorEmitted, 'expected an error event to be emitted when poll deadline fires');
+  t.true(emittedError instanceof DeadlineExceededError, 'expected a DeadlineExceededError on poll deadline');
   t.pass();
 });
