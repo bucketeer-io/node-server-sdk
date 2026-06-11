@@ -236,11 +236,11 @@ export const toErrorMetricsEvent = (
   sdkVersion: string,
   logger?: Logger,
 ): Event | null => {
-  if (e instanceof AbortError || isOperationAbortedError(e)) {
-    return null;
-  }
   if (e instanceof DeadlineExceededError || isDeadlineExceededError(e)) {
     return createTimeoutErrorMetricsEvent(tag, apiId, sourceId, sdkVersion);
+  }
+  if (e instanceof AbortError || isOperationAbortedError(e)) {
+    return null;
   }
   if (e instanceof IllegalArgumentError || e instanceof IllegalStateError) {
     return createInternalSdkErrorMetricsEvent(tag, apiId, sourceId, sdkVersion, e.message);
