@@ -97,13 +97,13 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
     try {
       await this.getFeatureFlags();
     } catch (error) {
-      if (isOperationAbortedError(error)) return;
       if (isDeadlineExceededError(error)) {
         if (!this.stopped) {
           this.pushErrorMetricsEvent(new DeadlineExceededError(this.pollingInterval, 'poll timed out'));
         }
         return;
       }
+      if (isOperationAbortedError(error)) return;
       this.pushErrorMetricsEvent(error);
     }
   }
