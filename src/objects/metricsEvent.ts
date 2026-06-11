@@ -225,7 +225,7 @@ export function createUnknownErrorMetricsEvent(
 // Error source                                              | Error type             | Metric
 // PollController: polling interval setTimeout fires        | DeadlineExceededError  | TimeoutErrorMetricsEvent
 // PollController.abort() / processor.stop()                | AbortError             | null (ignored)
-// API client: createTimeoutSignal() deadline fires         | DeadlineExceededError  | TimeoutErrorMetricsEvent
+// API client: createDeadlineExceededSignal() deadline fires         | DeadlineExceededError  | TimeoutErrorMetricsEvent
 // API client: AbortSignal.timeout() deadline fires         | DOMException(TimeoutError name) | TimeoutErrorMetricsEvent
 // API client: AbortController.abort() called               | AbortError             | null (ignored)
 export const toErrorMetricsEvent = (

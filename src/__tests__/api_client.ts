@@ -6,7 +6,7 @@ import { APIClient } from '../api/client';
 import { User } from '../bootstrap';
 import { AbortError, DeadlineExceededError, InvalidStatusError } from '../objects/errors';
 import { isRetryable, RetryPolicy } from '../utils/promiseRetriable';
-import { createTimeoutSignal, isOperationAbortedError, isDeadlineExceededError } from '../utils/pollController';
+import { createDeadlineExceededSignal, isOperationAbortedError, isDeadlineExceededError } from '../utils/pollController';
 import { SourceId } from '../objects/sourceId';
 
 const host = 'api.example.com:443';
@@ -359,7 +359,7 @@ test.serial('postRequest: pre-aborted signal with DeadlineExceededError reason p
   t.is(err.timeoutMillis, 1234);
 });
 
-test.serial('postRequest: createTimeoutSignal fires during request - DeadlineExceededError preserves original timeoutMillis', async (t) => {
+test.serial('postRequest: createDeadlineExceededSignal fires during request - DeadlineExceededError preserves original timeoutMillis', async (t) => {
   const fakeReq = makeFakeClientReq();
   const httpsRequestStub = sinon.stub(https, 'request').callsFake((_url, opts: any) => {
     const signal: AbortSignal | undefined = opts?.signal;
@@ -371,7 +371,7 @@ test.serial('postRequest: createTimeoutSignal fires during request - DeadlineExc
   t.teardown(() => httpsRequestStub.restore());
 
   const client = new APIClient(host, apiKey);
-  const signal = createTimeoutSignal(50);
+  const signal = createDeadlineExceededSignal(50);
 
   const keepAlive = setInterval(() => {}, 100);
   t.teardown(() => clearInterval(keepAlive));
@@ -436,7 +436,7 @@ test.serial('postRequest: Node DOMException wrapping DeadlineExceededError cause
   t.teardown(() => httpsRequestStub.restore());
 
   const client = new APIClient(host, apiKey);
-  const signal = createTimeoutSignal(50);
+  const signal = createDeadlineExceededSignal(50);
   const keepAlive = setInterval(() => {}, 100);
   t.teardown(() => clearInterval(keepAlive));
 

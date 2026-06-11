@@ -8,7 +8,7 @@ import { User } from '../bootstrap';
 import { AbortError, DeadlineExceededError, InvalidStatusError } from '../objects/errors';
 import { RetryPolicy } from '../utils/promiseRetriable';
 import { SourceId } from '../objects/sourceId';
-import { createTimeoutSignal, isOperationAbortedError, isDeadlineExceededError } from '../utils/pollController';
+import { createDeadlineExceededSignal, isOperationAbortedError, isDeadlineExceededError } from '../utils/pollController';
 
 const port = 9997;
 const host = `localhost:${port}`;
@@ -179,14 +179,14 @@ test.serial('getEvaluation: AbortSignal cancels mid-retry backoff', async (t) =>
 // e.cause to classify the error correctly; otherwise a deadline timeout is reported
 // as AbortError and no TimeoutErrorMetricsEvent is ever emitted.
 
-test.serial('getEvaluation: createTimeoutSignal fires with timeout - error is DeadlineExceededError not AbortError', async (t) => {
+test.serial('getEvaluation: createDeadlineExceededSignal fires with timeout - error is DeadlineExceededError not AbortError', async (t) => {
   currentHandler = (_req, _res) => {
     // Never respond so the signal deadline fires against a real TLS connection
   };
 
   const retryPolicy: RetryPolicy = { maxRetries: 0, initialInterval: 100, maxInterval: 1000 };
   const client = new APIClient(host, apiKey, retryPolicy);
-  const signal = createTimeoutSignal(50);
+  const signal = createDeadlineExceededSignal(50);
 
   const err = await t.throwsAsync(() =>
     client.getEvaluation('tag', user, 'feature-id', defaultSourceId, sdkVersion, signal),

@@ -1,6 +1,6 @@
 import test from 'ava';
 import sinon from 'sinon';
-import { PollController, createTimeoutSignal, isDeadlineExceededError, isOperationAbortedError } from '../utils/pollController';
+import { PollController, createDeadlineExceededSignal, isDeadlineExceededError, isOperationAbortedError } from '../utils/pollController';
 import { DeadlineExceededError, AbortError } from '../objects/errors';
 
 test('createSignal returns a non-aborted signal', (t) => {
@@ -79,15 +79,15 @@ test('createSignal replacing previous gives old signal AbortError reason', (t) =
   pc.abort();
 });
 
-test('createTimeoutSignal: returns a non-aborted signal initially', (t) => {
-  const signal = createTimeoutSignal(10_000);
+test('createDeadlineExceededSignal: returns a non-aborted signal initially', (t) => {
+  const signal = createDeadlineExceededSignal(10_000);
   t.false(signal.aborted);
 });
 
-test.serial('createTimeoutSignal: signal aborts with DeadlineExceededError after timeoutMs elapses', (t) => {
+test.serial('createDeadlineExceededSignal: signal aborts with DeadlineExceededError after timeoutMs elapses', (t) => {
   const clock = sinon.useFakeTimers();
   try {
-    const signal = createTimeoutSignal(100);
+    const signal = createDeadlineExceededSignal(100);
     t.false(signal.aborted);
     clock.tick(100);
     t.true(signal.aborted);
@@ -96,10 +96,10 @@ test.serial('createTimeoutSignal: signal aborts with DeadlineExceededError after
   }
 });
 
-test.serial('createTimeoutSignal: signal.reason is DeadlineExceededError with correct timeoutMillis', (t) => {
+test.serial('createDeadlineExceededSignal: signal.reason is DeadlineExceededError with correct timeoutMillis', (t) => {
   const clock = sinon.useFakeTimers();
   try {
-    const signal = createTimeoutSignal(250);
+    const signal = createDeadlineExceededSignal(250);
     clock.tick(250);
     t.true(signal.reason instanceof DeadlineExceededError);
     t.is((signal.reason as DeadlineExceededError).timeoutMillis, 250);
