@@ -451,6 +451,18 @@ test('should adjust retryMaxInterval to retryInitialInterval when retryInitialIn
   t.is(config.retryMaxInterval, 15000);
 });
 
+test('should adjust retryMaxInterval after negative reset when retryInitialInterval exceeds the default max', (t) => {
+  const config = defineBKTConfig({
+    apiKey: 'key',
+    apiEndpoint: 'endpoint',
+    appVersion: '1.2.3',
+    retryInitialInterval: 15_000,
+    retryMaxInterval: -1,
+  });
+  t.is(config.retryInitialInterval, 15_000);
+  t.is(config.retryMaxInterval, 15_000);
+});
+
 test('should accept retryMaxInterval = 0 (no cap)', (t) => {
   const config = defineBKTConfig({
     apiKey: 'key',

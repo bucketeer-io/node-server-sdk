@@ -287,14 +287,14 @@ const defineBKTConfig = (config: Partial<BKTConfig>): BKTConfig => {
       `retryMaxInterval (${baseConfig.retryMaxInterval}) must be >= 0. Using default value (${DEFAULT_RETRY_MAX_INTERVAL_MILLIS}).`,
     );
     baseConfig.retryMaxInterval = DEFAULT_RETRY_MAX_INTERVAL_MILLIS;
-  } else if (baseConfig.retryMaxInterval > 0 && baseConfig.retryMaxInterval < baseConfig.retryInitialInterval) {
+  }
+
+  if (baseConfig.retryMaxInterval > 0 && baseConfig.retryMaxInterval < baseConfig.retryInitialInterval) {
     const adjusted = Math.max(baseConfig.retryInitialInterval, DEFAULT_RETRY_MAX_INTERVAL_MILLIS);
     baseConfig.logger?.warn?.(
       `retryMaxInterval (${baseConfig.retryMaxInterval}) must be >= retryInitialInterval (${baseConfig.retryInitialInterval}). Adjusting to ${adjusted}.`,
     );
     baseConfig.retryMaxInterval = adjusted;
-  } else {
-    // If retryMaxInterval is 0 (no cap) or >= retryInitialInterval, it's valid as is.
   }
 
   if (baseConfig.retryMultiplier <= 0) {
