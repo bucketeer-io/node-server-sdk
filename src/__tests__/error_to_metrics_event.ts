@@ -14,7 +14,7 @@ import {
   createPayloadTooLargeErrorMetricsEvent,
   createServiceUnavailableErrorMetricsEvent,
 } from '../objects/status';
-import { InvalidStatusError, IllegalStateError, IllegalArgumentError, DeadlineExceededError } from '../objects/errors';
+import { InvalidStatusError, IllegalStateError, IllegalArgumentError, DeadlineExceededError, TimeoutError } from '../objects/errors';
 import { SourceId } from '../objects/sourceId';
 import { createNodeJSError } from './utils/native_error';
 
@@ -380,6 +380,28 @@ test('toErrorMetricsEvent returns correct event for DeadlineExceededError', (t) 
 test('toErrorMetricsEvent returns timeout event for DOMException TimeoutError from AbortSignal.timeout()', (t) => {
   // AbortSignal.timeout() rejects with DOMException { name: 'TimeoutError' }, not the SDK TimeoutError class
   const error = new DOMException('The operation timed out.', 'TimeoutError');
+  const tag = 'test-tag';
+  const apiId = ApiId.GET_EVALUATION;
+
+  const expectedEvent = createTimeoutErrorMetricsEvent(
+    tag,
+    apiId,
+    SourceId.OPEN_FEATURE_NODE,
+    sdkVersion,
+  ).event;
+  const actualEvent = toErrorMetricsEvent(
+    error,
+    tag,
+    apiId,
+    SourceId.OPEN_FEATURE_NODE,
+    sdkVersion,
+  )?.event;
+
+  t.deepEqual(actualEvent, expectedEvent);
+});
+
+test('toErrorMetricsEvent returns timeout event for SDK TimeoutError', (t) => {
+  const error = new TimeoutError(5000);
   const tag = 'test-tag';
   const apiId = ApiId.GET_EVALUATION;
 

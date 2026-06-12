@@ -28,6 +28,7 @@ export class PollController {
 // SDK DeadlineExceededError so callers can recover the timeout value from signal.reason.
 // The timer is unref'd so it does not prevent the Node.js process from exiting
 // once the request that owns this signal has already completed.
+// Use this for API client calls (getEvaluation, registerEvents, getFeatureFlags, getSegmentUsers).
 export function createDeadlineExceededSignal(timeoutMs: number): AbortSignal {
   const controller = new AbortController();
   const timeoutId = setTimeout(
@@ -49,7 +50,7 @@ export function isDeadlineExceededError(e: unknown): boolean {
   return (
     e instanceof DeadlineExceededError ||
     (e as any)?.name === 'DeadlineExceededError' ||
-    (e as any)?.name === 'TimeoutError' || // DOMException from AbortSignal.timeout()
+    (e instanceof DOMException && e.name === 'TimeoutError') || // DOMException from AbortSignal.timeout()
     (e as any)?.cause instanceof DeadlineExceededError
   );
 }

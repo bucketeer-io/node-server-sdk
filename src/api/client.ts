@@ -37,6 +37,12 @@ const DEFAULT_RETRY_POLICY: RetryPolicy = {
   multiplier: 2.0,
 };
 
+/**
+ * All signal parameters must come from createDeadlineExceededSignal().
+ * AbortSignal.timeout() is also caught by isDeadlineExceededError, but
+ * normalizeRequestError re-wraps its DOMException as new DeadlineExceededError(REQUEST_TIMEOUT_MS),
+ * discarding the caller's actual deadline value.
+ */
 export class APIClient {
   private readonly host: string;
   private readonly apiKey: string;
