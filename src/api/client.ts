@@ -21,6 +21,11 @@ import {
   isRetryable,
 } from '../utils/promiseRetriable';
 import { isOperationAbortedError, isDeadlineExceededError } from '../utils/pollController';
+import {
+  DEFAULT_RETRY_INITIAL_INTERVAL_MILLIS,
+  DEFAULT_RETRY_MAX_INTERVAL_MILLIS,
+  DEFAULT_RETRY_MULTIPLIER,
+} from '../config';
 
 const scheme = 'https://';
 const evaluationAPI = '/get_evaluation';
@@ -30,11 +35,11 @@ const eventsAPI = '/register_events';
 
 const REQUEST_TIMEOUT_MS = 5000;
 
-const DEFAULT_RETRY_POLICY: RetryPolicy = {
+const DEFAULT_NO_RETRY_POLICY: RetryPolicy = {
   maxRetries: 0,
-  initialInterval: 1000,
-  maxInterval: 10000,
-  multiplier: 2.0,
+  initialInterval: DEFAULT_RETRY_INITIAL_INTERVAL_MILLIS,
+  maxInterval: DEFAULT_RETRY_MAX_INTERVAL_MILLIS,
+  multiplier: DEFAULT_RETRY_MULTIPLIER,
 };
 
 /**
@@ -52,7 +57,7 @@ export class APIClient {
   constructor(
     host: string,
     apiKey: string,
-    retryPolicy: RetryPolicy = DEFAULT_RETRY_POLICY,
+    retryPolicy: RetryPolicy = DEFAULT_NO_RETRY_POLICY,
     promiseRetriable: typeof defaultPromiseRetriable = defaultPromiseRetriable,
   ) {
     this.host = host;

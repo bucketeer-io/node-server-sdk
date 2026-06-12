@@ -167,10 +167,10 @@ const DEFAULT_FLUSH_INTERVAL_MILLIS = 30_000; // 30 seconds
 const DEFAULT_MAX_QUEUE_SIZE = 50;
 const MINIMUM_POLLING_INTERVAL_MILLIS = 60_000; // 60 seconds
 const DEFAULT_POLLING_INTERVAL_MILLIS = 60_000; // 60 seconds
-const DEFAULT_MAX_RETRIES = 3;
-const DEFAULT_RETRY_INITIAL_INTERVAL_MILLIS = 1_000; // 1 second
-const DEFAULT_RETRY_MAX_INTERVAL_MILLIS = 10_000; // 10 seconds
-const DEFAULT_RETRY_MULTIPLIER = 2.0;
+export const DEFAULT_MAX_RETRIES = 3;
+export const DEFAULT_RETRY_INITIAL_INTERVAL_MILLIS = 1_000; // 1 second
+export const DEFAULT_RETRY_MAX_INTERVAL_MILLIS = 10_000; // 10 seconds
+export const DEFAULT_RETRY_MULTIPLIER = 2.0;
 
 const defineBKTConfig = (config: Partial<BKTConfig>): BKTConfig => {
   let baseConfig: BKTConfig = {
