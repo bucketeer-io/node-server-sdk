@@ -237,7 +237,7 @@ export const toErrorMetricsEvent = (
   sdkVersion: string,
   logger?: Logger,
 ): Event | null => {
-  if (e instanceof DeadlineExceededError || e instanceof TimeoutError || isDeadlineExceededError(e)) {
+  if (e instanceof TimeoutError || isDeadlineExceededError(e)) {
     return createTimeoutErrorMetricsEvent(tag, apiId, sourceId, sdkVersion);
   }
   if (e instanceof AbortError || isOperationAbortedError(e)) {
