@@ -22,5 +22,6 @@ export default {
 				"src/": "build/"
 			},
       "compile": "tsc"
-		}
+		},
+  timeout: '30s',
 };

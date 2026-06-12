@@ -55,7 +55,7 @@ test:
 test-single:
 	rm -rf $(CURDIR)/__test
 	$(NPM_BIN_DIR)/babel src --extensions '.ts' --config-file "$(CURDIR)/babel-test.config.js" --out-dir "__test"
-	$(NPM_BIN_DIR)/ava --config ava-test.config.mjs $(filter-out $@,$(MAKECMDGOALS))
+	$(NPM_BIN_DIR)/ava --config ava-test.config.mjs $(patsubst src/%.ts,__test/%.js,$(filter-out $@,$(MAKECMDGOALS)))
 
 .PHONY: test-eslint
 test-eslint:
