@@ -14,9 +14,21 @@ import {
   createPayloadTooLargeErrorMetricsEvent,
   createServiceUnavailableErrorMetricsEvent,
 } from '../objects/status';
-import { InvalidStatusError, IllegalStateError, IllegalArgumentError } from '../objects/errors';
+import {
+  IllegalStateError,
+  IllegalArgumentError,
+  TimeoutError,
+  BadRequestError,
+  UnauthorizedError,
+  ForbiddenError,
+  NotFoundError,
+  PayloadTooLargeError,
+  InternalServerError,
+  ServiceUnavailableError,
+  NetworkError,
+  UnknownError,
+} from '../objects/errors';
 import { SourceId } from '../objects/sourceId';
-import { createNodeJSError } from './utils/native_error';
 
 const sdkVersion = '3.0.1-test';
 
@@ -66,8 +78,8 @@ test('toErrorMetricsEvent returns correct event for IllegalArgumentError', (t) =
   t.deepEqual(actualEvent, expectedEvent);
 });
 
-test('toErrorMetricsEvent returns correct event for InvalidStatusError with 400 status code', (t) => {
-  const error = new InvalidStatusError('Bad Request', 400);
+test('toErrorMetricsEvent returns correct event for BadRequestError (400)', (t) => {
+  const error = new BadRequestError('Bad Request');
   const tag = 'test-tag';
   const apiId = ApiId.GET_EVALUATION;
 
@@ -89,8 +101,8 @@ test('toErrorMetricsEvent returns correct event for InvalidStatusError with 400 
   t.deepEqual(actualEvent, expectedEvent);
 });
 
-test('skip generating error events for unauthorized error', (t) => {
-  const error = new InvalidStatusError('Unauthorized', 401);
+test('skip generating error events for UnauthorizedError (401)', (t) => {
+  const error = new UnauthorizedError('Unauthorized');
   const tag = 'test-tag';
   const apiId = ApiId.GET_EVALUATION;
 
@@ -105,8 +117,8 @@ test('skip generating error events for unauthorized error', (t) => {
   t.is(actualEvent, null);
 });
 
-test('skip generating error events for forbidden error', (t) => {
-  const error = new InvalidStatusError('ForbiddenError', 403);
+test('skip generating error events for ForbiddenError (403)', (t) => {
+  const error = new ForbiddenError('ForbiddenError');
   const tag = 'test-tag';
   const apiId = ApiId.GET_EVALUATION;
 
@@ -121,8 +133,8 @@ test('skip generating error events for forbidden error', (t) => {
   t.is(actualEvent, null);
 });
 
-test('toErrorMetricsEvent returns correct event for InvalidStatusError with 404 status code', (t) => {
-  const error = new InvalidStatusError('Not Found', 404);
+test('toErrorMetricsEvent returns correct event for NotFoundError (404)', (t) => {
+  const error = new NotFoundError('Not Found');
   const tag = 'test-tag';
   const apiId = ApiId.GET_EVALUATION;
 
@@ -143,8 +155,8 @@ test('toErrorMetricsEvent returns correct event for InvalidStatusError with 404 
   t.deepEqual(actualEvent, expectedEvent);
 });
 
-test('toErrorMetricsEvent returns correct event for InvalidStatusError with 408 status code', (t) => {
-  const error = new InvalidStatusError('Request Timeout', 408);
+test('toErrorMetricsEvent returns correct event for TimeoutError (408)', (t) => {
+  const error = new TimeoutError(0, 'Request Timeout');
   const tag = 'test-tag';
   const apiId = ApiId.GET_EVALUATION;
 
@@ -166,8 +178,8 @@ test('toErrorMetricsEvent returns correct event for InvalidStatusError with 408 
   t.deepEqual(actualEvent, expectedEvent);
 });
 
-test('toErrorMetricsEvent returns correct event for InvalidStatusError with 413 status code', (t) => {
-  const error = new InvalidStatusError('Payload Too Large', 413);
+test('toErrorMetricsEvent returns correct event for PayloadTooLargeError (413)', (t) => {
+  const error = new PayloadTooLargeError('Payload Too Large');
   const tag = 'test-tag';
   const apiId = ApiId.GET_EVALUATION;
 
@@ -188,8 +200,8 @@ test('toErrorMetricsEvent returns correct event for InvalidStatusError with 413 
   t.deepEqual(actualEvent, expectedEvent);
 });
 
-test('toErrorMetricsEvent returns correct event for InvalidStatusError with 500 status code', (t) => {
-  const error = new InvalidStatusError('Internal Server Error', 500);
+test('toErrorMetricsEvent returns correct event for InternalServerError (500)', (t) => {
+  const error = new InternalServerError('Internal Server Error');
   const tag = 'test-tag';
   const apiId = ApiId.GET_EVALUATION;
 
@@ -211,10 +223,10 @@ test('toErrorMetricsEvent returns correct event for InvalidStatusError with 500 
   t.deepEqual(actualEvent, expectedEvent);
 });
 
-test('toErrorMetricsEvent returns correct event for InvalidStatusError with 5xx ServiceUnavailableCodes status code', (t) => {
-  const serviceUnavailableCodes = [502, 503, 504];
-  serviceUnavailableCodes.forEach((element) => {
-    const error = new InvalidStatusError('Service Unavailable', element);
+test('toErrorMetricsEvent returns correct event for ServiceUnavailableError (502/503/504)', (t) => {
+  const codes = [502, 503, 504];
+  codes.forEach(() => {
+    const error = new ServiceUnavailableError('Service Unavailable');
     const tag = 'test-tag';
     const apiId = ApiId.GET_EVALUATION;
 
@@ -237,31 +249,8 @@ test('toErrorMetricsEvent returns correct event for InvalidStatusError with 5xx 
   });
 });
 
-test('toErrorMetricsEvent returns correct event for node error ECONNRESET', (t) => {
-  const error = createNodeJSError('Connection reset by peer', 'ECONNRESET');
-  error.code = 'ECONNRESET';
-  const tag = 'test-tag';
-  const apiId = ApiId.GET_EVALUATION;
-
-  const expectedEvent = createTimeoutErrorMetricsEvent(
-    tag,
-    apiId,
-    SourceId.OPEN_FEATURE_NODE,
-    sdkVersion,
-  ).event;
-  const actualEvent = toErrorMetricsEvent(
-    error,
-    tag,
-    apiId,
-    SourceId.OPEN_FEATURE_NODE,
-    sdkVersion,
-  )?.event;
-
-  t.deepEqual(actualEvent, expectedEvent);
-});
-
-test('toErrorMetricsEvent returns correct event for node error ECONNREFUSED', (t) => {
-  const error = createNodeJSError('Connection refused', 'ECONNREFUSED');
+test('toErrorMetricsEvent returns correct event for NetworkError (ECONNREFUSED / EHOSTUNREACH)', (t) => {
+  const error = new NetworkError('Connection refused');
   const tag = 'test-tag';
   const apiId = ApiId.GET_EVALUATION;
 
@@ -283,8 +272,8 @@ test('toErrorMetricsEvent returns correct event for node error ECONNREFUSED', (t
   t.deepEqual(actualEvent, expectedEvent);
 });
 
-test('toErrorMetricsEvent returns correct event for unknown status code', (t) => {
-  const error = new InvalidStatusError('Unknown Error', 999);
+test('toErrorMetricsEvent returns correct event for UnknownError with status code', (t) => {
+  const error = new UnknownError('Unknown Error', 999);
   const tag = 'test-tag';
   const apiId = ApiId.GET_EVALUATION;
 
@@ -307,8 +296,8 @@ test('toErrorMetricsEvent returns correct event for unknown status code', (t) =>
   t.deepEqual(actualEvent, expectedEvent);
 });
 
-test('toErrorMetricsEvent returns correct event for unknown error', (t) => {
-  const error = new Error('Unknown error occurred');
+test('toErrorMetricsEvent returns correct event for UnknownError without status code', (t) => {
+  const error = new UnknownError('Unknown error occurred');
   const tag = 'test-tag';
   const apiId = ApiId.GET_EVALUATION;
 
@@ -331,18 +320,16 @@ test('toErrorMetricsEvent returns correct event for unknown error', (t) => {
   t.deepEqual(actualEvent, expectedEvent);
 });
 
-test('toErrorMetricsEvent returns correct event for unknown object', (t) => {
-  const error = new Object();
+test('toErrorMetricsEvent returns correct event for TimeoutError (SDK class)', (t) => {
+  const error = new TimeoutError(5000, 'poll timed out');
   const tag = 'test-tag';
-  const apiId = ApiId.GET_EVALUATION;
+  const apiId = ApiId.GET_FEATURE_FLAGS;
 
-  const expectedEvent = createUnknownErrorMetricsEvent(
+  const expectedEvent = createTimeoutErrorMetricsEvent(
     tag,
     apiId,
     SourceId.OPEN_FEATURE_NODE,
     sdkVersion,
-    undefined,
-    String(error),
   ).event;
   const actualEvent = toErrorMetricsEvent(
     error,

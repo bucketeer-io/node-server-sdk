@@ -153,3 +153,24 @@ test('toBKTError handles undefined code in InvalidStatusError', (t) => {
   // default status code is 0
   t.is(result.statusCode, 0);
 });
+
+test('toBKTError converts Node.js ABORT_ERR to TimeoutError', (t) => {
+  const error = createNodeJSError('connection aborted', 'ABORT_ERR');
+  const result = toBKTError(error, { timeout: 5000 }) as TimeoutError;
+  t.true(result instanceof TimeoutError);
+  t.is(result.timeoutMillis, 5000);
+});
+
+test('toBKTError converts DOMException TimeoutError (name-based) to TimeoutError', (t) => {
+  const error = new DOMException('signal timed out', 'TimeoutError');
+  const result = toBKTError(error, { timeout: 3000 }) as TimeoutError;
+  t.true(result instanceof TimeoutError);
+  t.is(result.timeoutMillis, 3000);
+});
+
+test('toBKTError converts DOMException AbortError (name-based) to TimeoutError', (t) => {
+  const error = new DOMException('aborted', 'AbortError');
+  const result = toBKTError(error, { timeout: 1000 }) as TimeoutError;
+  t.true(result instanceof TimeoutError);
+  t.is(result.timeoutMillis, 1000);
+});

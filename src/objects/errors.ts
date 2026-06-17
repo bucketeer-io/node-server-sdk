@@ -1,11 +1,39 @@
 import typeUtils from 'node:util/types';
 
+/**
+ * Parses the `Retry-After` HTTP response header into milliseconds.
+ * Handles both RFC 7231 formats:
+ *  - Delta-seconds: "120" -> 120_000
+ *  - HTTP-date:     "Wed, 16 Apr 2026 12:00:00 GMT" -> (date - now) ms
+ * Returns undefined for missing, unparseable, or past HTTP-date values.
+ */
+export function parseRetryAfter(header: string | undefined): number | undefined {
+  if (!header) return undefined;
+
+  const trimmed = header.trim();
+
+  // Delta-seconds: a non-negative integer string
+  if (/^\d+$/.test(trimmed)) {
+    const seconds = parseInt(trimmed, 10);
+    return seconds * 1000;
+  }
+
+  // HTTP-date
+  const date = new Date(trimmed);
+  if (isNaN(date.getTime())) return undefined;
+
+  const ms = date.getTime() - Date.now();
+  return ms > 0 ? ms : undefined;
+}
+
 export class InvalidStatusError extends Error {
   name = 'InvalidStatusError'
   readonly code: number | undefined;
-  constructor(message: string, code: number | undefined) {
+  readonly retryAfterMs: number | undefined;
+  constructor(message: string, code: number | undefined, retryAfterMs?: number) {
     super(message);
     this.code = code;
+    this.retryAfterMs = retryAfterMs;
     // Set the prototype explicitly.
     Object.setPrototypeOf(this, new.target.prototype);
   }
@@ -150,6 +178,7 @@ export function toBKTError(e: unknown, params: {
   if (isNodeError(e)) {
     switch (e.code) {
       case 'ECONNRESET':
+      case 'ABORT_ERR':
         return new TimeoutError(params.timeout ?? 0, e.message);
       case 'EHOSTUNREACH':
       case 'ECONNREFUSED':
@@ -158,7 +187,12 @@ export function toBKTError(e: unknown, params: {
         return new UnknownError(e.message);
     }
   }
-  
+
+  // DOMException TimeoutError / AbortError (pre-flight abort via signal.reason)
+  if ((e as any)?.name === 'TimeoutError' || (e as any)?.name === 'AbortError') {
+    return new TimeoutError(params.timeout ?? 0, (e as Error).message ?? '');
+  }
+
   // Generic Error
   if (e instanceof Error) {
     return new UnknownError(e.message);

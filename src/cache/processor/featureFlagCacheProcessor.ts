@@ -8,6 +8,8 @@ import { ApiId } from '../../objects/apiId';
 import { Clock } from '../../utils/clock';
 import { SourceId } from '../../objects/sourceId';
 import { toProtoFeature } from './converter';
+import { PollController as PollAbortController } from '../../utils/pollController';
+import { BKTBaseError, TimeoutError, toBKTError } from '../../objects/errors';
 
 interface FeatureFlagProcessor {
   start(): Promise<void>;
@@ -42,6 +44,8 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
   private pollingScheduleID?: NodeJS.Timeout;
   private pollingInterval: number;
   private clock: Clock;
+  private pollController = new PollAbortController();
+  private stopped = false;
 
   featureTag: string;
   sourceId: SourceId;
@@ -60,24 +64,29 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
   }
 
   async start() {
+    this.stopped = false;
     // Execute immediately
     try {
       await this.getFeatureFlags();
     } catch (e) {
-      this.pushErrorMetricsEvent(e);
+      this.handleError(e);
       throw e;
     } finally {
-      this.pollingScheduleID = createSchedule(() => {
-        this.runUpdateCache();
-      }, this.pollingInterval);
+      if (!this.stopped) {
+        this.pollingScheduleID = createSchedule(() => {
+          this.runUpdateCache();
+        }, this.pollingInterval);
+      }
     }
   }
 
   async stop() {
+    this.stopped = true;
     if (this.pollingScheduleID) {
       removeSchedule(this.pollingScheduleID);
       this.pollingScheduleID = undefined;
     }
+    this.pollController.abort();
   }
 
   getPollingScheduleID(): NodeJS.Timeout | undefined {
@@ -88,12 +97,20 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
     try {
       await this.getFeatureFlags();
     } catch (error) {
-      // Always log the error regardless of initialization state
-      this.pushErrorMetricsEvent(error);
+      this.handleError(error);
     }
   }
 
+  private handleError(error: any) {
+    const bktError = toBKTError(error, {});
+    if (bktError instanceof TimeoutError && this.stopped) {
+      return;
+    }
+    this.pushErrorMetricsEvent(bktError);
+  }  
+
   private async getFeatureFlags() {
+    const signal = this.pollController.createSignal(this.pollingInterval);
     const featureFlagsId = await this.getFeatureFlagId();
     const requestedAt = await this.getFeatureFlagRequestedAt();
     const startMark = this.clock.latencyStart();
@@ -103,6 +120,7 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
       requestedAt,
       this.sourceId,
       this.sdkVersion,
+      signal,
     );
 
     const latency = this.clock.latencySecondsSince(startMark);
@@ -169,7 +187,7 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
     });
   }
 
-  async pushErrorMetricsEvent(error: any) {
+  async pushErrorMetricsEvent(error: BKTBaseError) {
     this.eventEmitter.emit('error', { error: error, apiId: ApiId.GET_FEATURE_FLAGS });
   }
 

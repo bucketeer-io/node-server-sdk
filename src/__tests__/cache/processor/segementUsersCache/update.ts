@@ -17,6 +17,7 @@ import { ProcessorEventsEmitter } from '../../../../processorEventsEmitter';
 import { SourceId } from '../../../../objects/sourceId';
 import { toProtoSegmentUsers } from '../../../../cache/processor/converter';
 import { UNSUPPORTED_PROTO_ENUM_VALUES } from '../../../../cache/processor/unsupportedEnumValues';
+import { toBKTError } from '../../../../objects/errors';
 
 const test = anyTest as TestFn<{
   processor: DefaultSegementUserCacheProcessor;
@@ -86,7 +87,7 @@ function buildSegmentResponse(
 
 test('err: failed while getting segment IDs', async (t) => {
   const { processor, sandbox, options } = t.context;
-  const internalErr = new Error('internal error');
+  const internalErr = toBKTError(new Error('internal error'), {});
   const mockSegementUsersCache = sandbox.mock(options.segmentUsersCache);
   mockSegementUsersCache.expects('getIds').rejects(internalErr);
   const mockProcessorEventsEmitter = sandbox.mock(options.eventEmitter);
@@ -102,7 +103,7 @@ test('err: failed while getting segment IDs', async (t) => {
 
 test('err: failed while getting requestedAt', async (t) => {
   const { processor, sandbox, options } = t.context;
-  const internalErr = new Error('internal error');
+  const internalErr = toBKTError(new Error('internal error'), {});
   const mockSegementUsersCache = sandbox.mock(options.segmentUsersCache);
   mockSegementUsersCache.expects('getIds').resolves([]);
   const mockCache = sandbox.mock(options.cache);
@@ -120,7 +121,7 @@ test('err: failed while getting requestedAt', async (t) => {
 
 test('err: failed while putting requestedAt, and the forceUpdate is true', async (t) => {
   const { processor, sandbox, options, singleSegementUser } = t.context;
-  const internalErr = new Error('internal error');
+  const internalErr = toBKTError(new Error('internal error'), {});
   const mockSegementUsersCache = sandbox.mock(options.segmentUsersCache);
   mockSegementUsersCache.expects('getIds').resolves(['segment-id']);
   const mockCache = sandbox.mock(options.cache);
@@ -131,7 +132,7 @@ test('err: failed while putting requestedAt, and the forceUpdate is true', async
   const mockAPIClient = sandbox.mock(options.apiClient);
   mockAPIClient
     .expects('getSegmentUsers')
-    .withArgs(['segment-id'], 10, options.sourceId, options.sdkVersion)
+    .withArgs(['segment-id'], 10, options.sourceId, options.sdkVersion, sino.match.instanceOf(AbortSignal))
     .resolves([response, responseSize]);
 
   const mockProcessorEventsEmitter = sandbox.mock(options.eventEmitter);
@@ -167,7 +168,7 @@ test('err: failed while putting requestedAt, and the forceUpdate is true', async
 
 test('err: failed while putting requestedAt, and the forceUpdate is false', async (t) => {
   const { processor, sandbox, options, singleSegementUser } = t.context;
-  const internalErr = new Error('internal error');
+  const internalErr = toBKTError(new Error('internal error'), {});
   const mockSegementUsersCache = sandbox.mock(options.segmentUsersCache);
   mockSegementUsersCache.expects('getIds').resolves(['segment-id']);
   const mockCache = sandbox.mock(options.cache);
@@ -178,7 +179,7 @@ test('err: failed while putting requestedAt, and the forceUpdate is false', asyn
   const mockAPIClient = sandbox.mock(options.apiClient);
   mockAPIClient
     .expects('getSegmentUsers')
-    .withArgs(['segment-id'], 10, options.sourceId, options.sdkVersion)
+    .withArgs(['segment-id'], 10, options.sourceId, options.sdkVersion, sino.match.instanceOf(AbortSignal))
     .resolves([response, responseSize]);
 
   const mockProcessorEventsEmitter = sandbox.mock(options.eventEmitter);
@@ -224,7 +225,7 @@ test('success: get segment IDs not found', async (t) => {
   const mockAPIClient = sandbox.mock(options.apiClient);
   mockAPIClient
     .expects('getSegmentUsers')
-    .withArgs([], 10, options.sourceId, options.sdkVersion)
+    .withArgs([], 10, options.sourceId, options.sdkVersion, sino.match.instanceOf(AbortSignal))
     .resolves([response, responseSize]);
 
   const mockProcessorEventsEmitter = sandbox.mock(options.eventEmitter);
@@ -267,7 +268,7 @@ test('success: requestedAt not found', async (t) => {
   const mockAPIClient = sandbox.mock(options.apiClient);
   mockAPIClient
     .expects('getSegmentUsers')
-    .withArgs(['segment-id'], 0, options.sourceId, options.sdkVersion)
+    .withArgs(['segment-id'], 0, options.sourceId, options.sdkVersion, sino.match.instanceOf(AbortSignal))
     .resolves([response, responseSize]);
 
   const mockProcessorEventsEmitter = sandbox.mock(options.eventEmitter);
@@ -310,7 +311,7 @@ test('success: force update is true', async (t) => {
   const mockAPIClient = sandbox.mock(options.apiClient);
   mockAPIClient
     .expects('getSegmentUsers')
-    .withArgs(['segment-id'], 10, options.sourceId, options.sdkVersion)
+    .withArgs(['segment-id'], 10, options.sourceId, options.sdkVersion, sino.match.instanceOf(AbortSignal))
     .resolves([response, responseSize]);
 
   const mockProcessorEventsEmitter = sandbox.mock(options.eventEmitter);
@@ -353,7 +354,7 @@ test('success: force update is false', async (t) => {
   const mockAPIClient = sandbox.mock(options.apiClient);
   mockAPIClient
     .expects('getSegmentUsers')
-    .withArgs(['segment-id'], 10, options.sourceId, options.sdkVersion)
+    .withArgs(['segment-id'], 10, options.sourceId, options.sdkVersion, sino.match.instanceOf(AbortSignal))
     .resolves([response, responseSize]);
 
   const mockProcessorEventsEmitter = sandbox.mock(options.eventEmitter);
@@ -406,7 +407,7 @@ test('success: preserves unsupported segment user state when caching segment use
   const mockAPIClient = sandbox.mock(options.apiClient);
   mockAPIClient
     .expects('getSegmentUsers')
-    .withArgs(['segment-id'], 10, options.sourceId, options.sdkVersion)
+    .withArgs(['segment-id'], 10, options.sourceId, options.sdkVersion, sino.match.instanceOf(AbortSignal))
     .resolves([response, responseSize]);
 
   const mockProcessorEventsEmitter = sandbox.mock(options.eventEmitter);

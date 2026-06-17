@@ -16,13 +16,16 @@ test('should convert Config to BKTConfig with defaults', (t) => {
   t.is(bktConfig.apiKey, 'test-token');
   t.is(bktConfig.apiEndpoint, 'https://api.example.com');
   t.is(bktConfig.featureTag, 'test-tag');
-  t.is(bktConfig.eventsFlushInterval, 10000); // Default value
+  t.is(bktConfig.eventsFlushInterval, 30000); // Default value
   t.is(bktConfig.eventsMaxQueueSize, 50); // Default value
   t.is(bktConfig.cachePollingInterval, 60000); // Default value
   t.is(bktConfig.appVersion, '1.0.0'); // Default value
   t.true(bktConfig.logger instanceof DefaultLogger); // Default logger
   t.false(bktConfig.enableLocalEvaluation); // Default value
   t.is(bktConfig.cachePollingInterval, 60000); // Default value
+  t.is(bktConfig.maxRetries, 3); // Default retry value
+  t.is(bktConfig.retryInitialInterval, 1000); // Default retry value
+  t.is(bktConfig.retryMaxInterval, 10000); // Default retry value
 });
 
 test('should override defaults with provided values', (t) => {

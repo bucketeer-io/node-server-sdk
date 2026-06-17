@@ -14,7 +14,8 @@ import {
   GetSegmentUsersResponse,
   RegisterEventsResponse,
 } from '../objects/response';
-import { InvalidStatusError } from '../objects/errors';
+import { InvalidStatusError, parseRetryAfter, toBKTError } from '../objects/errors';
+import { RetryPolicy, promiseRetriable, isRetryable } from '../utils/promiseRetriable';
 
 const scheme = 'https://';
 const evaluationAPI = '/get_evaluation';
@@ -22,13 +23,22 @@ const featureFlagsAPI = '/get_feature_flags';
 const segmentUsersAPI = '/get_segment_users';
 const eventsAPI = '/register_events';
 
+const DEFAULT_RETRY_POLICY: RetryPolicy = {
+  maxRetries: 0,
+  initialInterval: 1000,
+  maxInterval: 10000,
+  multiplier: 2.0,
+};
+
 export class APIClient {
   private readonly host: string;
   private readonly apiKey: string;
+  private readonly retryPolicy: RetryPolicy;
 
-  constructor(host: string, apiKey: string) {
+  constructor(host: string, apiKey: string, retryPolicy: RetryPolicy = DEFAULT_RETRY_POLICY) {
     this.host = host;
     this.apiKey = apiKey;
+    this.retryPolicy = retryPolicy;
   }
 
   getFeatureFlags(
@@ -37,6 +47,7 @@ export class APIClient {
     requestedAt: number,
     sourceId: SourceId,
     sdkVersion: string,
+    signal?: AbortSignal,
   ): Promise<[GetFeatureFlagsResponse, number]> {
     const req: GetFeatureFlagsRequest = {
       tag,
@@ -46,7 +57,8 @@ export class APIClient {
       sdkVersion,
     };
     const url = scheme.concat(this.host, featureFlagsAPI);
-    return this.postRequest<GetFeatureFlagsResponse>(url, req);
+    const chunk = JSON.stringify(req);
+    return this.postRequestWithRetry<GetFeatureFlagsResponse>(url, chunk, signal);
   }
 
   getSegmentUsers(
@@ -54,6 +66,7 @@ export class APIClient {
     requestedAt: number,
     sourceId: SourceId,
     sdkVersion: string,
+    signal?: AbortSignal,
   ): Promise<[GetSegmentUsersResponse, number]> {
     const req: GetSegmentUsersRequest = {
       segmentIds,
@@ -62,7 +75,8 @@ export class APIClient {
       sdkVersion,
     };
     const url = scheme.concat(this.host, segmentUsersAPI);
-    return this.postRequest<GetSegmentUsersResponse>(url, req);
+    const chunk = JSON.stringify(req);
+    return this.postRequestWithRetry<GetSegmentUsersResponse>(url, chunk, signal);
   }
 
   getEvaluation(
@@ -71,6 +85,7 @@ export class APIClient {
     featureId: string,
     sourceId: SourceId,
     sdkVersion: string,
+    signal?: AbortSignal,
   ): Promise<[GetEvaluationResponse, number]> {
     const req: GetEvaluationRequest = {
       tag,
@@ -80,13 +95,15 @@ export class APIClient {
       sdkVersion: sdkVersion,
     };
     const url = scheme.concat(this.host, evaluationAPI);
-    return this.postRequest<GetEvaluationResponse>(url, req);
+    const chunk = JSON.stringify(req);
+    return this.postRequestWithRetry<GetEvaluationResponse>(url, chunk, signal);
   }
 
   registerEvents(
     events: Array<Event>,
     sourceId: SourceId,
     sdkVersion: string,
+    signal?: AbortSignal,
   ): Promise<[RegisterEventsResponse, number]> {
     const req: RegisterEventsRequest = {
       events,
@@ -94,39 +111,64 @@ export class APIClient {
       sourceId: sourceId,
     };
     const url = scheme.concat(this.host, eventsAPI);
-    return this.postRequest<RegisterEventsResponse>(url, req);
+    const chunk = JSON.stringify(req);
+    return this.postRequestWithRetry<RegisterEventsResponse>(url, chunk, signal);
   }
 
-  private postRequest<T>(url: string, req: unknown): Promise<[T, number]> {
-    const chunk = JSON.stringify(req);
+  private async postRequestWithRetry<T>(
+    url: string,
+    chunk: string,
+    signal?: AbortSignal,
+  ): Promise<[T, number]> {
+    try {
+      return await promiseRetriable(
+        (s) => this.postRequest<T>(url, chunk, s),
+        this.retryPolicy,
+        isRetryable,
+        signal);
+    } catch (e) {
+      throw toBKTError(e, {});
+    }
+  }
+
+  private postRequest<T>(
+    url: string,
+    chunk: string,
+    signal?: AbortSignal,
+  ): Promise<[T, number]> {
     const opts: https.RequestOptions = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         authorization: this.apiKey,
       },
-      timeout: 10000,
+      timeout: 5000,
+      signal: signal,
     };
     return new Promise((resolve, reject) => {
+      if (signal?.aborted) {
+        return reject(signal.reason);
+      }
       const clientReq = https.request(url, opts, (res) => {
-        if (res.statusCode != 200) {
-          reject(
-            new InvalidStatusError(
-              `bucketeer/api: send HTTP request failed: ${res.statusCode}`,
-              res.statusCode,
-            ),
-          );
-        }
         res.setEncoding('utf8');
         let rawData = '';
         res.on('data', (chunk: Buffer) => {
           rawData += chunk.toString();
         });
         res.on('end', () => {
-          const headerContentLength = res.headers['content-length'];
+          if (res.statusCode !== 200) {
+            const retryAfterMs = parseRetryAfter(res.headers['retry-after'] as string | undefined);
+            reject(
+              new InvalidStatusError(
+                `bucketeer/api: send HTTP request failed: ${res.statusCode}`,
+                res.statusCode,
+                retryAfterMs,
+              ),
+            );
+            return;
+          }
           try {
-            const result = JSON.parse(rawData) as T;
-            resolve([result, Number(headerContentLength || 0)]);
+            resolve([JSON.parse(rawData) as T, Number(res.headers['content-length'] || 0)]);
           } catch (e) {
             reject(e);
           }
@@ -135,11 +177,11 @@ export class APIClient {
       clientReq.on('error', (e) => {
         reject(e);
       });
-      clientReq.write(chunk);
-      clientReq.end();
       clientReq.on('timeout', () => {
         clientReq.destroy();
       });
+      clientReq.write(chunk);
+      clientReq.end();
     });
   }
 }

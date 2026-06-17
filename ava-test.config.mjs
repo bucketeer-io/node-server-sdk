@@ -22,5 +22,6 @@ export default {
 				"src/": "build/"
 			},
       "compile": "tsc"
-		}
+		},
+  timeout: '30s', // accepts '30s', '1m', or a number in ms
 };
