@@ -122,6 +122,9 @@ export class APIClient {
         res.on('data', (chunk: Buffer) => {
           rawData += chunk.toString();
         });
+        res.on('error', (e) => {
+          reject(e);
+        });
         res.on('end', () => {
           const headerContentLength = res.headers['content-length'];
           try {
@@ -138,6 +141,10 @@ export class APIClient {
       clientReq.write(chunk);
       clientReq.end();
       clientReq.on('timeout', () => {
+        // No error arg: Node.js emits ECONNRESET on clientReq (pre-response phase)
+        // or on res (post-headers phase). Both paths are handled — clientReq.on('error')
+        // and res.on('error') above — so the promise always rejects. 
+        // ECONNRESET is retriable.
         clientReq.destroy();
       });
     });
