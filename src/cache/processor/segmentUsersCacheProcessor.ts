@@ -8,6 +8,8 @@ import { createSchedule, removeSchedule } from '../../schedule';
 import { Clock } from '../../utils/clock';
 import { SourceId } from '../../objects/sourceId';
 import { toProtoSegmentUsers } from './converter';
+import { PollController, isOperationAbortedError, isDeadlineExceededError } from '../../utils/pollController';
+import { DeadlineExceededError } from '../../objects/errors';
 
 interface SegementUsersCacheProcessor {
   start(): Promise<void>;
@@ -44,6 +46,8 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
   private clock: Clock;
   private sourceId: SourceId;
   private sdkVersion: string;
+  private pollController = new PollController();
+  private stopped = false;
 
   constructor(options: SegementUsersCacheProcessorOptions) {
     this.cache = options.cache;
@@ -57,6 +61,7 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
   }
 
   async start() {
+    this.stopped = false;
     // Execute immediately
     try {
       await this.getSegmentUsers();
@@ -64,15 +69,19 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
       this.pushErrorMetricsEvent(e);
       throw e;
     } finally {
-      this.pollingScheduleID = createSchedule(() => this.runUpdateCache(), this.pollingInterval);
+      if (!this.stopped) {
+        this.pollingScheduleID = createSchedule(() => this.runUpdateCache(), this.pollingInterval);
+      }
     }
   }
 
   async stop() {
+    this.stopped = true;
     if (this.pollingScheduleID) {
       removeSchedule(this.pollingScheduleID);
       this.pollingScheduleID = undefined;
     }
+    this.pollController.abort();
   }
 
   getPollingScheduleID(): NodeJS.Timeout | undefined {
@@ -83,12 +92,19 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
     try {
       await this.getSegmentUsers();
     } catch (error) {
-      // Always log the error regardless of initialization state
+      if (isDeadlineExceededError(error)) {
+        if (!this.stopped) {
+          this.pushErrorMetricsEvent(new DeadlineExceededError(this.pollingInterval, 'poll timed out'));
+        }
+        return;
+      }
+      if (isOperationAbortedError(error)) return;
       this.pushErrorMetricsEvent(error);
     }
   }
 
   private async getSegmentUsers() {
+    const signal = this.pollController.createSignal(this.pollingInterval);
     const segmentIds = await this.segmentUsersCache.getIds();
     const requestedAt = await this.getSegmentUsersRequestedAt();
     const sourceId = this.sourceId;
@@ -101,6 +117,7 @@ class DefaultSegementUserCacheProcessor implements SegementUsersCacheProcessor {
       requestedAt,
       sourceId,
       sdkVersion,
+      signal,
     );
 
     const latency = this.clock.latencySecondsSince(startMark);

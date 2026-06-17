@@ -14,7 +14,18 @@ import {
   GetSegmentUsersResponse,
   RegisterEventsResponse,
 } from '../objects/response';
-import { InvalidStatusError } from '../objects/errors';
+import { AbortError, DeadlineExceededError, InvalidStatusError, parseRetryAfter } from '../objects/errors';
+import {
+  RetryPolicy,
+  promiseRetriable as defaultPromiseRetriable,
+  isRetryable,
+} from '../utils/promiseRetriable';
+import { isOperationAbortedError, isDeadlineExceededError } from '../utils/pollController';
+import {
+  DEFAULT_RETRY_INITIAL_INTERVAL_MILLIS,
+  DEFAULT_RETRY_MAX_INTERVAL_MILLIS,
+  DEFAULT_RETRY_MULTIPLIER,
+} from '../config';
 
 const scheme = 'https://';
 const evaluationAPI = '/get_evaluation';
@@ -22,13 +33,37 @@ const featureFlagsAPI = '/get_feature_flags';
 const segmentUsersAPI = '/get_segment_users';
 const eventsAPI = '/register_events';
 
+const REQUEST_TIMEOUT_MS = 5000;
+
+const DEFAULT_NO_RETRY_POLICY: RetryPolicy = {
+  maxRetries: 0,
+  initialInterval: DEFAULT_RETRY_INITIAL_INTERVAL_MILLIS,
+  maxInterval: DEFAULT_RETRY_MAX_INTERVAL_MILLIS,
+  multiplier: DEFAULT_RETRY_MULTIPLIER,
+};
+
+/**
+ * All signal parameters must come from createDeadlineExceededSignal().
+ * AbortSignal.timeout() is also caught by isDeadlineExceededError, but
+ * normalizeRequestError re-wraps its DOMException as new DeadlineExceededError(REQUEST_TIMEOUT_MS),
+ * discarding the caller's actual deadline value.
+ */
 export class APIClient {
   private readonly host: string;
   private readonly apiKey: string;
+  private readonly retryPolicy: RetryPolicy;
+  private readonly promiseRetriable: typeof defaultPromiseRetriable;
 
-  constructor(host: string, apiKey: string) {
+  constructor(
+    host: string,
+    apiKey: string,
+    retryPolicy: RetryPolicy = DEFAULT_NO_RETRY_POLICY,
+    promiseRetriable: typeof defaultPromiseRetriable = defaultPromiseRetriable,
+  ) {
     this.host = host;
     this.apiKey = apiKey;
+    this.retryPolicy = retryPolicy;
+    this.promiseRetriable = promiseRetriable;
   }
 
   getFeatureFlags(
@@ -37,6 +72,7 @@ export class APIClient {
     requestedAt: number,
     sourceId: SourceId,
     sdkVersion: string,
+    signal?: AbortSignal,
   ): Promise<[GetFeatureFlagsResponse, number]> {
     const req: GetFeatureFlagsRequest = {
       tag,
@@ -46,7 +82,8 @@ export class APIClient {
       sdkVersion,
     };
     const url = scheme.concat(this.host, featureFlagsAPI);
-    return this.postRequest<GetFeatureFlagsResponse>(url, req);
+    const chunk = JSON.stringify(req);
+    return this.postRequestWithRetry<GetFeatureFlagsResponse>(url, chunk, signal);
   }
 
   getSegmentUsers(
@@ -54,6 +91,7 @@ export class APIClient {
     requestedAt: number,
     sourceId: SourceId,
     sdkVersion: string,
+    signal?: AbortSignal,
   ): Promise<[GetSegmentUsersResponse, number]> {
     const req: GetSegmentUsersRequest = {
       segmentIds,
@@ -62,7 +100,8 @@ export class APIClient {
       sdkVersion,
     };
     const url = scheme.concat(this.host, segmentUsersAPI);
-    return this.postRequest<GetSegmentUsersResponse>(url, req);
+    const chunk = JSON.stringify(req);
+    return this.postRequestWithRetry<GetSegmentUsersResponse>(url, chunk, signal);
   }
 
   getEvaluation(
@@ -71,6 +110,7 @@ export class APIClient {
     featureId: string,
     sourceId: SourceId,
     sdkVersion: string,
+    signal?: AbortSignal,
   ): Promise<[GetEvaluationResponse, number]> {
     const req: GetEvaluationRequest = {
       tag,
@@ -80,13 +120,15 @@ export class APIClient {
       sdkVersion: sdkVersion,
     };
     const url = scheme.concat(this.host, evaluationAPI);
-    return this.postRequest<GetEvaluationResponse>(url, req);
+    const chunk = JSON.stringify(req);
+    return this.postRequestWithRetry<GetEvaluationResponse>(url, chunk, signal);
   }
 
   registerEvents(
     events: Array<Event>,
     sourceId: SourceId,
     sdkVersion: string,
+    signal?: AbortSignal,
   ): Promise<[RegisterEventsResponse, number]> {
     const req: RegisterEventsRequest = {
       events,
@@ -94,29 +136,42 @@ export class APIClient {
       sourceId: sourceId,
     };
     const url = scheme.concat(this.host, eventsAPI);
-    return this.postRequest<RegisterEventsResponse>(url, req);
+    const chunk = JSON.stringify(req);
+    return this.postRequestWithRetry<RegisterEventsResponse>(url, chunk, signal);
   }
 
-  private postRequest<T>(url: string, req: unknown): Promise<[T, number]> {
-    const chunk = JSON.stringify(req);
+  private postRequestWithRetry<T>(
+    url: string,
+    chunk: string,
+    signal?: AbortSignal,
+  ): Promise<[T, number]> {
+    return this.promiseRetriable(
+      (s) => this.postRequest<T>(url, chunk, s),
+      this.retryPolicy,
+      isRetryable,
+      signal,
+    );
+  }
+
+  private postRequest<T>(
+    url: string,
+    chunk: string,
+    signal?: AbortSignal,
+  ): Promise<[T, number]> {
     const opts: https.RequestOptions = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         authorization: this.apiKey,
       },
-      timeout: 10000,
+      timeout: REQUEST_TIMEOUT_MS,
+      signal: signal,
     };
     return new Promise((resolve, reject) => {
+      if (signal?.aborted) {
+        return reject(this.normalizeRequestError(signal.reason));
+      }
       const clientReq = https.request(url, opts, (res) => {
-        if (res.statusCode != 200) {
-          reject(
-            new InvalidStatusError(
-              `bucketeer/api: send HTTP request failed: ${res.statusCode}`,
-              res.statusCode,
-            ),
-          );
-        }
         res.setEncoding('utf8');
         let rawData = '';
         res.on('data', (chunk: Buffer) => {
@@ -126,27 +181,46 @@ export class APIClient {
           reject(e);
         });
         res.on('end', () => {
-          const headerContentLength = res.headers['content-length'];
+          if (res.statusCode !== 200) {
+            const retryAfterMs = parseRetryAfter(res.headers['retry-after'] as string | undefined);
+            reject(
+              new InvalidStatusError(
+                `bucketeer/api: send HTTP request failed: ${res.statusCode}`,
+                res.statusCode,
+                retryAfterMs,
+              ),
+            );
+            return;
+          }
           try {
-            const result = JSON.parse(rawData) as T;
-            resolve([result, Number(headerContentLength || 0)]);
+            resolve([JSON.parse(rawData) as T, Number(res.headers['content-length'] || 0)]);
           } catch (e) {
             reject(e);
           }
         });
       });
       clientReq.on('error', (e) => {
-        reject(e);
+        reject(this.normalizeRequestError(e));
       });
-      clientReq.write(chunk);
-      clientReq.end();
       clientReq.on('timeout', () => {
         // No error arg: Node.js emits ECONNRESET on clientReq (pre-response phase)
         // or on res (post-headers phase). Both paths are handled — clientReq.on('error')
         // and res.on('error') above — so the promise always rejects. 
-        // ECONNRESET is retriable.
+        // ECONNRESET is in RETRYABLE_CODES, so the attempt is retried.
         clientReq.destroy();
       });
+      clientReq.write(chunk);
+      clientReq.end();
     });
+  }
+
+  private normalizeRequestError(e: unknown): Error {
+    if (isDeadlineExceededError(e)) {
+      if (e instanceof DeadlineExceededError) return e;
+      const cause = (e as any)?.cause;
+      return cause instanceof DeadlineExceededError ? cause : new DeadlineExceededError(REQUEST_TIMEOUT_MS);
+    }
+    if (isOperationAbortedError(e)) return new AbortError();
+    return e as Error;
   }
 }

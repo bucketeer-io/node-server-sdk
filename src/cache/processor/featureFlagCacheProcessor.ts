@@ -8,6 +8,8 @@ import { ApiId } from '../../objects/apiId';
 import { Clock } from '../../utils/clock';
 import { SourceId } from '../../objects/sourceId';
 import { toProtoFeature } from './converter';
+import { PollController as PollAbortController, isOperationAbortedError, isDeadlineExceededError } from '../../utils/pollController';
+import { DeadlineExceededError } from '../../objects/errors';
 
 interface FeatureFlagProcessor {
   start(): Promise<void>;
@@ -42,6 +44,8 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
   private pollingScheduleID?: NodeJS.Timeout;
   private pollingInterval: number;
   private clock: Clock;
+  private pollController = new PollAbortController();
+  private stopped = false;
 
   featureTag: string;
   sourceId: SourceId;
@@ -60,6 +64,7 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
   }
 
   async start() {
+    this.stopped = false;
     // Execute immediately
     try {
       await this.getFeatureFlags();
@@ -67,17 +72,21 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
       this.pushErrorMetricsEvent(e);
       throw e;
     } finally {
-      this.pollingScheduleID = createSchedule(() => {
-        this.runUpdateCache();
-      }, this.pollingInterval);
+      if (!this.stopped) {
+        this.pollingScheduleID = createSchedule(() => {
+          this.runUpdateCache();
+        }, this.pollingInterval);
+      }
     }
   }
 
   async stop() {
+    this.stopped = true;
     if (this.pollingScheduleID) {
       removeSchedule(this.pollingScheduleID);
       this.pollingScheduleID = undefined;
     }
+    this.pollController.abort();
   }
 
   getPollingScheduleID(): NodeJS.Timeout | undefined {
@@ -88,12 +97,19 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
     try {
       await this.getFeatureFlags();
     } catch (error) {
-      // Always log the error regardless of initialization state
+      if (isDeadlineExceededError(error)) {
+        if (!this.stopped) {
+          this.pushErrorMetricsEvent(new DeadlineExceededError(this.pollingInterval, 'poll timed out'));
+        }
+        return;
+      }
+      if (isOperationAbortedError(error)) return;
       this.pushErrorMetricsEvent(error);
     }
   }
 
   private async getFeatureFlags() {
+    const signal = this.pollController.createSignal(this.pollingInterval);
     const featureFlagsId = await this.getFeatureFlagId();
     const requestedAt = await this.getFeatureFlagRequestedAt();
     const startMark = this.clock.latencyStart();
@@ -103,6 +119,7 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
       requestedAt,
       this.sourceId,
       this.sdkVersion,
+      signal,
     );
 
     const latency = this.clock.latencySecondsSince(startMark);

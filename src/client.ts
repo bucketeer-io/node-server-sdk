@@ -32,10 +32,27 @@ import { Bucketeer, BuildInfo } from '.';
 import { IllegalStateError, TimeoutError, toBKTError } from './objects/errors';
 import { assertGetEvaluationRequest } from './assert';
 import { InternalConfig } from './internalConfig';
+import { createDeadlineExceededSignal } from './utils/pollController';
 
 // Default timeout for graceful shutdown in milliseconds (30 seconds)
 // For high-traffic applications with large event queues, consider increasing this value
 const DEFAULT_DESTROY_TIMEOUT_MILLIS = 30000;
+
+// Per-call deadline constants — mirrors the Go SDK values.
+// getEvaluation: hardcoded 30s (Go SDK: defaultEvaluationTimeout = 30s, sdk.go:586)
+const DEFAULT_EVALUATION_TIMEOUT_MS = 30_000;
+
+const REGISTER_EVENTS_FLUSH_TIMEOUT_MS = 10_000; // Go SDK: flushTimeout = 10s
+const MIN_REGISTER_EVENTS_DEADLINE_MS = 5_000; // Go SDK: minDeadline = 5s
+
+// Calculate deadline: use 80% of flush interval or flush timeout, whichever is smaller.
+// Minimum 5 seconds to allow retry attempts.
+// (mirrors Go SDK: processor.go flushEvents)
+export function computeRegisterEventsDeadline(eventsFlushIntervalMs: number): number {
+  const derived = Math.floor(eventsFlushIntervalMs * 0.8);
+  const capped = Math.min(derived, REGISTER_EVENTS_FLUSH_TIMEOUT_MS);
+  return Math.max(capped, MIN_REGISTER_EVENTS_DEADLINE_MS);
+}
 
 export class BKTClientImpl implements Bucketeer {
   apiClient: APIClient;
@@ -226,7 +243,12 @@ export class BKTClientImpl implements Bucketeer {
 
   private callRegisterEvents(events: Array<Event>): void {
     this.apiClient
-      .registerEvents(events, this.config.sourceId, this.config.sdkVersion)
+      .registerEvents(
+        events,
+        this.config.sourceId,
+        this.config.sdkVersion,
+        createDeadlineExceededSignal(computeRegisterEventsDeadline(this.config.eventsFlushInterval)),
+      )
       .catch((e) => {
         this.saveErrorMetricsEvent(this.config.featureTag, e, ApiId.REGISTER_EVENTS);
         this.config.logger?.warn('register events failed', e);
@@ -273,6 +295,7 @@ export class BKTClientImpl implements Bucketeer {
           eventsToFlush,
           this.config.sourceId,
           this.config.sdkVersion,
+          createDeadlineExceededSignal(computeRegisterEventsDeadline(this.config.eventsFlushInterval)),
         );
         flushedCount += eventsToFlush.length;
         this.config.logger?.debug(
@@ -395,6 +418,7 @@ export class BKTClientImpl implements Bucketeer {
         featureId,
         this.config.sourceId,
         this.config.sdkVersion,
+        createDeadlineExceededSignal(DEFAULT_EVALUATION_TIMEOUT_MS),
       );
       const second = this.clock.latencySecondsSince(startMark);
       this.eventEmitter.emit('pushLatencyMetricsEvent', {

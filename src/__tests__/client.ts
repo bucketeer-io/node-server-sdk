@@ -39,7 +39,10 @@ test.serial('getEvaluation: default evaluation details', async (t) => {
   const featureId = 'stringEvaluationDetails';
   t.context.server.use(
     rest.post(evaluationAPI, (_req, res, ctx) => {
-      return res(ctx.status(500));
+       // Use 400 (not 5xx): 5xx responses are considered retryable (see RETRYABLE_STATUS_CODES in promiseRetriable.ts),
+       // so using 500 can trigger retries/backoff and significantly slow this test (potentially up to the 30s evaluation deadline).
+       // With 400, no retry is triggered, the default fallback is returned immediately, and the test stays fast/deterministic.
+      return res(ctx.status(400));
     }),
   );
   const client = t.context.bktClient;

@@ -1,5 +1,6 @@
 import { Logger } from '../logger';
-import { IllegalArgumentError, IllegalStateError, InvalidStatusError, isNodeError } from '../objects/errors';
+import { AbortError, DeadlineExceededError, IllegalArgumentError, IllegalStateError, InvalidStatusError, TimeoutError, isNodeError } from '../objects/errors';
+import { isOperationAbortedError, isDeadlineExceededError } from '../utils/pollController';
 import { createTimestamp } from '../utils/time';
 import { NodeApiIds } from './apiId';
 import { createEvent, Event } from './event';
@@ -219,6 +220,15 @@ export function createUnknownErrorMetricsEvent(
   return createEvent(metricsEvent);
 }
 
+// Error routing:
+//
+// Error source                                              | Error type             | Metric
+// PollController: polling interval setTimeout fires        | DeadlineExceededError  | TimeoutErrorMetricsEvent
+// PollController.abort() / processor.stop()                | AbortError             | null (ignored)
+// API client: createDeadlineExceededSignal() deadline fires         | DeadlineExceededError  | TimeoutErrorMetricsEvent
+// API client: AbortSignal.timeout() fires (defensive; unused in production) | DOMException{name:'TimeoutError'} | TimeoutErrorMetricsEvent
+// API client: AbortController.abort() called               | AbortError             | null (ignored)
+// waitForInitialization / destroy timeout                  | TimeoutError           | TimeoutErrorMetricsEvent
 export const toErrorMetricsEvent = (
   e: any,
   tag: string,
@@ -227,6 +237,12 @@ export const toErrorMetricsEvent = (
   sdkVersion: string,
   logger?: Logger,
 ): Event | null => {
+  if (e instanceof TimeoutError || isDeadlineExceededError(e)) {
+    return createTimeoutErrorMetricsEvent(tag, apiId, sourceId, sdkVersion);
+  }
+  if (e instanceof AbortError || isOperationAbortedError(e)) {
+    return null;
+  }
   if (e instanceof IllegalArgumentError || e instanceof IllegalStateError) {
     return createInternalSdkErrorMetricsEvent(tag, apiId, sourceId, sdkVersion, e.message);
   }

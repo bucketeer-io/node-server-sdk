@@ -3,9 +3,48 @@ import sinon from 'sinon';
 import https from 'https';
 import { EventEmitter } from 'events';
 import { APIClient } from '../api/client';
+import { User } from '../bootstrap';
+import { AbortError, DeadlineExceededError, InvalidStatusError } from '../objects/errors';
+import { isRetryable, RetryPolicy } from '../utils/promiseRetriable';
+import { createDeadlineExceededSignal, isOperationAbortedError, isDeadlineExceededError } from '../utils/pollController';
+import { SourceId } from '../objects/sourceId';
 
 const host = 'api.example.com:443';
 const apiKey = 'test-api-key';
+const defaultSourceId = SourceId.OPEN_FEATURE_NODE;
+const sdkVersion = '1.0.0';
+const user: User = { id: 'user-1', data: {} };
+
+const retryPolicy: RetryPolicy = { maxRetries: 2, initialInterval: 100, maxInterval: 500 };
+
+const mockEvalResponse = {
+  evaluation: {
+    id: 'eval-id',
+    featureId: 'feat-1',
+    featureVersion: 1,
+    userId: 'user-1',
+    variationId: 'var-1',
+    reason: { type: 'DEFAULT' },
+    variationValue: 'v',
+    variationName: 'n',
+  },
+};
+
+function makeFakeResponse(statusCode: number, headers: Record<string, string>) {
+  return Object.assign(new EventEmitter(), {
+    statusCode,
+    headers,
+    setEncoding: sinon.stub(),
+  });
+}
+
+function makeFakeClientReq() {
+  return Object.assign(new EventEmitter(), {
+    write: sinon.stub(),
+    end: sinon.stub(),
+    destroy: sinon.stub(),
+  });
+}
 
 // Group 1: mid-response stall handling
 //
@@ -28,14 +67,6 @@ const apiKey = 'test-api-key';
 
 
 const HANG_DETECT_MS = 300;
-
-function makeFakeResponse(statusCode: number, headers: Record<string, string>) {
-  return Object.assign(new EventEmitter(), {
-    statusCode,
-    headers,
-    setEncoding: sinon.stub(),
-  });
-}
 
 test.serial('postRequest: socket timeout fires mid-response - promise must reject not hang', async (t) => {
   const fakeResponse = makeFakeResponse(200, {});
@@ -99,4 +130,352 @@ test.serial('postRequest: socket timeout fires mid-response - promise must rejec
     'rejected',
     'postRequest hung instead of rejecting: res.on("error") must be wired inside the response callback',
   );
+});
+
+// Group 2: promiseRetriable wiring
+
+test('postRequestWithRetry: passes retryPolicy to promiseRetriable', async (t) => {
+  const promiseRetriableSpy = sinon.stub().resolves([mockEvalResponse, 0]);
+  const client = new APIClient(host, apiKey, retryPolicy, promiseRetriableSpy);
+
+  await client.getEvaluation('tag', user, 'feat-1', defaultSourceId, sdkVersion);
+
+  const [, receivedRetryPolicy] = promiseRetriableSpy.firstCall.args;
+  t.true(promiseRetriableSpy.calledOnce);
+  t.deepEqual(receivedRetryPolicy, retryPolicy);
+});
+
+test('postRequestWithRetry: passes isRetryable as the shouldRetry predicate', async (t) => {
+  const promiseRetriableSpy = sinon.stub().resolves([mockEvalResponse, 0]);
+  const client = new APIClient(host, apiKey, retryPolicy, promiseRetriableSpy);
+
+  await client.getEvaluation('tag', user, 'feat-1', defaultSourceId, sdkVersion);
+
+  const [, , receivedShouldRetry] = promiseRetriableSpy.firstCall.args;
+  t.is(receivedShouldRetry, isRetryable);
+});
+
+test('postRequestWithRetry: forwards the AbortSignal to promiseRetriable', async (t) => {
+  const promiseRetriableSpy = sinon.stub().resolves([mockEvalResponse, 0]);
+  const client = new APIClient(host, apiKey, retryPolicy, promiseRetriableSpy);
+  const controller = new AbortController();
+
+  await client.getEvaluation('tag', user, 'feat-1', defaultSourceId, sdkVersion, controller.signal);
+
+  const [, , , receivedSignal] = promiseRetriableSpy.firstCall.args;
+  t.is(receivedSignal, controller.signal);
+});
+
+// Group 3: postRequest URL and body wiring
+//
+// Each test uses a passthrough promiseRetriable that immediately invokes fn so that
+// postRequest is actually called, letting us assert the URL and body it received.
+
+function makePassthroughRetriable(): sinon.SinonStub {
+  return sinon.stub().callsFake((fn: (s: AbortSignal | undefined) => Promise<unknown>) => fn(undefined));
+}
+
+test('getEvaluation: builds correct URL and request body', async (t) => {
+  const sandbox = sinon.createSandbox();
+  t.teardown(() => sandbox.restore());
+
+  const client = new APIClient(host, apiKey, retryPolicy, makePassthroughRetriable());
+  const postRequestSpy = sandbox.stub(client as any, 'postRequest').resolves([mockEvalResponse, 0]);
+
+  await client.getEvaluation('my-tag', user, 'feat-1', defaultSourceId, sdkVersion);
+
+  const [receivedUrl, receivedBody] = postRequestSpy.firstCall.args;
+  t.true(postRequestSpy.calledOnce);
+  t.is(receivedUrl, `https://${host}/get_evaluation`);
+  t.is(receivedBody, JSON.stringify({ tag: 'my-tag', user, featureId: 'feat-1', sourceId: defaultSourceId, sdkVersion }));
+});
+
+test('registerEvents: builds correct URL and request body', async (t) => {
+  const sandbox = sinon.createSandbox();
+  t.teardown(() => sandbox.restore());
+
+  const client = new APIClient(host, apiKey, retryPolicy, makePassthroughRetriable());
+  const postRequestSpy = sandbox.stub(client as any, 'postRequest').resolves([{}, 0]);
+
+  const events = [] as any[];
+  await client.registerEvents(events, defaultSourceId, sdkVersion);
+
+  const [receivedUrl, receivedBody] = postRequestSpy.firstCall.args;
+  t.true(postRequestSpy.calledOnce);
+  t.is(receivedUrl, `https://${host}/register_events`);
+  t.is(receivedBody, JSON.stringify({ events, sdkVersion, sourceId: defaultSourceId }));
+});
+
+test('getFeatureFlags: builds correct URL and request body', async (t) => {
+  const sandbox = sinon.createSandbox();
+  t.teardown(() => sandbox.restore());
+
+  const client = new APIClient(host, apiKey, retryPolicy, makePassthroughRetriable());
+  const postRequestSpy = sandbox.stub(client as any, 'postRequest').resolves([{}, 0]);
+
+  await client.getFeatureFlags('my-tag', 'flags-id-1', 12345, defaultSourceId, sdkVersion);
+
+  const [receivedUrl, receivedBody] = postRequestSpy.firstCall.args;
+  t.true(postRequestSpy.calledOnce);
+  t.is(receivedUrl, `https://${host}/get_feature_flags`);
+  t.is(receivedBody, JSON.stringify({ tag: 'my-tag', featureFlagsId: 'flags-id-1', requestedAt: 12345, sourceId: defaultSourceId, sdkVersion }));
+});
+
+test('getSegmentUsers: builds correct URL and request body', async (t) => {
+  const sandbox = sinon.createSandbox();
+  t.teardown(() => sandbox.restore());
+
+  const client = new APIClient(host, apiKey, retryPolicy, makePassthroughRetriable());
+  const postRequestSpy = sandbox.stub(client as any, 'postRequest').resolves([{}, 0]);
+
+  await client.getSegmentUsers(['seg-1', 'seg-2'], 99999, defaultSourceId, sdkVersion);
+
+  const [receivedUrl, receivedBody] = postRequestSpy.firstCall.args;
+  t.true(postRequestSpy.calledOnce);
+  t.is(receivedUrl, `https://${host}/get_segment_users`);
+  t.is(receivedBody, JSON.stringify({ segmentIds: ['seg-1', 'seg-2'], requestedAt: 99999, sourceId: defaultSourceId, sdkVersion }));
+});
+
+test('postRequestWithRetry: fn forwards signal from promiseRetriable to postRequest', async (t) => {
+  const sandbox = sinon.createSandbox();
+  t.teardown(() => sandbox.restore());
+
+  const innerSignal = AbortSignal.timeout(9999);
+  const passthroughRetriable = sinon.stub().callsFake(
+    (fn: (s: AbortSignal | undefined) => Promise<unknown>) => fn(innerSignal),
+  );
+  const client = new APIClient(host, apiKey, retryPolicy, passthroughRetriable);
+  const postRequestSpy = sandbox.stub(client as any, 'postRequest').resolves([mockEvalResponse, 0]);
+
+  await client.getEvaluation('tag', user, 'feat-1', defaultSourceId, sdkVersion);
+
+  const [, , receivedSignal] = postRequestSpy.firstCall.args;
+  t.is(receivedSignal, innerSignal);
+});
+
+// Group 4: Retry-After header capture in postRequest
+
+test.serial('postRequest: Retry-After delta-seconds header is captured as retryAfterMs', async (t) => {
+  const fakeResponse = makeFakeResponse(503, { 'retry-after': '60' });
+  const httpsRequestStub = sinon.stub(https, 'request').callsFake((_url, _opts, callback: any) => {
+    callback(fakeResponse);
+    fakeResponse.emit('end');
+    return makeFakeClientReq() as any;
+  });
+  t.teardown(() => httpsRequestStub.restore());
+
+  const client = new APIClient(host, apiKey);
+  const error = await t.throwsAsync<InvalidStatusError>(() =>
+    (client as any).postRequest(`https://${host}/get_evaluation`, '{}'),
+  );
+
+  t.true(error instanceof InvalidStatusError);
+  t.is(error.retryAfterMs, 60_000);
+});
+
+test.serial('postRequest: absent Retry-After header leaves retryAfterMs undefined', async (t) => {
+  const fakeResponse = makeFakeResponse(503, {});
+  const httpsRequestStub = sinon.stub(https, 'request').callsFake((_url, _opts, callback: any) => {
+    callback(fakeResponse);
+    fakeResponse.emit('end');
+    return makeFakeClientReq() as any;
+  });
+  t.teardown(() => httpsRequestStub.restore());
+
+  const client = new APIClient(host, apiKey);
+  const error = await t.throwsAsync<InvalidStatusError>(() =>
+    (client as any).postRequest(`https://${host}/get_evaluation`, '{}'),
+  );
+
+  t.true(error instanceof InvalidStatusError);
+  t.is(error.retryAfterMs, undefined);
+});
+
+test.serial('postRequest: Retry-After: 0 is captured as retryAfterMs === 0', async (t) => {
+  const fakeResponse = makeFakeResponse(429, { 'retry-after': '0' });
+  const httpsRequestStub = sinon.stub(https, 'request').callsFake((_url, _opts, callback: any) => {
+    callback(fakeResponse);
+    fakeResponse.emit('end');
+    return makeFakeClientReq() as any;
+  });
+  t.teardown(() => httpsRequestStub.restore());
+
+  const client = new APIClient(host, apiKey);
+  const error = await t.throwsAsync<InvalidStatusError>(() =>
+    (client as any).postRequest(`https://${host}/get_evaluation`, '{}'),
+  );
+
+  t.true(error instanceof InvalidStatusError);
+  t.is(error.retryAfterMs, 0);
+});
+
+// Group 4: DOMException-to-SDK-type conversion at the postRequest boundary
+
+test.serial('postRequest: AbortSignal.timeout fires - error is SDK DeadlineExceededError', async (t) => {
+  const fakeReq = makeFakeClientReq();
+  const httpsRequestStub = sinon.stub(https, 'request').callsFake((_url, opts: any) => {
+    const signal: AbortSignal | undefined = opts?.signal;
+    if (signal) {
+      signal.addEventListener('abort', () => fakeReq.emit('error', signal.reason), { once: true });
+    }
+    return fakeReq as any;
+  });
+  t.teardown(() => httpsRequestStub.restore());
+
+  const client = new APIClient(host, apiKey);
+  const signal = AbortSignal.timeout(50);
+
+  // AbortSignal.timeout() uses an unref'd timer; the interval keeps the event loop alive so it fires.
+  const keepAlive = setInterval(() => {}, 100);
+  t.teardown(() => clearInterval(keepAlive));
+
+  const err = await t.throwsAsync(() =>
+    (client as any).postRequest(`https://${host}/get_evaluation`, '{}', signal),
+  );
+
+  t.true(err instanceof DeadlineExceededError);
+  t.is((err as DeadlineExceededError).timeoutMillis, 5000);
+  t.true(isDeadlineExceededError(err));
+  t.false(isOperationAbortedError(err));
+});
+
+test.serial('postRequest: pre-aborted signal with DeadlineExceededError reason preserves timeoutMillis', async (t) => {
+  const fakeReq = makeFakeClientReq();
+  const httpsRequestStub = sinon.stub(https, 'request').returns(fakeReq as any);
+  t.teardown(() => httpsRequestStub.restore());
+
+  const controller = new AbortController();
+  controller.abort(new DeadlineExceededError(1234));
+
+  const err = await t.throwsAsync<DeadlineExceededError>(() =>
+    (new APIClient(host, apiKey) as any).postRequest(
+      `https://${host}/get_evaluation`,
+      '{}',
+      controller.signal,
+    ),
+  );
+
+  t.true(err instanceof DeadlineExceededError);
+  t.is(err.timeoutMillis, 1234);
+});
+
+test.serial('postRequest: createDeadlineExceededSignal fires during request - DeadlineExceededError preserves original timeoutMillis', async (t) => {
+  const fakeReq = makeFakeClientReq();
+  const httpsRequestStub = sinon.stub(https, 'request').callsFake((_url, opts: any) => {
+    const signal: AbortSignal | undefined = opts?.signal;
+    if (signal) {
+      signal.addEventListener('abort', () => fakeReq.emit('error', signal.reason), { once: true });
+    }
+    return fakeReq as any;
+  });
+  t.teardown(() => httpsRequestStub.restore());
+
+  const client = new APIClient(host, apiKey);
+  const signal = createDeadlineExceededSignal(50);
+
+  const keepAlive = setInterval(() => {}, 100);
+  t.teardown(() => clearInterval(keepAlive));
+
+  const err = await t.throwsAsync<DeadlineExceededError>(() =>
+    (client as any).postRequest(`https://${host}/get_evaluation`, '{}', signal),
+  );
+
+  t.true(err instanceof DeadlineExceededError);
+  t.is(err.timeoutMillis, 50);
+  t.true(isDeadlineExceededError(err));
+  t.false(isOperationAbortedError(err));
+});
+
+test.serial('postRequest: AbortController.abort() - error is SDK AbortError', async (t) => {
+  const fakeReq = makeFakeClientReq();
+  const controller = new AbortController();
+  const httpsRequestStub = sinon.stub(https, 'request').callsFake((_url, opts: any) => {
+    const signal: AbortSignal | undefined = opts?.signal;
+    if (signal) {
+      signal.addEventListener('abort', () => fakeReq.emit('error', signal.reason), { once: true });
+    }
+    return fakeReq as any;
+  });
+  t.teardown(() => httpsRequestStub.restore());
+
+  const client = new APIClient(host, apiKey);
+  setTimeout(() => controller.abort(), 10);
+  const err = await t.throwsAsync(() =>
+    (client as any).postRequest(`https://${host}/get_evaluation`, '{}', controller.signal),
+  );
+
+  t.true(err instanceof AbortError);
+  t.true(isOperationAbortedError(err));
+  t.false(isDeadlineExceededError(err));
+});
+
+// Group 5: Node DOMException wrapping
+//
+// When https.request is aborted via its signal option, Node does NOT emit the abort
+// reason directly. It emits a DOMException with name='AbortError' and the original
+// reason (e.g. DeadlineExceededError) on e.cause. The tests above in Group 4 emit signal.reason
+// directly and therefore do not cover this path. These tests simulate the real wrapping
+// to ensure the error handler correctly unwraps e.cause.
+
+test.serial('postRequest: Node DOMException wrapping DeadlineExceededError cause - error is SDK DeadlineExceededError', async (t) => {
+  const fakeReq = makeFakeClientReq();
+  const httpsRequestStub = sinon.stub(https, 'request').callsFake((_url, opts: any) => {
+    const signal: AbortSignal | undefined = opts?.signal;
+    if (signal) {
+      signal.addEventListener('abort', () => {
+        const nodeError = Object.assign(new Error('The operation was aborted'), {
+          name: 'AbortError',
+          code: 'ABORT_ERR',
+          cause: signal.reason,
+        });
+        fakeReq.emit('error', nodeError);
+      }, { once: true });
+    }
+    return fakeReq as any;
+  });
+  t.teardown(() => httpsRequestStub.restore());
+
+  const client = new APIClient(host, apiKey);
+  const signal = createDeadlineExceededSignal(50);
+  const keepAlive = setInterval(() => {}, 100);
+  t.teardown(() => clearInterval(keepAlive));
+
+  const err = await t.throwsAsync<DeadlineExceededError>(() =>
+    (client as any).postRequest(`https://${host}/get_evaluation`, '{}', signal),
+  );
+
+  t.true(err instanceof DeadlineExceededError);
+  t.is(err.timeoutMillis, 50);
+  t.true(isDeadlineExceededError(err));
+  t.false(isOperationAbortedError(err));
+});
+
+test.serial('postRequest: Node DOMException wrapping AbortError cause - error is SDK AbortError', async (t) => {
+  const fakeReq = makeFakeClientReq();
+  const controller = new AbortController();
+  const httpsRequestStub = sinon.stub(https, 'request').callsFake((_url, opts: any) => {
+    const signal: AbortSignal | undefined = opts?.signal;
+    if (signal) {
+      signal.addEventListener('abort', () => {
+        const nodeError = Object.assign(new Error('The operation was aborted'), {
+          name: 'AbortError',
+          code: 'ABORT_ERR',
+          cause: signal.reason,
+        });
+        fakeReq.emit('error', nodeError);
+      }, { once: true });
+    }
+    return fakeReq as any;
+  });
+  t.teardown(() => httpsRequestStub.restore());
+
+  const client = new APIClient(host, apiKey);
+  setTimeout(() => controller.abort(), 10);
+  const err = await t.throwsAsync(() =>
+    (client as any).postRequest(`https://${host}/get_evaluation`, '{}', controller.signal),
+  );
+
+  t.true(err instanceof AbortError);
+  t.true(isOperationAbortedError(err));
+  t.false(isDeadlineExceededError(err));
 });

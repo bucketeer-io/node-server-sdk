@@ -97,7 +97,7 @@ test.serial('start success', async (t) => {
   mockAPIClient
     .expects('getSegmentUsers')
     .once()
-    .withArgs(['segment-id'], 10, options.sourceId, options.sdkVersion)
+    .withArgs(['segment-id'], 10, options.sourceId, options.sdkVersion, sino.match.instanceOf(AbortSignal))
     .resolves([response, responseSize]);
 
   mockProcessorEventsEmitter
@@ -144,7 +144,7 @@ test.serial('start fail', async (t) => {
   mockAPIClient
     .expects('getSegmentUsers')
     .once()
-    .withArgs(['segment-id'], 10, options.sourceId, options.sdkVersion)
+    .withArgs(['segment-id'], 10, options.sourceId, options.sdkVersion, sino.match.instanceOf(AbortSignal))
     .rejects(error);
 
   mockProcessorEventsEmitter

@@ -1,11 +1,39 @@
 import typeUtils from 'node:util/types';
 
+/**
+ * Parses the `Retry-After` HTTP response header into milliseconds.
+ * Handles both RFC 7231 formats:
+ *  - Delta-seconds: "120" → 120_000
+ *  - HTTP-date:     "Wed, 16 Apr 2026 12:00:00 GMT" → (date - now) ms
+ * Returns undefined for missing, unparseable, or past HTTP-date values.
+ */
+export function parseRetryAfter(header: string | undefined): number | undefined {
+  if (!header) return undefined;
+
+  const trimmed = header.trim();
+
+  // Delta-seconds: a non-negative integer string
+  if (/^\d+$/.test(trimmed)) {
+    const seconds = parseInt(trimmed, 10);
+    return seconds * 1000;
+  }
+
+  // HTTP-date
+  const date = new Date(trimmed);
+  if (isNaN(date.getTime())) return undefined;
+
+  const ms = date.getTime() - Date.now();
+  return ms > 0 ? ms : undefined;
+}
+
 export class InvalidStatusError extends Error {
   name = 'InvalidStatusError'
   readonly code: number | undefined;
-  constructor(message: string, code: number | undefined) {
+  readonly retryAfterMs: number | undefined;
+  constructor(message: string, code: number | undefined, retryAfterMs?: number) {
     super(message);
     this.code = code;
+    this.retryAfterMs = retryAfterMs;
     // Set the prototype explicitly.
     Object.setPrototypeOf(this, new.target.prototype);
   }
@@ -75,6 +103,19 @@ export class ServiceUnavailableError extends BKTBaseError {
 }
 
 // Network errors
+
+// DeadlineExceededError: fired when a per-request or polling-interval AbortSignal expires.
+// Distinct from TimeoutError which is thrown by waitForInitialization/destroy.
+export class DeadlineExceededError extends BKTBaseError {
+  name = 'DeadlineExceededError' as const;
+  timeoutMillis: number;
+
+  constructor(timeoutMillis: number, msg?: string) {
+    super(msg);
+    this.timeoutMillis = timeoutMillis;
+  }
+}
+
 export class TimeoutError extends BKTBaseError {
   name = 'TimeoutError' as const;
   timeoutMillis: number;
@@ -87,6 +128,10 @@ export class TimeoutError extends BKTBaseError {
 
 export class NetworkError extends BKTBaseError {
   name = 'NetworkError' as const;
+}
+
+export class AbortError extends BKTBaseError {
+  name = 'AbortError' as const;
 }
 
 // SDK errors
