@@ -29,14 +29,6 @@ const apiKey = 'test-api-key';
 
 const HANG_DETECT_MS = 300;
 
-function makeFakeClientReq() {
-  return Object.assign(new EventEmitter(), {
-    write: sinon.stub(),
-    end: sinon.stub(),
-    destroy: sinon.stub(),
-  });
-}
-
 function makeFakeResponse(statusCode: number, headers: Record<string, string>) {
   return Object.assign(new EventEmitter(), {
     statusCode,
