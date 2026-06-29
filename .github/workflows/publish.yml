@@ -53,3 +53,14 @@ jobs:
             --provenance \
             --access public \
             ${{ inputs.dry_run && '--dry-run' || '' }}
+
+      - name: Dispatch dependency bump to openfeature-node-server-sdk
+        # Only dispatch on real tag pushes (not dry-run workflow_dispatch).
+        if: ${{ !inputs.dry_run && startsWith(github.ref, 'refs/tags/v') }}
+        uses: benc-uk/workflow-dispatch@7a027648b88c2413826b6ddd6c76114894dc5ec4 # v1.3.1
+        with:
+          repo: bucketeer-io/openfeature-node-server-sdk
+          token: ${{ secrets.REPO_ACCESS_PAT }}
+          workflow: bump-node-server-sdk.yml
+          ref: main
+          inputs: '{"version": "${{ github.ref_name }}"}'
