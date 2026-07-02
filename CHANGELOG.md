@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.7](https://github.com/bucketeer-io/node-server-sdk/compare/v0.4.6...v0.4.7) (2026-07-02)
+
+
+### Build System
+
+* **dev-deps:** bump dev-patch ([#220](https://github.com/bucketeer-io/node-server-sdk/issues/220)) ([9bfa632](https://github.com/bucketeer-io/node-server-sdk/commit/9bfa632e77865491a25e7fd17ec5a3b413ce457c))
+* **dev-deps:** bump dev-patch group to v7.29.6 [SECURITY] ([#217](https://github.com/bucketeer-io/node-server-sdk/issues/217)) ([bb58ddd](https://github.com/bucketeer-io/node-server-sdk/commit/bb58ddd6695410975e00991780d228a2caf063ee))
+
 ## [0.4.6](https://github.com/bucketeer-io/node-server-sdk/compare/v0.4.5...v0.4.6) (2026-06-17)
 
 
