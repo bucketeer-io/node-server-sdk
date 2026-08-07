@@ -271,6 +271,10 @@ export function toProtoSegmentUsers(segmentUsers: SegmentUsers): ProtoSegmentUse
     }),
   );
 
+  if (segmentUsers.rules) {
+    psu.setRulesList(segmentUsers.rules.map(toProtoRule));
+  }
+
   return psu;
 }
 

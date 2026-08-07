@@ -722,6 +722,70 @@ test('toProtoSegmentUsers: parameterized cases', (t) => {
   }
 });
 
+test('toProtoSegmentUsers: rule-based segment rules are carried into the proto', (t) => {
+  const input: SegmentUsers = {
+    segmentId: 'seg_rule_based',
+    updatedAt: '1690000000',
+    users: [
+      { id: 'su_1', segmentId: 'seg_rule_based', userId: 'user_1', state: 'INCLUDED', deleted: false },
+    ],
+    rules: [
+      {
+        id: 'segment_rule_1',
+        clauses: [
+          { id: 'clause_1', attribute: 'plan', operator: 'EQUALS', values: ['premium'] },
+          { id: 'clause_2', attribute: 'country', operator: 'IN', values: ['japan', 'vietnam'] },
+        ],
+      },
+      {
+        id: 'segment_rule_2',
+        clauses: [
+          { id: 'clause_3', attribute: 'age', operator: 'GREATER', values: ['18'] },
+        ],
+      },
+    ],
+  };
+
+  const obj = toProtoSegmentUsers(input).toObject();
+  t.is(obj.segmentId, 'seg_rule_based');
+  t.is(obj.usersList.length, 1);
+  t.is(obj.rulesList.length, 2);
+
+  t.is(obj.rulesList[0].id, 'segment_rule_1');
+  t.is(obj.rulesList[0].clausesList.length, 2);
+  t.deepEqual(obj.rulesList[0].clausesList[0], {
+    id: 'clause_1',
+    attribute: 'plan',
+    operator: 0, // EQUALS
+    valuesList: ['premium'],
+  });
+  t.deepEqual(obj.rulesList[0].clausesList[1], {
+    id: 'clause_2',
+    attribute: 'country',
+    operator: 1, // IN
+    valuesList: ['japan', 'vietnam'],
+  });
+
+  t.is(obj.rulesList[1].id, 'segment_rule_2');
+  t.deepEqual(obj.rulesList[1].clausesList[0], {
+    id: 'clause_3',
+    attribute: 'age',
+    operator: 5, // GREATER
+    valuesList: ['18'],
+  });
+});
+
+test('toProtoSegmentUsers: missing rules field keeps the rules list empty', (t) => {
+  const input: SegmentUsers = {
+    segmentId: 'seg_no_rules',
+    updatedAt: '1690000000',
+    users: [],
+  };
+
+  const obj = toProtoSegmentUsers(input).toObject();
+  t.deepEqual(obj.rulesList, []);
+});
+
 // toProtoVariation
 
 test('toProtoVariation: parameterized cases', (t) => {

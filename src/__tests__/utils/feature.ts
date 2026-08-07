@@ -11,14 +11,17 @@ import {
   Feature as ProtoFeature,
   User as ProtoUser,
   SegmentUser as ProtoSegmentUser,
+  SegmentUsers as ProtoSegmentUsers,
   Prerequisite as ProtoPrerequisite,
 } from '@bucketeer/evaluation';
 import {
   toProtoFeature,
   toProtoUser,
   toProtoPrerequisite,
+  toProtoSegmentUsers,
 } from '../../cache/processor/converter';
 import { Feature } from '../../objects/feature';
+import { SegmentUsers } from '../../objects/segment';
 
 export function createUser(id: string, data: { [key: string]: string }): ProtoUser {
   return toProtoUser({ id, data });
@@ -36,6 +39,15 @@ export function createSegmentUser(userId: string, segmentId: string, state: any)
   pu.setState(state);
   pu.setDeleted(false);
   return pu;
+}
+
+export function createSegmentUsers(params: Partial<SegmentUsers>): ProtoSegmentUsers {
+  return toProtoSegmentUsers({
+    segmentId: params.segmentId ?? '',
+    users: params.users ?? [],
+    updatedAt: params.updatedAt ?? '0',
+    rules: params.rules,
+  });
 }
 
 export function createFeature(params: Partial<Feature>): ProtoFeature {

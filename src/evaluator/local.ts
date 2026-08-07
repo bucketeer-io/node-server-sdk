@@ -7,6 +7,11 @@ import {
   Reason as ProtoReason,
   getFeatureIDsDependsOn,
 } from '@bucketeer/evaluation';
+// TODO: Import Segment from the package root once @bucketeer/evaluation
+// re-exports it. Until then it is imported from the generated proto module.
+// The dependency is pinned to an exact version, so the internal file layout
+// cannot change underneath us, and the type check catches any break on upgrade.
+import { Segment } from '@bucketeer/evaluation/lib/proto/feature/segment_pb';
 
 import { FeaturesCache } from '../cache/features';
 import { SegmentUsersCache } from '../cache/segmentUsers';
@@ -81,10 +86,19 @@ class LocalEvaluator implements NodeEvaluator {
       const evaluator = new Evaluator();
       const fIds = evaluator.listSegmentIDs(feature);
       const segmentUsersMap = new Map<string, SegmentUser[]>();
+      const segmentsMap = new Map<string, Segment>();
       for (const fId of fIds) {
-        const segmentUser = await this.getSegmentUsers(fId);
-        if (segmentUser !== null) {
-          segmentUsersMap.set(segmentUser.getSegmentId(), segmentUser.getUsersList());
+        // getSegmentUsers throws when the segment is not found in the cache.
+        const segmentUsers = await this.getSegmentUsers(fId);
+        segmentUsersMap.set(segmentUsers.getSegmentId(), segmentUsers.getUsersList());
+        // Rule-based segments: the segment rules are delivered inside the
+        // SegmentUsers message. Rebuild the Segment so the evaluator can
+        // match users by rules in addition to the included-user list.
+        if (segmentUsers.getRulesList().length > 0) {
+          const segment = new Segment();
+          segment.setId(segmentUsers.getSegmentId());
+          segment.setRulesList(segmentUsers.getRulesList());
+          segmentsMap.set(segmentUsers.getSegmentId(), segment);
         }
       }
 
@@ -93,6 +107,7 @@ class LocalEvaluator implements NodeEvaluator {
         targetFeatures,
         protoUser,
         segmentUsersMap,
+        segmentsMap,
         this.tag,
       );
       return userEvaluations;

@@ -1,3 +1,5 @@
+import { Rule } from './feature';
+
 export type SegmentUser = {
   id: string;
   segmentId: string;
@@ -10,4 +12,5 @@ export type SegmentUsers = {
   segmentId: string;
   users: SegmentUser[];
   updatedAt: string;
+  rules?: Rule[];
 };

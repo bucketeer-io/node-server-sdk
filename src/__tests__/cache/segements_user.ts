@@ -1,5 +1,5 @@
 import test from 'ava';
-import { SegmentUsers, } from '@bucketeer/evaluation';
+import { SegmentUsers, Rule, Clause } from '@bucketeer/evaluation';
 import { InMemoryCache } from '../../cache/inMemoryCache';
 import { NewSegmentUsersCache } from '../../cache/segmentUsers';
 
@@ -8,6 +8,22 @@ function createSegmentUsers(
 ): SegmentUsers {
   const segmentUsers = new SegmentUsers();
   segmentUsers.setSegmentId(id);
+  return segmentUsers;
+}
+
+function createSegmentUsersWithRules(id: string): SegmentUsers {
+  const clause = new Clause();
+  clause.setId('clause-1');
+  clause.setAttribute('plan');
+  clause.setOperator(Clause.Operator.EQUALS);
+  clause.setValuesList(['premium']);
+
+  const rule = new Rule();
+  rule.setId('segment-rule-1');
+  rule.setClausesList([clause]);
+
+  const segmentUsers = createSegmentUsers(id);
+  segmentUsers.setRulesList([rule]);
   return segmentUsers;
 }
 
@@ -27,6 +43,22 @@ test('put should store the value in the cache', async t => {
   await segmentUsersCache.put(segmentUser);
   const result = await segmentUsersCache.get('segment1');
   t.deepEqual(result, segmentUser);
+});
+
+test('put should preserve rule-based segment rules across put/get', async t => {
+  const cache = new InMemoryCache<SegmentUsers>();
+  const segmentUsersCache = NewSegmentUsersCache({ cache, ttl: 1000 });
+  const segmentUsers = createSegmentUsersWithRules('segment1');
+
+  await segmentUsersCache.put(segmentUsers);
+  const result = await segmentUsersCache.get('segment1');
+  t.deepEqual(result, segmentUsers);
+  t.is(result?.getRulesList().length, 1);
+  t.is(result?.getRulesList()[0].getId(), 'segment-rule-1');
+  const clauses = result?.getRulesList()[0].getClausesList() ?? [];
+  t.is(clauses.length, 1);
+  t.is(clauses[0].getAttribute(), 'plan');
+  t.deepEqual(clauses[0].getValuesList(), ['premium']);
 });
 
 test('delete should remove the value from the cache', async t => {
