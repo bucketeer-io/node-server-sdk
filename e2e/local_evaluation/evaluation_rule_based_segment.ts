@@ -13,8 +13,7 @@ import {
 } from '../constants/constants';
 
 /**
- * E2E tests for rule-based segments (Bucketeer server 2.3.0+) on the
- * local-evaluation path. A segment carries attribute-based rules in addition
+ * E2E tests for rule-based segments on the local-evaluation path. A segment carries attribute-based rules in addition
  * to its uploaded included-user list; a user belongs to the segment if they
  * are in the list OR match any rule. Clauses within a rule are AND-ed,
  * rules are OR-ed.

@@ -775,7 +775,7 @@ test('toProtoSegmentUsers: rule-based segment rules are carried into the proto',
   });
 });
 
-test('toProtoSegmentUsers: missing rules field keeps the rules list empty (pre-2.3.0 servers)', (t) => {
+test('toProtoSegmentUsers: missing rules field keeps the rules list empty', (t) => {
   const input: SegmentUsers = {
     segmentId: 'seg_no_rules',
     updatedAt: '1690000000',

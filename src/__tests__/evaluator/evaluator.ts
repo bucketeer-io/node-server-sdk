@@ -584,7 +584,7 @@ test ('evaluate | success: with segment user', async (t) => {
   t.pass();
 });
 
-// Rule-based segments (Bucketeer server 2.3.0+): a segment carries rules in
+// Rule-based segments: a segment carries rules in
 // addition to its included-user list. A user is in the segment when they are
 // in the list OR match any rule (clauses in a rule are AND-ed).
 function createRuleBasedSegmentFixture() {
@@ -723,7 +723,7 @@ for (const tc of ruleBasedSegmentTestCases) {
 test('evaluate | rule-based segment: list-only segment without rules keeps working (backward compat)', async (t) => {
   const { evaluator, featureFlagCache, segmentUsersCache, sandbox } = t.context;
   const { feature } = createRuleBasedSegmentFixture();
-  // Same segment ID, but only an included-user list, as pre-2.3.0 servers send it.
+  // Same segment ID, but only an included-user list without rules.
   const listOnlySegmentUsers = createSegmentUsers({
     segmentId: 'segment-id-rule-based',
     updatedAt: '0',

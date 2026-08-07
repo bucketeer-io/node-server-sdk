@@ -16,7 +16,7 @@ import { SourceId } from '../../../../objects/sourceId';
 import { LocalEvaluator } from '../../../../evaluator/local';
 import { createFeature } from '../../../utils/feature';
 
-// Verifies that rule-based segment rules (Bucketeer server 2.3.0+) survive the
+// Verifies that rule-based segment rules survive the
 // whole local-evaluation data path:
 //   API response parse -> cache processor -> segment users cache -> evaluator.
 

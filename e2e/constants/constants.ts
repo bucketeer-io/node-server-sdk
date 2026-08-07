@@ -12,7 +12,7 @@ export const FEATURE_ID_INT = 'feature-nodejs-server-e2e-int';
 export const FEATURE_ID_FLOAT = 'feature-nodejs-server-e2e-float';
 export const FEATURE_ID_JSON = 'feature-nodejs-server-e2e-json';
 
-// Rule-based segment fixtures (requires Bucketeer server 2.3.0+).
+// Rule-based segment fixtures.
 // See e2e/local_evaluation/evaluation_rule_based_segment.ts for the required
 // dashboard configuration.
 export const FEATURE_ID_RULE_SEGMENT = 'feature-nodejs-server-e2e-rule-segment';
