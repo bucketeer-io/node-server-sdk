@@ -1,51 +1,51 @@
 import anyTest, { TestFn } from 'ava';
-import { Bucketeer, DefaultLogger, defineBKTConfig, initializeBKTClient } from '../../lib';
+import { Bucketeer, DefaultLogger, User, defineBKTConfig, initializeBKTClient } from '../../lib';
 import {
   API_ENDPOINT,
   SCHEME,
   FEATURE_TAG,
-  FEATURE_ID_RULE_SEGMENT,
-  FEATURE_ID_RULE_SEGMENT_AND_ATTRIBUTE,
+  FEATURE_ID_RULE_BASED_SEGMENT,
+  FEATURE_ID_SEGMENT_AND_ATTRIBUTE,
   FEATURE_ID_STRING,
-  RULE_SEGMENT_LIST_ONLY_USER_ID,
+  RULE_BASED_SEGMENT_DEFAULT_VARIATION,
+  RULE_BASED_SEGMENT_MATCHED_VARIATION,
+  RULE_BASED_SEGMENT_LISTED_USER_ID,
   TARGETED_SEGMENT_USER_ID,
   SERVER_API_KEY,
 } from '../constants/constants';
 
 /**
- * E2E tests for rule-based segments on the local-evaluation path. A segment carries attribute-based rules in addition
- * to its uploaded included-user list; a user belongs to the segment if they
- * are in the list OR match any rule. Clauses within a rule are AND-ed,
- * rules are OR-ed.
+ * E2E tests for rule-based segments on the local-evaluation path.
+ * A segment carries attribute-based rules in addition to its uploaded
+ * included-user list; a user belongs to the segment if they are in the list
+ * OR match any rule. Clauses within a rule are AND-ed, rules are OR-ed.
  *
- * Required fixtures in the test environment:
+ * These tests require the following fixtures to be configured in the
+ * test environment:
  *
- * Segment `nodejs-server-e2e-rule-based-segment`:
- *   - Uploaded included-user list: [RULE_SEGMENT_LIST_ONLY_USER_ID]
- *   - Rule 1 (clauses AND-ed):
- *       `plan`    EQUALS      `premium`
- *       `country` IN          [`japan`, `vietnam`]
- *   - Rule 2 (clauses AND-ed):
- *       `tier`    STARTS_WITH `gold`
- *       `age`     GREATER     `18`
- *       `age`     LESS        `65`
+ * Segment "nodejs-server-e2e-rule-based" (mixed: uploaded user list AND rules):
+ *   - Uploaded included-user list: RULE_BASED_SEGMENT_LISTED_USER_ID
+ *   - Rule 1 (clauses are AND-ed):
+ *       country EQUALS "japan"
+ *       AND age GREATER "19"
+ *       AND age LESS "60"
+ *   - Rule 2 (clauses are AND-ed):
+ *       email STARTS_WITH "test@"
+ *       AND plan IN ["premium", "enterprise"]
+ *   (Rules are OR-ed: a user matching either rule is in the segment)
  *
- * Flag FEATURE_ID_RULE_SEGMENT (string flag, tag `nodejs`, enabled):
- *   - Variations: `value-1` (name `variation 1`), `value-2` (name `variation 2`)
- *   - Rule: user is included in segment `nodejs-server-e2e-rule-based-segment`
- *       -> serve `value-2`
- *   - Default strategy: serve `value-1`
+ * Flag FEATURE_ID_RULE_BASED_SEGMENT (string, tag `nodejs`, enabled):
+ *   - Variations: value-1, value-2
+ *   - Targeting rule: user is included in segment "nodejs-server-e2e-rule-based" -> value-2
+ *   - Default strategy: value-1
  *
- * Flag FEATURE_ID_RULE_SEGMENT_AND_ATTRIBUTE (string flag, tag `nodejs`, enabled):
- *   - Variations: `value-1` (name `variation 1`), `value-2` (name `variation 2`)
- *   - Rule with TWO clauses in the SAME rule (AND-ed):
- *       user is included in segment `nodejs-server-e2e-rule-based-segment`
- *       AND `country` EQUALS `japan`
- *       -> serve `value-2`
- *   - Default strategy: serve `value-1`
- *
- * Variation IDs are environment-generated UUIDs, so assertions check the
- * variation value and the evaluation reason instead.
+ * Flag FEATURE_ID_SEGMENT_AND_ATTRIBUTE (string, tag `nodejs`, enabled):
+ *   - Variations: value-1, value-2
+ *   - Targeting rule (single rule, two AND-ed clauses):
+ *       user is included in segment "nodejs-server-e2e-rule-based"
+ *       AND region EQUALS "tokyo"
+ *     -> value-2
+ *   - Default strategy: value-1
  */
 
 const test = anyTest as TestFn<{ bktClient: Bucketeer }>;
@@ -72,116 +72,135 @@ test.after(async (t) => {
   bktClient.destroy();
 });
 
-test('segment rule match: all AND clauses of rule 1 satisfied (equals + in)', async (t) => {
-  const { bktClient } = t.context;
-  const user = {
-    id: 'nodejs-server-e2e-rule-segment-user-rule-1',
-    data: { plan: 'premium', country: 'japan' },
-  };
-  t.is(await bktClient.stringVariation(user, FEATURE_ID_RULE_SEGMENT, ''), 'value-2');
-  const details = await bktClient.stringVariationDetails(user, FEATURE_ID_RULE_SEGMENT, '');
-  t.is(details.reason, 'RULE');
-});
+// Verifies the segment rule evaluation semantics: rules are OR-ed,
+// and the clauses within a rule are AND-ed.
+const multipleRulesTestCases: { desc: string; user: User; expected: string }[] = [
+  {
+    desc: 'match rule 1: country equals AND age within the greater/less bounds',
+    user: { id: 'rule-based-user-1', data: { country: 'japan', age: '30' } },
+    expected: RULE_BASED_SEGMENT_MATCHED_VARIATION,
+  },
+  {
+    desc: 'match rule 2: email starts-with AND plan in',
+    user: { id: 'rule-based-user-2', data: { email: 'test@bucketeer.io', plan: 'premium' } },
+    expected: RULE_BASED_SEGMENT_MATCHED_VARIATION,
+  },
+  {
+    desc: 'no match: age is out of the less bound (clauses are AND-ed)',
+    user: { id: 'rule-based-user-3', data: { country: 'japan', age: '65' } },
+    expected: RULE_BASED_SEGMENT_DEFAULT_VARIATION,
+  },
+  {
+    desc: 'no match: plan is not in the values (clauses are AND-ed)',
+    user: { id: 'rule-based-user-4', data: { email: 'test@bucketeer.io', plan: 'free' } },
+    expected: RULE_BASED_SEGMENT_DEFAULT_VARIATION,
+  },
+  {
+    desc: "no match: the rule's attribute is missing entirely",
+    user: {
+      id: 'rule-based-user-5',
+      // The age attribute required by rule 1 is missing,
+      // and no attribute required by rule 2 is set
+      data: { country: 'japan' },
+    },
+    expected: RULE_BASED_SEGMENT_DEFAULT_VARIATION,
+  },
+];
 
-test('segment rule match: rule 2 satisfied (starts-with + numeric greater/less)', async (t) => {
-  const { bktClient } = t.context;
-  const user = {
-    id: 'nodejs-server-e2e-rule-segment-user-rule-2',
-    data: { tier: 'gold-plus', age: '30' },
-  };
-  t.is(await bktClient.stringVariation(user, FEATURE_ID_RULE_SEGMENT, ''), 'value-2');
-  const details = await bktClient.stringVariationDetails(user, FEATURE_ID_RULE_SEGMENT, '');
-  t.is(details.reason, 'RULE');
-});
+for (const tc of multipleRulesTestCases) {
+  test(`rule-based segment multiple rules: ${tc.desc}`, async (t) => {
+    const { bktClient } = t.context;
+    t.is(
+      await bktClient.stringVariation(tc.user, FEATURE_ID_RULE_BASED_SEGMENT, 'default'),
+      tc.expected,
+    );
+  });
+}
 
-test('mixed segment: user matches by uploaded list only (no rule matches)', async (t) => {
-  const { bktClient } = t.context;
-  const user = {
-    id: RULE_SEGMENT_LIST_ONLY_USER_ID,
-    data: { plan: 'free' },
-  };
-  t.is(await bktClient.stringVariation(user, FEATURE_ID_RULE_SEGMENT, ''), 'value-2');
-  const details = await bktClient.stringVariationDetails(user, FEATURE_ID_RULE_SEGMENT, '');
-  t.is(details.reason, 'RULE');
-});
+// Verifies that a user belongs to a mixed segment (uploaded user list AND rules)
+// when the user is in the list OR matches any rule.
+const mixedListAndRulesTestCases: { desc: string; user: User; expected: string }[] = [
+  {
+    desc: "match by the uploaded user list only (attributes don't match the rules)",
+    user: { id: RULE_BASED_SEGMENT_LISTED_USER_ID, data: { country: 'france' } },
+    expected: RULE_BASED_SEGMENT_MATCHED_VARIATION,
+  },
+  {
+    desc: 'match by the rules only (user is not in the uploaded user list)',
+    user: { id: 'rule-based-user-not-listed', data: { country: 'japan', age: '25' } },
+    expected: RULE_BASED_SEGMENT_MATCHED_VARIATION,
+  },
+  {
+    desc: "no match: user is not in the uploaded user list and doesn't match the rules",
+    user: { id: 'rule-based-user-no-match', data: { country: 'france' } },
+    expected: RULE_BASED_SEGMENT_DEFAULT_VARIATION,
+  },
+];
 
-test('mixed segment: user matching neither the list nor any rule gets the default', async (t) => {
-  const { bktClient } = t.context;
-  const user = {
-    id: 'nodejs-server-e2e-rule-segment-user-no-match',
-    data: { plan: 'free', country: 'usa', tier: 'silver', age: '30' },
-  };
-  t.is(await bktClient.stringVariation(user, FEATURE_ID_RULE_SEGMENT, ''), 'value-1');
-  const details = await bktClient.stringVariationDetails(user, FEATURE_ID_RULE_SEGMENT, '');
-  t.is(details.reason, 'DEFAULT');
-});
+for (const tc of mixedListAndRulesTestCases) {
+  test(`rule-based segment mixed list and rules: ${tc.desc}`, async (t) => {
+    const { bktClient } = t.context;
+    t.is(
+      await bktClient.stringVariation(tc.user, FEATURE_ID_RULE_BASED_SEGMENT, 'default'),
+      tc.expected,
+    );
+  });
+}
 
-test('AND within a rule: satisfying only one clause of rule 1 does not match', async (t) => {
-  const { bktClient } = t.context;
-  const user = {
-    id: 'nodejs-server-e2e-rule-segment-user-partial',
-    data: { plan: 'premium', country: 'usa' },
-  };
-  t.is(await bktClient.stringVariation(user, FEATURE_ID_RULE_SEGMENT, ''), 'value-1');
-  const details = await bktClient.stringVariationDetails(user, FEATURE_ID_RULE_SEGMENT, '');
-  t.is(details.reason, 'DEFAULT');
-});
+// Verifies a flag rule that combines a SEGMENT clause with an additional
+// attribute clause in the same rule (segment membership AND region equals "tokyo").
+const segmentAndAttributeTestCases: { desc: string; user: User; expected: string }[] = [
+  {
+    desc: 'match: in the segment by rules AND the region attribute matches',
+    user: {
+      id: 'segment-attribute-user-1',
+      data: { country: 'japan', age: '30', region: 'tokyo' },
+    },
+    expected: RULE_BASED_SEGMENT_MATCHED_VARIATION,
+  },
+  {
+    desc: "no match: in the segment by rules but the region attribute doesn't match",
+    user: {
+      id: 'segment-attribute-user-2',
+      data: { country: 'japan', age: '30', region: 'osaka' },
+    },
+    expected: RULE_BASED_SEGMENT_DEFAULT_VARIATION,
+  },
+  {
+    desc: 'no match: the region attribute matches but the user is not in the segment',
+    user: { id: 'segment-attribute-user-3', data: { country: 'france', region: 'tokyo' } },
+    expected: RULE_BASED_SEGMENT_DEFAULT_VARIATION,
+  },
+];
 
-test('user missing the rule attributes entirely does not match', async (t) => {
-  const { bktClient } = t.context;
-  const user = {
-    id: 'nodejs-server-e2e-rule-segment-user-no-attributes',
-    data: {},
-  };
-  t.is(await bktClient.stringVariation(user, FEATURE_ID_RULE_SEGMENT, ''), 'value-1');
-  const details = await bktClient.stringVariationDetails(user, FEATURE_ID_RULE_SEGMENT, '');
-  t.is(details.reason, 'DEFAULT');
-});
+for (const tc of segmentAndAttributeTestCases) {
+  test(`rule-based segment with attribute clause: ${tc.desc}`, async (t) => {
+    const { bktClient } = t.context;
+    t.is(
+      await bktClient.stringVariation(tc.user, FEATURE_ID_SEGMENT_AND_ATTRIBUTE, 'default'),
+      tc.expected,
+    );
+  });
+}
 
-test('flag rule combining SEGMENT clause AND attribute clause: both satisfied', async (t) => {
-  const { bktClient } = t.context;
-  // In the segment via rule 1 AND country=japan satisfies the extra clause.
-  const user = {
-    id: 'nodejs-server-e2e-rule-segment-attr-user-match',
-    data: { plan: 'premium', country: 'japan' },
-  };
-  t.is(
-    await bktClient.stringVariation(user, FEATURE_ID_RULE_SEGMENT_AND_ATTRIBUTE, ''),
-    'value-2',
-  );
-  const details = await bktClient.stringVariationDetails(
-    user,
-    FEATURE_ID_RULE_SEGMENT_AND_ATTRIBUTE,
-    '',
-  );
-  t.is(details.reason, 'RULE');
-});
+// Verifies that a segment configured only with an uploaded user list (no rules)
+// still evaluates as before.
+const listOnlyBackwardCompatibilityTestCases: { desc: string; user: User; expected: string }[] = [
+  {
+    desc: 'match by the uploaded user list',
+    user: { id: TARGETED_SEGMENT_USER_ID, data: {} },
+    expected: 'value-3',
+  },
+  {
+    desc: 'no match: user is not in the uploaded user list',
+    user: { id: 'list-only-segment-user-no-match', data: {} },
+    expected: 'value-1',
+  },
+];
 
-test('flag rule combining SEGMENT clause AND attribute clause: in segment but attribute clause fails', async (t) => {
-  const { bktClient } = t.context;
-  // In the segment via rule 2, but country is not japan, so the AND-ed
-  // attribute clause of the flag rule fails.
-  const user = {
-    id: 'nodejs-server-e2e-rule-segment-attr-user-no-attr-match',
-    data: { tier: 'gold-plus', age: '30', country: 'usa' },
-  };
-  t.is(
-    await bktClient.stringVariation(user, FEATURE_ID_RULE_SEGMENT_AND_ATTRIBUTE, ''),
-    'value-1',
-  );
-  const details = await bktClient.stringVariationDetails(
-    user,
-    FEATURE_ID_RULE_SEGMENT_AND_ATTRIBUTE,
-    '',
-  );
-  t.is(details.reason, 'DEFAULT');
-});
-
-test('backward compat: list-only segment (no rules) still evaluates as before', async (t) => {
-  const { bktClient } = t.context;
-  // FEATURE_ID_STRING targets a segment that only has an uploaded user list.
-  const user = { id: TARGETED_SEGMENT_USER_ID, data: {} };
-  t.is(await bktClient.stringVariation(user, FEATURE_ID_STRING, ''), 'value-3');
-  const details = await bktClient.stringVariationDetails(user, FEATURE_ID_STRING, '');
-  t.is(details.reason, 'RULE');
-});
+for (const tc of listOnlyBackwardCompatibilityTestCases) {
+  test(`list-only segment backward compatibility: ${tc.desc}`, async (t) => {
+    const { bktClient } = t.context;
+    t.is(await bktClient.stringVariation(tc.user, FEATURE_ID_STRING, 'default'), tc.expected);
+  });
+}

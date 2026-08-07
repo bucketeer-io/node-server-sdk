@@ -15,10 +15,12 @@ export const FEATURE_ID_JSON = 'feature-nodejs-server-e2e-json';
 // Rule-based segment fixtures.
 // See e2e/local_evaluation/evaluation_rule_based_segment.ts for the required
 // dashboard configuration.
-export const FEATURE_ID_RULE_SEGMENT = 'feature-nodejs-server-e2e-rule-segment';
-export const FEATURE_ID_RULE_SEGMENT_AND_ATTRIBUTE =
-  'feature-nodejs-server-e2e-rule-segment-attr';
-export const RULE_SEGMENT_LIST_ONLY_USER_ID = 'bucketeer-nodejs-server-user-id-rule-segment-list';
+export const FEATURE_ID_RULE_BASED_SEGMENT = 'feature-nodejs-server-e2e-rule-based-segment';
+export const FEATURE_ID_SEGMENT_AND_ATTRIBUTE = 'feature-nodejs-server-e2e-segment-attribute';
+export const RULE_BASED_SEGMENT_DEFAULT_VARIATION = 'value-1';
+export const RULE_BASED_SEGMENT_MATCHED_VARIATION = 'value-2';
+// Uploaded to the segment's user list on the console
+export const RULE_BASED_SEGMENT_LISTED_USER_ID = 'bucketeer-nodejs-server-user-id-3';
 
 export const GOAL_ID = 'goal-nodejs-server-e2e-1';
 export const GOAL_VALUE = 1.0;
