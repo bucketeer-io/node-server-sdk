@@ -17,7 +17,7 @@
   "types": "lib/index.d.ts",
   "dependencies": {
     "uuid": "^11.1.0",
-    "@bucketeer/evaluation": "0.0.8"
+    "@bucketeer/evaluation": "0.0.9"
   },
   "devDependencies": {
     "@ava/babel": "2.0.0",

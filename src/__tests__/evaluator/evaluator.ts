@@ -16,6 +16,7 @@ import {
   createFeature,
   createUser,
   createSegmentUser,
+  createSegmentUsers,
 } from '../utils/feature';
 
 import { LocalEvaluator, protoReasonToReason } from '../../evaluator/local';
@@ -581,6 +582,189 @@ test ('evaluate | success: with segment user', async (t) => {
   segmentUsersCacheMock.verify();
 
   t.pass();
+});
+
+// Rule-based segments (Bucketeer server 2.3.0+): a segment carries rules in
+// addition to its included-user list. A user is in the segment when they are
+// in the list OR match any rule (clauses in a rule are AND-ed).
+function createRuleBasedSegmentFixture() {
+  const segmentId = 'segment-id-rule-based';
+  const segmentUsers = createSegmentUsers({
+    segmentId: segmentId,
+    updatedAt: '0',
+    users: [
+      {
+        id: `${segmentId}:user-id-list`,
+        segmentId: segmentId,
+        userId: 'user-id-list',
+        state: 'INCLUDED',
+        deleted: false,
+      },
+    ],
+    rules: [
+      {
+        id: 'segment-rule-1',
+        clauses: [
+          { id: 'clause-1', attribute: 'plan', operator: 'EQUALS', values: ['premium'] },
+          { id: 'clause-2', attribute: 'country', operator: 'IN', values: ['japan', 'vietnam'] },
+        ],
+      },
+      {
+        id: 'segment-rule-2',
+        clauses: [{ id: 'clause-3', attribute: 'age', operator: 'GREATER', values: ['18'] }],
+      },
+    ],
+  });
+
+  const feature = createFeature({
+    id: 'feature-id-rule-based-segment',
+    version: 0,
+    name: 'feature-rule-based-segment',
+    enabled: true,
+    tags: ['server'],
+    variations: [
+      {
+        id: 'variation-true-id',
+        name: 'true-name',
+        value: 'true',
+        description: 'variation-true-id',
+      },
+      {
+        id: 'variation-false-id',
+        name: 'false-name',
+        value: 'false',
+        description: 'variation-false-id',
+      },
+    ],
+    rules: [
+      {
+        id: 'flag-rule-1',
+        strategy: { type: 'FIXED', fixedStrategy: { variation: 'variation-true-id' } },
+        clauses: [{
+          id: 'flag-clause-1',
+          attribute: '',
+          operator: 'SEGMENT',
+          values: [segmentId],
+        }],
+      },
+    ],
+    defaultStrategy: {
+      type: 'FIXED',
+      fixedStrategy: { variation: 'variation-false-id' },
+    },
+    offVariation: 'variation-false-id',
+  });
+
+  return { feature, segmentUsers };
+}
+
+const ruleBasedSegmentTestCases: {
+  desc: string;
+  user: { id: string; data: { [key: string]: string } };
+  expectedVariationId: string;
+  expectedReason: { ruleId: string; type: string };
+}[] = [
+  {
+    desc: 'user matches by segment rule (AND clauses in one rule)',
+    user: { id: 'user-id-rule', data: { plan: 'premium', country: 'japan' } },
+    expectedVariationId: 'variation-true-id',
+    expectedReason: { ruleId: 'flag-rule-1', type: 'RULE' },
+  },
+  {
+    desc: 'user matches by the second segment rule (OR across rules)',
+    user: { id: 'user-id-rule-2', data: { age: '30' } },
+    expectedVariationId: 'variation-true-id',
+    expectedReason: { ruleId: 'flag-rule-1', type: 'RULE' },
+  },
+  {
+    desc: 'user matches by included-user list even when no rule matches',
+    user: { id: 'user-id-list', data: { plan: 'free' } },
+    expectedVariationId: 'variation-true-id',
+    expectedReason: { ruleId: 'flag-rule-1', type: 'RULE' },
+  },
+  {
+    desc: 'user matching only one of the AND clauses does not match',
+    user: { id: 'user-id-partial', data: { plan: 'premium', country: 'usa' } },
+    expectedVariationId: 'variation-false-id',
+    expectedReason: { ruleId: '', type: 'DEFAULT' },
+  },
+  {
+    desc: 'user missing the rule attributes does not match',
+    user: { id: 'user-id-no-attr', data: {} },
+    expectedVariationId: 'variation-false-id',
+    expectedReason: { ruleId: '', type: 'DEFAULT' },
+  },
+];
+
+for (const tc of ruleBasedSegmentTestCases) {
+  test(`evaluate | rule-based segment: ${tc.desc}`, async (t) => {
+    const { evaluator, featureFlagCache, segmentUsersCache, sandbox } = t.context;
+    const { feature, segmentUsers } = createRuleBasedSegmentFixture();
+
+    const featuresCacheMock = sandbox.mock(featureFlagCache);
+    featuresCacheMock.expects('get').withArgs(feature.getId()).resolves(feature);
+
+    const segmentUsersCacheMock = sandbox.mock(segmentUsersCache);
+    segmentUsersCacheMock
+      .expects('get')
+      .withArgs(segmentUsers.getSegmentId())
+      .resolves(segmentUsers);
+
+    const evaluation = await evaluator.evaluate(tc.user, feature.getId());
+
+    t.is(evaluation.variationId, tc.expectedVariationId);
+    t.deepEqual(evaluation.reason, tc.expectedReason);
+
+    featuresCacheMock.verify();
+    segmentUsersCacheMock.verify();
+  });
+}
+
+test('evaluate | rule-based segment: list-only segment without rules keeps working (backward compat)', async (t) => {
+  const { evaluator, featureFlagCache, segmentUsersCache, sandbox } = t.context;
+  const { feature } = createRuleBasedSegmentFixture();
+  // Same segment ID, but only an included-user list, as pre-2.3.0 servers send it.
+  const listOnlySegmentUsers = createSegmentUsers({
+    segmentId: 'segment-id-rule-based',
+    updatedAt: '0',
+    users: [
+      {
+        id: 'segment-id-rule-based:user-id-list',
+        segmentId: 'segment-id-rule-based',
+        userId: 'user-id-list',
+        state: 'INCLUDED',
+        deleted: false,
+      },
+    ],
+  });
+
+  const featuresCacheMock = sandbox.mock(featureFlagCache);
+  featuresCacheMock.expects('get').withArgs(feature.getId()).twice().resolves(feature);
+
+  const segmentUsersCacheMock = sandbox.mock(segmentUsersCache);
+  segmentUsersCacheMock
+    .expects('get')
+    .withArgs(listOnlySegmentUsers.getSegmentId())
+    .twice()
+    .resolves(listOnlySegmentUsers);
+
+  const listedUserEvaluation = await evaluator.evaluate(
+    { id: 'user-id-list', data: {} },
+    feature.getId(),
+  );
+  t.is(listedUserEvaluation.variationId, 'variation-true-id');
+  t.deepEqual(listedUserEvaluation.reason, { ruleId: 'flag-rule-1', type: 'RULE' });
+
+  // A user with matching attributes must NOT match when the segment has no rules.
+  const attributeUserEvaluation = await evaluator.evaluate(
+    { id: 'user-id-rule', data: { plan: 'premium', country: 'japan' } },
+    feature.getId(),
+  );
+  t.is(attributeUserEvaluation.variationId, 'variation-false-id');
+  t.deepEqual(attributeUserEvaluation.reason, { ruleId: '', type: 'DEFAULT' });
+
+  featuresCacheMock.verify();
+  segmentUsersCacheMock.verify();
 });
 
 test ('getTargetFeatures | err: failed to get feature flag from cache', async (t) => {

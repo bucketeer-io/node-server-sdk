@@ -271,6 +271,12 @@ export function toProtoSegmentUsers(segmentUsers: SegmentUsers): ProtoSegmentUse
     }),
   );
 
+  // Rule-based segment rules (Bucketeer server 2.3.0+).
+  // Servers older than 2.3.0 never send rules, so the list stays empty.
+  if (segmentUsers.rules) {
+    psu.setRulesList(segmentUsers.rules.map(toProtoRule));
+  }
+
   return psu;
 }
 

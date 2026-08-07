@@ -7,6 +7,9 @@ import {
   Reason as ProtoReason,
   getFeatureIDsDependsOn,
 } from '@bucketeer/evaluation';
+// The Segment message is not re-exported from the package root,
+// so it is imported directly from the generated proto module.
+import { Segment } from '@bucketeer/evaluation/lib/proto/feature/segment_pb';
 
 import { FeaturesCache } from '../cache/features';
 import { SegmentUsersCache } from '../cache/segmentUsers';
@@ -81,10 +84,20 @@ class LocalEvaluator implements NodeEvaluator {
       const evaluator = new Evaluator();
       const fIds = evaluator.listSegmentIDs(feature);
       const segmentUsersMap = new Map<string, SegmentUser[]>();
+      const segmentsMap = new Map<string, Segment>();
       for (const fId of fIds) {
-        const segmentUser = await this.getSegmentUsers(fId);
-        if (segmentUser !== null) {
-          segmentUsersMap.set(segmentUser.getSegmentId(), segmentUser.getUsersList());
+        const segmentUsers = await this.getSegmentUsers(fId);
+        if (segmentUsers !== null) {
+          segmentUsersMap.set(segmentUsers.getSegmentId(), segmentUsers.getUsersList());
+          // Rule-based segments: the segment rules are delivered inside the
+          // SegmentUsers message. Rebuild the Segment so the evaluator can
+          // match users by rules in addition to the included-user list.
+          if (segmentUsers.getRulesList().length > 0) {
+            const segment = new Segment();
+            segment.setId(segmentUsers.getSegmentId());
+            segment.setRulesList(segmentUsers.getRulesList());
+            segmentsMap.set(segmentUsers.getSegmentId(), segment);
+          }
         }
       }
 
@@ -93,6 +106,7 @@ class LocalEvaluator implements NodeEvaluator {
         targetFeatures,
         protoUser,
         segmentUsersMap,
+        segmentsMap,
         this.tag,
       );
       return userEvaluations;
