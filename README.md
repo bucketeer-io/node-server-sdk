@@ -21,14 +21,35 @@ Please follow our contribution guide [here](https://docs.bucketeer.io/contributi
 Before building the example, please follow the following steps.
 
 - Ensure that you have the `yarn` installed.
-- Configure the `apiEndpoint` (with URL scheme like `https://`) and the `apiKey` info in the [index.ts](https://github.com/bucketeer-io/node-server-sdk/blob/master/example/src/index.ts#L15-L19).
+- Configure the `apiEndpoint` (with URL scheme like `https://`) and the `apiKey` in the example source file you want to run.
 - Move to the example directory `cd example`.
 - Install dependencies `make init`.
 
-### Build and start an example server
+### Build and start the example server
+
+There are two example entry points:
+
+- `example/src/index.ts`: Remote evaluation example.
+- `example/src/index-local-evaluation.ts`: Local evaluation example with `enableLocalEvaluation: true`.
+
+Use the local evaluation example when you want to evaluate users locally within the SDK.
+
+Use the remote evaluation example when you want to evaluate users on the Bucketeer service side.
+
+#### Remote evaluation
+
+Update `example/src/index.ts`, then run:
 
 ```bash
 make start
+```
+
+#### Local evaluation
+
+Update `example/src/index-local-evaluation.ts`, then run:
+
+```bash
+make start-local-evaluation
 ```
 
 If you want to use a published SDK instead of a local one, replace the line where it imports the library in the [example code](https://github.com/bucketeer-io/node-server-sdk/blob/master/example/src/index.ts#L7-L8)
