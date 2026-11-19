@@ -18,6 +18,8 @@ import { ProcessorEventsEmitter } from '../processorEventsEmitter';
 import { Clock } from '../utils/clock';
 import { NewSegmentUsersCache, SegmentUsersCache } from '../cache/segmentUsers';
 import { FeaturesCache, NewFeatureCache } from '../cache/features';
+import { NewHoldoutGroupsCache } from '../cache/holdoutGroups';
+import { InMemoryCache } from '../cache/inMemoryCache';
 import { DefaultLogger, defineBKTConfig } from '../index';
 import { ForbiddenError, IllegalStateError, TimeoutError } from '../objects/errors';
 import { InternalConfig, requiredInternalConfig } from '../internalConfig';
@@ -58,6 +60,11 @@ test.beforeEach((t) => {
     cache: cache,
     ttl: FEATURE_FLAG_CACHE_TTL,
   });
+  // Kept apart from the mocked cache: no holdout group is serving in these tests.
+  const holdoutGroupsCache = NewHoldoutGroupsCache({
+    cache: new InMemoryCache(),
+    ttl: FEATURE_FLAG_CACHE_TTL,
+  });
 
   const config = requiredInternalConfig(
     defineBKTConfig({
@@ -73,6 +80,7 @@ test.beforeEach((t) => {
   const featureFlagProcessor = NewFeatureFlagProcessor({
     cache: cache,
     featureFlagCache: featureFlagCache,
+    holdoutGroupsCache: holdoutGroupsCache,
     pollingInterval: config.cachePollingInterval!,
     apiClient: apiClient,
     eventEmitter: eventEmitter,
@@ -97,6 +105,7 @@ test.beforeEach((t) => {
     tag: tag,
     featuresCache: featureFlagCache,
     segementUsersCache: segmentUsersCache,
+    holdoutGroupsCache: holdoutGroupsCache,
   });
 
   t.context = {

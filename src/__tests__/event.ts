@@ -185,6 +185,35 @@ test('createEvaluationEvent', (t) => {
   }
 });
 
+test('createEvaluationEvent carries the HOLDOUT reason and the holdout group ID', (t) => {
+  const holdoutReason: Reason = {
+    type: 'HOLDOUT',
+    ruleId: '',
+    holdoutGroupId: 'holdout-group-id-1',
+  };
+  const evaluation: Evaluation = {
+    id,
+    featureId,
+    featureVersion,
+    userId,
+    variationId,
+    reason: holdoutReason,
+    variationValue,
+    variationName,
+  };
+
+  const actual = createEvaluationEvent(tag, user, evaluation, defaultSourceId, sdkVersion);
+
+  t.true(isEvaluationEvent(actual.event));
+  // The event is sent as JSON, so check the serialized payload.
+  const payload = JSON.parse(JSON.stringify(actual.event));
+  t.deepEqual(payload.reason, {
+    type: 'HOLDOUT',
+    ruleId: '',
+    holdoutGroupId: 'holdout-group-id-1',
+  });
+});
+
 test('isNotEvaluationEvent', (t) => {
   const evaluationEvent: EvaluationEvent = {
     tag,

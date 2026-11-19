@@ -1,6 +1,8 @@
 import test from 'ava';
 import sino from 'sinon';
 import { NewFeatureCache } from '../../../../cache/features';
+import { NewHoldoutGroupsCache } from '../../../../cache/holdoutGroups';
+import { InMemoryCache } from '../../../../cache/inMemoryCache';
 import {
   FEATURE_FLAG_CACHE_TTL,
   FEATURE_FLAG_ID,
@@ -118,6 +120,7 @@ test('polling cache', async (t) => {
   const processor = NewFeatureFlagProcessor({
     cache: cache,
     featureFlagCache: NewFeatureCache({ cache: cache, ttl: 0 }),
+    holdoutGroupsCache: NewHoldoutGroupsCache({ cache: new InMemoryCache(), ttl: 0 }),
     pollingInterval: 1000,
     apiClient: apiClient,
     eventEmitter: eventEmitter,

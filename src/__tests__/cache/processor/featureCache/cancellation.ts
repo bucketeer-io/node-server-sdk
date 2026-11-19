@@ -8,6 +8,8 @@ import {
   FeatureFlagProcessorOptions,
 } from '../../../../cache/processor/featureFlagCacheProcessor';
 import { NewFeatureCache } from '../../../../cache/features';
+import { NewHoldoutGroupsCache } from '../../../../cache/holdoutGroups';
+import { InMemoryCache } from '../../../../cache/inMemoryCache';
 import { ProcessorEventsEmitter } from '../../../../processorEventsEmitter';
 import { Clock } from '../../../../utils/clock';
 import { MockCache } from '../../../mocks/cache';
@@ -31,6 +33,10 @@ test.beforeEach((t) => {
   const options: FeatureFlagProcessorOptions = {
     cache,
     featureFlagCache: NewFeatureCache({ cache, ttl: FEATURE_FLAG_CACHE_TTL }),
+    holdoutGroupsCache: NewHoldoutGroupsCache({
+      cache: new InMemoryCache(),
+      ttl: FEATURE_FLAG_CACHE_TTL,
+    }),
     pollingInterval: 5_000,
     apiClient,
     eventEmitter,

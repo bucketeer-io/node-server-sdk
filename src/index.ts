@@ -12,6 +12,7 @@ import { BKTEvaluationDetails } from './evaluationDetails';
 import { BKTValue, BKTJsonArray, BKTJsonObject, BKTJsonPrimitive } from './types';
 import { InMemoryCache } from './cache/inMemoryCache';
 import { NewFeatureCache } from './cache/features';
+import { NewHoldoutGroupsCache } from './cache/holdoutGroups';
 import {
   FEATURE_FLAG_CACHE_TTL,
   FeatureFlagProcessor,
@@ -244,6 +245,11 @@ function defaultInitialize(resolvedConfig: InternalConfig): Bucketeer {
   if (resolvedConfig.enableLocalEvaluation === true) {
     const cache = new InMemoryCache();
     const featureFlagCache = NewFeatureCache({ cache: cache, ttl: FEATURE_FLAG_CACHE_TTL });
+    // The holdout groups arrive with the flags and are kept as long as they are.
+    const holdoutGroupsCache = NewHoldoutGroupsCache({
+      cache: cache,
+      ttl: FEATURE_FLAG_CACHE_TTL,
+    });
     const segementUsersCache = NewSegmentUsersCache({
       cache: cache,
       ttl: SEGEMENT_USERS_CACHE_TTL,
@@ -252,6 +258,7 @@ function defaultInitialize(resolvedConfig: InternalConfig): Bucketeer {
     featureFlagProcessor = NewFeatureFlagProcessor({
       cache: cache,
       featureFlagCache: featureFlagCache,
+      holdoutGroupsCache: holdoutGroupsCache,
       pollingInterval: resolvedConfig.cachePollingInterval!,
       apiClient: apiClient,
       eventEmitter: eventEmitter,
@@ -276,6 +283,8 @@ function defaultInitialize(resolvedConfig: InternalConfig): Bucketeer {
       tag: resolvedConfig.featureTag,
       featuresCache: featureFlagCache,
       segementUsersCache: segementUsersCache,
+      holdoutGroupsCache: holdoutGroupsCache,
+      logger: resolvedConfig.logger,
     });
   }
 

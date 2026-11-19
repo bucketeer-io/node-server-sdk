@@ -11,6 +11,7 @@ import { MockAPIClient } from '../../../mocks/api';
 import { Clock } from '../../../../utils/clock';
 import { NewSegmentUsersCache, SegmentUsersCache } from '../../../../cache/segmentUsers';
 import { NewFeatureCache } from '../../../../cache/features';
+import { NewHoldoutGroupsCache } from '../../../../cache/holdoutGroups';
 import { ProcessorEventsEmitter } from '../../../../processorEventsEmitter';
 import { SourceId } from '../../../../objects/sourceId';
 import { LocalEvaluator } from '../../../../evaluator/local';
@@ -164,6 +165,7 @@ test('cached rules reach the evaluator: user matches the segment by rules only',
     tag: 'server',
     featuresCache: featureFlagCache,
     segementUsersCache: segmentUsersCache,
+    holdoutGroupsCache: NewHoldoutGroupsCache({ cache, ttl: 0 }),
   });
 
   // Not in the included-user list, matches segment-rule-1 by attributes.
