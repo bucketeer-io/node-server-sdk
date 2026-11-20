@@ -27,6 +27,8 @@ import { MockCache } from '../mocks/cache';
 import { Clock } from '../../utils/clock';
 import { NewSegmentUsersCache, SegmentUsersCache } from '../../cache/segmentUsers';
 import { NewFeatureCache, FeaturesCache } from '../../cache/features';
+import { NewHoldoutGroupsCache } from '../../cache/holdoutGroups';
+import { InMemoryCache } from '../../cache/inMemoryCache';
 import { ProcessorEventsEmitter } from '../../processorEventsEmitter';
 import { IllegalStateError, InvalidStatusError } from '../../objects/errors';
 
@@ -266,6 +268,11 @@ test.beforeEach((t) => {
     tag: tag,
     featuresCache: featureFlagCache,
     segementUsersCache: segmentUsersCache,
+    // Kept apart from the mocked cache: no holdout group is serving in these tests.
+    holdoutGroupsCache: NewHoldoutGroupsCache({
+      cache: new InMemoryCache(),
+      ttl: FEATURE_FLAG_CACHE_TTL,
+    }),
   });
 
   t.context = {

@@ -1,6 +1,7 @@
 import test from 'ava';
 import { InMemoryCache } from '../../../../cache/inMemoryCache';
 import { NewFeatureCache } from '../../../../cache/features';
+import { NewHoldoutGroupsCache } from '../../../../cache/holdoutGroups';
 import {
   FEATURE_FLAG_ID,
   FEATURE_FLAG_REQUESTED_AT,
@@ -75,6 +76,7 @@ test('polling cache - using InMemoryCache()', async (t) => {
   const processor = NewFeatureFlagProcessor({
     cache: cache,
     featureFlagCache: featureCache,
+    holdoutGroupsCache: NewHoldoutGroupsCache({ cache, ttl: 1000 }),
     pollingInterval: 10,
     apiClient: apiClient,
     eventEmitter: eventEmitter,

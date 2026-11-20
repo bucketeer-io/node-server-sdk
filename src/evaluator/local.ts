@@ -5,7 +5,9 @@ import {
   SegmentUsers,
   UserEvaluations,
   Reason as ProtoReason,
+  HoldoutGroup,
   getFeatureIDsDependsOn,
+  holdoutSegmentIds,
 } from '@bucketeer/evaluation';
 // TODO: Import Segment from the package root once @bucketeer/evaluation
 // re-exports it. Until then it is imported from the generated proto module.
@@ -14,6 +16,7 @@ import {
 import { Segment } from '@bucketeer/evaluation/lib/proto/feature/segment_pb';
 
 import { FeaturesCache } from '../cache/features';
+import { HoldoutGroupsCache } from '../cache/holdoutGroups';
 import { SegmentUsersCache } from '../cache/segmentUsers';
 import { Evaluation } from '../objects/evaluation';
 import { User } from '../objects/user';
@@ -21,20 +24,31 @@ import { Reason, ReasonType } from '../objects/reason';
 import { NodeEvaluator } from './evaluator';
 import { IllegalStateError, InvalidStatusError } from '../objects/errors';
 import { toProtoUser } from '../cache/processor/converter';
+import { Logger } from '../logger';
 
 class LocalEvaluator implements NodeEvaluator {
   private tag: string;
   private featureCache: FeaturesCache;
   private segementUsersCache: SegmentUsersCache;
+  private holdoutGroupsCache: HoldoutGroupsCache;
+  private logger?: Logger;
+  // Segments of serving SEGMENT holdout groups that were not in the cache on
+  // the last evaluation. Used to log a missing segment once instead of on
+  // every evaluation.
+  private missingHoldoutSegmentIds = new Set<string>();
 
   constructor(options: {
     tag: string;
     featuresCache: FeaturesCache;
     segementUsersCache: SegmentUsersCache;
+    holdoutGroupsCache: HoldoutGroupsCache;
+    logger?: Logger;
   }) {
     this.tag = options.tag;
     this.segementUsersCache = options.segementUsersCache;
     this.featureCache = options.featuresCache;
+    this.holdoutGroupsCache = options.holdoutGroupsCache;
+    this.logger = options.logger;
   }
 
   async evaluate(user: User, featureID: string): Promise<Evaluation> {
@@ -80,6 +94,64 @@ class LocalEvaluator implements NodeEvaluator {
     });
   }
 
+  private async getHoldoutGroups(): Promise<HoldoutGroup[]> {
+    return this.holdoutGroupsCache.get().catch((error) => {
+      throw new IllegalStateError(
+        `Failed to get holdout groups: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    });
+  }
+
+  // Adds the segment users of the serving SEGMENT holdout groups to the map
+  // the evaluator reads. No flag rule has to reference such a segment, so the
+  // flag's own segment IDs do not cover it.
+  //
+  // Flags and segment users are polled separately, so a group can be in the
+  // cache before its segment is. Until the segment arrives the user is not
+  // held out: the evaluator treats a segment that is not in the map as having
+  // no members. Throwing here instead would make every evaluation fall back to
+  // the default value during that window.
+  private async addHoldoutSegmentUsers(
+    holdoutGroups: HoldoutGroup[],
+    segmentUsersMap: Map<string, SegmentUser[]>,
+  ): Promise<void> {
+    const segmentIds = holdoutSegmentIds(holdoutGroups);
+    // Forget the segments no serving group references any more.
+    this.missingHoldoutSegmentIds.forEach((segmentId) => {
+      if (!segmentIds.includes(segmentId)) {
+        this.missingHoldoutSegmentIds.delete(segmentId);
+      }
+    });
+    for (const segmentId of segmentIds) {
+      if (segmentUsersMap.has(segmentId)) {
+        // A flag rule references the same segment and it is already loaded.
+        this.missingHoldoutSegmentIds.delete(segmentId);
+        continue;
+      }
+      const segmentUsers = await this.getSegmentUsersFromCache(segmentId);
+      if (segmentUsers === null) {
+        this.reportMissingHoldoutSegment(segmentId, holdoutGroups);
+        continue;
+      }
+      this.missingHoldoutSegmentIds.delete(segmentId);
+      segmentUsersMap.set(segmentId, segmentUsers.getUsersList());
+    }
+  }
+
+  private reportMissingHoldoutSegment(segmentId: string, holdoutGroups: HoldoutGroup[]) {
+    if (this.missingHoldoutSegmentIds.has(segmentId)) {
+      return;
+    }
+    this.missingHoldoutSegmentIds.add(segmentId);
+    const groupIds = holdoutGroups
+      .filter((group) => group.getSegmentId() === segmentId)
+      .map((group) => group.getId());
+    this.logger?.warn(
+      `Segment ${segmentId} of holdout group ${groupIds.join(', ')} is not in the cache yet. ` +
+        'Users are not held out by this group until the segment users are fetched.',
+    );
+  }
+
   private async evaluateFeatures(user: User, feature: Feature): Promise<UserEvaluations> {
     try {
       const targetFeatures = await this.getTargetFeatures(feature);
@@ -102,6 +174,9 @@ class LocalEvaluator implements NodeEvaluator {
         }
       }
 
+      const holdoutGroups = await this.getHoldoutGroups();
+      await this.addHoldoutSegmentUsers(holdoutGroups, segmentUsersMap);
+
       const protoUser = toProtoUser(user);
       const userEvaluations = await evaluator.evaluateFeatures(
         targetFeatures,
@@ -109,6 +184,7 @@ class LocalEvaluator implements NodeEvaluator {
         segmentUsersMap,
         segmentsMap,
         this.tag,
+        holdoutGroups,
       );
       return userEvaluations;
     } catch (error) {
@@ -171,10 +247,17 @@ function protoReasonToReason(protoReason: ProtoReason | undefined): Reason {
       type: 'DEFAULT',
     };
   }
-  return {
+  const reason: Reason = {
     type: protoReasonTypeToReasonType(protoReason.getType()),
     ruleId: protoReason.getRuleId(),
   };
+  // The evaluator sets the group ID only on a HOLDOUT reason. It is left out
+  // otherwise so the reason of a normal evaluation keeps its shape.
+  const holdoutGroupId = protoReason.getHoldoutGroupId();
+  if (holdoutGroupId) {
+    reason.holdoutGroupId = holdoutGroupId;
+  }
+  return reason;
 }
 
 function protoReasonTypeToReasonType(protoReasonType: number): ReasonType {
@@ -191,6 +274,8 @@ function protoReasonTypeToReasonType(protoReasonType: number): ReasonType {
       return 'OFF_VARIATION';
     case ProtoReason.Type.PREREQUISITE:
       return 'PREREQUISITE';
+    case ProtoReason.Type.HOLDOUT:
+      return 'HOLDOUT';
     default:
       return 'DEFAULT';
   }

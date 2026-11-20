@@ -1,6 +1,8 @@
 import anyTest, { TestFn } from 'ava';
 import sino from 'sinon';
 import { NewFeatureCache } from '../../../../cache/features';
+import { NewHoldoutGroupsCache } from '../../../../cache/holdoutGroups';
+import { InMemoryCache } from '../../../../cache/inMemoryCache';
 import {
   DefaultFeatureFlagProcessor,
   FEATURE_FLAG_CACHE_TTL,
@@ -42,6 +44,11 @@ test.beforeEach((t) => {
   const options = {
     cache: cache,
     featureFlagCache: featureFlagCache,
+    // Kept apart from the mocked cache: these tests cover the flag cache only.
+    holdoutGroupsCache: NewHoldoutGroupsCache({
+      cache: new InMemoryCache(),
+      ttl: FEATURE_FLAG_CACHE_TTL,
+    }),
     pollingInterval: 1000,
     apiClient: apiClient,
     eventEmitter: eventEmitter,

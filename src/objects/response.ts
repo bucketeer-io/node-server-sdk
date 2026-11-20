@@ -1,5 +1,6 @@
 import { Evaluation } from './evaluation';
 import { Feature } from './feature';
+import { HoldoutGroup } from './holdout';
 import { SegmentUsers } from './segment';
 
 export type RegisterEventsResponseError = {
@@ -21,6 +22,10 @@ export type GetFeatureFlagsResponse = {
   archivedFeatureFlagIds: string[];
   requestedAt: string;
   forceUpdate: boolean;
+  // The holdout groups serving in the environment. Always the full list and
+  // never a diff: an empty list means no group is serving. A backend that
+  // predates holdout delivery does not send the field.
+  holdoutGroups?: HoldoutGroup[];
 };
 
 export type GetSegmentUsersResponse = {

@@ -1,4 +1,5 @@
 import { FeaturesCache } from '../features';
+import { HoldoutGroupsCache } from '../holdoutGroups';
 import { Cache } from '../cache';
 import { APIClient } from '../../api/client';
 import { ProcessorEventsEmitter } from '../../processorEventsEmitter';
@@ -7,9 +8,10 @@ import { Feature } from '../../objects/feature';
 import { ApiId } from '../../objects/apiId';
 import { Clock } from '../../utils/clock';
 import { SourceId } from '../../objects/sourceId';
-import { toProtoFeature } from './converter';
+import { toEvaluatorHoldoutGroups, toProtoFeature } from './converter';
 import { PollController as PollAbortController, isOperationAbortedError, isDeadlineExceededError } from '../../utils/pollController';
 import { DeadlineExceededError } from '../../objects/errors';
+import { HoldoutGroup } from '@bucketeer/evaluation';
 
 interface FeatureFlagProcessor {
   start(): Promise<void>;
@@ -19,6 +21,7 @@ interface FeatureFlagProcessor {
 type FeatureFlagProcessorOptions = {
   cache: Cache;
   featureFlagCache: FeaturesCache;
+  holdoutGroupsCache: HoldoutGroupsCache;
   pollingInterval: number;
   apiClient: Pick<APIClient, 'getFeatureFlags'>;
   eventEmitter: ProcessorEventsEmitter;
@@ -38,6 +41,7 @@ const FEATURE_FLAG_ID = 'bucketeer_feature_flag_id';
 
 class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
   private featureFlagCache: FeaturesCache;
+  private holdoutGroupsCache: HoldoutGroupsCache;
   private cache: Cache;
   private apiClient: Pick<APIClient, 'getFeatureFlags'>;
   private eventEmitter: ProcessorEventsEmitter;
@@ -53,6 +57,7 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
 
   constructor(options: FeatureFlagProcessorOptions) {
     this.featureFlagCache = options.featureFlagCache;
+    this.holdoutGroupsCache = options.holdoutGroupsCache;
     this.cache = options.cache;
     this.apiClient = options.apiClient;
     this.eventEmitter = options.eventEmitter;
@@ -128,11 +133,16 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
     this.pushSizeMetricsEvent(size);
 
     const responseRequestedAt = Number(featureFlags.requestedAt) || 0;
+    // Every response carries the full list of serving holdout groups, also
+    // when the flag diff is empty. The cached list is replaced each time, and
+    // cleared when the list is empty or the backend does not send the field.
+    const holdoutGroups = toEvaluatorHoldoutGroups(featureFlags.holdoutGroups);
     if (featureFlags.forceUpdate) {
       await this.deleteAllAndSaveLocalCache(
         responseRequestedAt,
         featureFlags.featureFlagsId,
         featureFlags.features,
+        holdoutGroups,
       );
     } else {
       await this.updateLocalCache(
@@ -140,6 +150,7 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
         featureFlags.featureFlagsId,
         featureFlags.features,
         featureFlags.archivedFeatureFlagIds,
+        holdoutGroups,
       );
     }
   }
@@ -158,9 +169,10 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
     requestedAt: number,
     featureFlagsId: string,
     features: Feature[],
+    holdoutGroups: HoldoutGroup[],
   ) {
     await this.featureFlagCache.deleteAll();
-    await this.updateLocalCache(requestedAt, featureFlagsId, features, []);
+    await this.updateLocalCache(requestedAt, featureFlagsId, features, [], holdoutGroups);
   }
 
   private async updateLocalCache(
@@ -168,6 +180,7 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
     featureFlagsId: string,
     features: Feature[],
     archivedFeatureIds: string[],
+    holdoutGroups: HoldoutGroup[],
   ) {
     for (const featureId of archivedFeatureIds) {
       await this.featureFlagCache.delete(featureId);
@@ -175,6 +188,9 @@ class DefaultFeatureFlagProcessor implements FeatureFlagProcessor {
     for (const feature of features) {
       await this.featureFlagCache.put(toProtoFeature(feature));
     }
+    // featureFlagsId covers the flags and the holdout groups, so it is stored
+    // only after both are in the cache.
+    await this.holdoutGroupsCache.put(holdoutGroups);
     await this.cache.put(FEATURE_FLAG_ID, featureFlagsId, FEATURE_FLAG_CACHE_TTL);
     await this.cache.put(FEATURE_FLAG_REQUESTED_AT, requestedAt, FEATURE_FLAG_CACHE_TTL);
   }

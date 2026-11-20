@@ -13,6 +13,7 @@ import {
   FeatureLastUsedInfo,
 } from '../../objects/feature';
 import { SegmentUsers } from '../../objects/segment';
+import { HoldoutGroup, HoldoutGroupFeature } from '../../objects/holdout';
 import {
   Feature as ProtoFeature,
   SegmentUsers as ProtoSegmentUsers,
@@ -27,8 +28,13 @@ import {
   RolloutStrategy as ProtoRolloutStrategy,
   FixedStrategy as ProtoFixedStrategy,
   User as ProtoUser,
+  HoldoutAssignment,
+  HoldoutFeature as EvaluatorHoldoutFeature,
+  HoldoutGroup as EvaluatorHoldoutGroup,
+  createHoldoutFeature,
+  createHoldoutGroup,
 } from '@bucketeer/evaluation';
-import { normalizeEnumName } from './enumUtils';
+import { getUnsupportedEnumValue, normalizeEnumName } from './enumUtils';
 import { UNSUPPORTED_PROTO_ENUM_VALUES } from './unsupportedEnumValues';
 
 type ProtoVariationType = ProtoFeature.VariationTypeMap[keyof ProtoFeature.VariationTypeMap];
@@ -111,6 +117,25 @@ function mapSegmentUserState(state: string): ProtoSegmentUserState {
       return ProtoSegmentUser.State.EXCLUDED;
     default:
       return UNSUPPORTED_PROTO_ENUM_VALUES.segmentUserState as ProtoSegmentUserState;
+  }
+}
+
+// An assignment type this SDK does not know. The evaluator holds nobody out
+// for a group whose assignment type is neither HASH nor SEGMENT.
+const UNSUPPORTED_HOLDOUT_ASSIGNMENT = getUnsupportedEnumValue(HoldoutAssignment);
+
+function mapHoldoutAssignmentType(type: string | undefined): number {
+  // HASH is the proto default, and JSON may omit a field that holds its default.
+  if (!type) {
+    return HoldoutAssignment.HASH;
+  }
+  switch (normalizeEnumName(type)) {
+    case 'HASH':
+      return HoldoutAssignment.HASH;
+    case 'SEGMENT':
+      return HoldoutAssignment.SEGMENT;
+    default:
+      return UNSUPPORTED_HOLDOUT_ASSIGNMENT;
   }
 }
 
@@ -286,4 +311,39 @@ export function toProtoUser(user: User): ProtoUser {
     Object.entries(user.data).forEach(([key, value]) => map.set(key, value));
   }
   return pu;
+}
+
+export function toEvaluatorHoldoutFeature(feature: HoldoutGroupFeature): EvaluatorHoldoutFeature {
+  return createHoldoutFeature({
+    id: feature.id || '',
+    featureId: feature.featureId || '',
+    holdoutVariationId: feature.holdoutVariationId || '',
+    addedAt: Number(feature.addedAt) || 0,
+    removedAt: Number(feature.removedAt) || 0,
+  });
+}
+
+// holdout.proto is not compiled into @bucketeer/evaluation, so the evaluator
+// input is built with the factories of the package instead of a proto message.
+export function toEvaluatorHoldoutGroup(group: HoldoutGroup): EvaluatorHoldoutGroup {
+  return createHoldoutGroup({
+    id: group.id || '',
+    environmentId: group.environmentId || '',
+    assignmentType: mapHoldoutAssignmentType(group.assignmentType),
+    samplingSeed: group.samplingSeed || '',
+    bucketStart: Number(group.bucketStart) || 0,
+    percentage: Number(group.percentage) || 0,
+    segmentId: group.segmentId || '',
+    updatedAt: Number(group.updatedAt) || 0,
+    features: (group.features ?? []).map(toEvaluatorHoldoutFeature),
+  });
+}
+
+// Converts the holdoutGroups of a getFeatureFlags response. The field is
+// absent on a backend that predates holdout delivery, which is the same as an
+// empty list: no group is serving.
+export function toEvaluatorHoldoutGroups(
+  groups: HoldoutGroup[] | undefined,
+): EvaluatorHoldoutGroup[] {
+  return (groups ?? []).map(toEvaluatorHoldoutGroup);
 }

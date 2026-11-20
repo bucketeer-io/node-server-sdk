@@ -7,7 +7,14 @@ export interface BKTEvaluationDetails<T extends BKTValue> {
   readonly variationId: string;
   readonly variationName: string;
   readonly variationValue: T;
-  readonly reason: 'TARGET' | 'RULE' | 'DEFAULT' | 'CLIENT' | 'OFF_VARIATION' | 'PREREQUISITE';
+  readonly reason:
+    | 'TARGET'
+    | 'RULE'
+    | 'DEFAULT'
+    | 'CLIENT'
+    | 'OFF_VARIATION'
+    | 'PREREQUISITE'
+    | 'HOLDOUT';
 }
 
 export const newDefaultBKTEvaluationDetails = <T extends BKTValue>(
