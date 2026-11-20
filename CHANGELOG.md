@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.4.8](https://github.com/bucketeer-io/node-server-sdk/compare/v0.4.7...v0.4.8) (2026-11-20)
+
+
+### Features
+
+* support holdout groups in local evaluation ([#229](https://github.com/bucketeer-io/node-server-sdk/issues/229)) ([380e7b1](https://github.com/bucketeer-io/node-server-sdk/commit/380e7b1688d545cd29ea446c921dc18cdefd7339))
+
+
+### Build System
+
+* **dev-deps:** bump dev-minor ([#226](https://github.com/bucketeer-io/node-server-sdk/issues/226)) ([0dfd264](https://github.com/bucketeer-io/node-server-sdk/commit/0dfd264a255a4ac87fc47f4fb2a6c4c718d0fb9e))
+
 ## [0.4.7](https://github.com/bucketeer-io/node-server-sdk/compare/v0.4.6...v0.4.7) (2026-08-07)
 
 
