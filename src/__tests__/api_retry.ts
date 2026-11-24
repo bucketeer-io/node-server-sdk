@@ -1,14 +1,13 @@
 import anyTest, { TestFn } from 'ava';
 import https from 'https';
 import http from 'http';
-import fs from 'fs';
-import path from 'path';
 import { APIClient } from '../api/client';
 import { User } from '../bootstrap';
 import { AbortError, DeadlineExceededError, InvalidStatusError } from '../objects/errors';
 import { RetryPolicy } from '../utils/promiseRetriable';
 import { SourceId } from '../objects/sourceId';
 import { createDeadlineExceededSignal, isOperationAbortedError, isDeadlineExceededError } from '../utils/pollController';
+import { testServerTls } from './testdata/test_server_cert';
 
 const port = 9997;
 const host = `localhost:${port}`;
@@ -16,10 +15,6 @@ const apiKey = '';
 const defaultSourceId = SourceId.OPEN_FEATURE_NODE;
 const sdkVersion = '1.0.0';
 const user: User = { id: 'user-1', data: {} };
-
-const projectRoot = path.join(__dirname, '..', '..');
-const serverKey = path.join(projectRoot, 'src', '__tests__', 'testdata', 'server.key');
-const serverCrt = path.join(projectRoot, 'src', '__tests__', 'testdata', 'server.crt');
 
 // Mutable handler — each serial test sets this before making requests.
 let currentHandler: (req: http.IncomingMessage, res: http.ServerResponse) => void = (_req, res) => {
@@ -45,8 +40,8 @@ const test = anyTest as TestFn<{ server: https.Server }>;
 test.before((t) => {
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
   const opts = {
-    key: fs.readFileSync(serverKey),
-    cert: fs.readFileSync(serverCrt),
+    key: testServerTls().key,
+    cert: testServerTls().cert,
   };
   t.context = {
     server: https

@@ -24,15 +24,10 @@
 import anyTest, { TestFn } from 'ava';
 import https from 'https';
 import http from 'http';
-import fs from 'fs';
-import path from 'path';
 import { APIClient } from '../api/client';
 import { User } from '../bootstrap';
 import { SourceId } from '../objects/sourceId';
-
-const projectRoot = path.join(__dirname, '..', '..');
-const serverKey = path.join(projectRoot, 'src', '__tests__', 'testdata', 'server.key');
-const serverCrt = path.join(projectRoot, 'src', '__tests__', 'testdata', 'server.crt');
+import { testServerTls } from './testdata/test_server_cert';
 
 interface Ctx {
   stallPort: number;
@@ -47,7 +42,7 @@ test.before(async (t) => {
   // never calls res.end(). The socket goes idle after the write, causing
   // the client's REQUEST_TIMEOUT_MS inactivity timer to fire.
   const stallServer = https.createServer(
-    { key: fs.readFileSync(serverKey), cert: fs.readFileSync(serverCrt) },
+    { key: testServerTls().key, cert: testServerTls().cert },
     (_req: http.IncomingMessage, res: http.ServerResponse) => {
       res.writeHead(200, { 'content-type': 'application/json' });
       res.write('{"partial":'); // partial body — socket idles here
