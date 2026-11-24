@@ -22,13 +22,8 @@
 import anyTest, { TestFn } from 'ava';
 import https from 'https';
 import http from 'http';
-import fs from 'fs';
-import path from 'path';
 import { promiseRetriable, RetryPolicy } from '../utils/promiseRetriable';
-
-const projectRoot = path.join(__dirname, '..', '..');
-const serverKey = path.join(projectRoot, 'src', '__tests__', 'testdata', 'server.key');
-const serverCrt = path.join(projectRoot, 'src', '__tests__', 'testdata', 'server.crt');
+import { testServerTls } from './testdata/test_server_cert';
 
 const test = anyTest as TestFn<{ port: number }>;
 
@@ -37,7 +32,7 @@ const test = anyTest as TestFn<{ port: number }>;
 test.before(async (t) => {
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
   const server = https.createServer(
-    { key: fs.readFileSync(serverKey), cert: fs.readFileSync(serverCrt) },
+    { key: testServerTls().key, cert: testServerTls().cert },
     (_req: http.IncomingMessage, _res: http.ServerResponse) => { /* hang */ },
   );
   await new Promise<void>(r => server.listen(0, '127.0.0.1', r));

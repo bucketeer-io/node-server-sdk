@@ -1,9 +1,8 @@
 import anyTest, { TestFn } from 'ava';
 import https from 'https';
-import fs from 'fs';
 import { APIClient } from '../api/client';
 import { User } from '../bootstrap';
-import path from 'path';
+import { testServerTls } from './testdata/test_server_cert';
 import { InvalidStatusError } from '../objects/errors';
 import { SourceId } from '../objects/sourceId';
 
@@ -12,17 +11,15 @@ const port = 9998;
 const host = `localhost:${port}`;
 
 const test = anyTest as TestFn<{ server: https.Server }>;
-const projectRoot = path.join(__dirname, '..', '..');
-const serverKey = path.join(projectRoot, 'src', '__tests__', 'testdata', 'server.key');
-const serverCrt = path.join(projectRoot, 'src', '__tests__', 'testdata', 'server.crt');
 const defaultSourceId = SourceId.OPEN_FEATURE_NODE;
 const sdkVersion = '1.2.10';
 
 test.before((t) => {
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+  const tls = testServerTls();
   const opts = {
-    key: fs.readFileSync(serverKey),
-    cert: fs.readFileSync(serverCrt),
+    key: tls.key,
+    cert: tls.cert,
   };
   t.context = {
     server: https
